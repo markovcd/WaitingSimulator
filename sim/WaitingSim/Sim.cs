@@ -166,16 +166,9 @@ public sealed class Sim
                 .Add(agent.Trait?.Id ?? "")
                 .Add(agent.Patience)
                 .Add((long)agent.Stage);
-            if (tuning.Ripple is not null)
-            {
-                var (agentState, agentIncrement) = agent.Rng.Position;
-                hash.Add(agentState).Add(agentIncrement).Add(agent.PreferredSpacing).Add((long)agent.Step).Add(agent.StepEndsAt);
-            }
-
-            if (tuning.StepOut is not null)
-            {
-                hash.Add(agent.HeldAlong ?? -1f).Add(agent.HoldEndsAt).Add((long)(agent.HeldBehind?.Value ?? -1)).Add(agent.Refused);
-            }
+            var (agentState, agentIncrement) = agent.Rng.Position;
+            hash.Add(agentState).Add(agentIncrement).Add(agent.PreferredSpacing).Add((long)agent.Step).Add(agent.StepEndsAt)
+                .Add(agent.HeldAlong ?? -1f).Add(agent.HoldEndsAt).Add((long)(agent.HeldBehind?.Value ?? -1)).Add(agent.Refused);
         }
 
         return hash.Value;
