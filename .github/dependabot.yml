@@ -1,0 +1,12 @@
+# Proposes moving pinned action SHAs and central NuGet versions. Updates arrive as pull requests;
+# each one lands as its own commit (the dependencies skill).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
