@@ -29,7 +29,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 
 | Area | Choice |
 |---|---|
-| Engine | **Godot 4 (.NET build), C#. Decided.** Pin the latest stable 4.x at project start and upgrade deliberately. |
+| Engine | **Godot 4 (.NET build), C#. Decided.** Pinned to 4.7.2 by the game's `Godot.NET.Sdk` version; upgrade deliberately. |
 | Simulation | Separate `WaitingSim` C# class library on .NET 10 (the client targets the same), no engine references, unit-tested with xunit v3. Solution file: `WaitingSimulator.slnx`. |
 | Game client | Godot project that references `WaitingSim` and does only presentation, input and audio. |
 | Tick | 60 Hz fixed step, owned by the sim driver (accumulator), render interpolation between snapshots. |
@@ -154,7 +154,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 ## 7. Tooling and workflow
 
 - **Repo:** monorepo as in §4.1. Git LFS for `*.blend`, `*.wav`, `*.ogg`, `*.png`, `*.psd`, `*.glb`.
-- **CI (GitHub Actions):** on every push, `dotnet test` the sim (fast, no engine). On tags, export with headless Godot and upload builds as artifacts.
+- **CI (GitHub Actions):** on every push to main and every pull request, `./gate.sh`: in the gate image (`ci/gate.Dockerfile`, the .NET SDK and Godot pinned), build everything, run every test, import the game with headless Godot and fail if that changes any file, then start the game headless (`-- --smoke`) and fail unless it quits by itself. On tags, export with headless Godot and upload builds as artifacts.
 - **Debug tools:** in-game overlay with patience values, zones, grace timer, RNG seed and tick; record-and-replay hotkey; a "step one tick" pause mode. These cost little given the architecture and are essential for tuning the hidden meter (§8 readability risk).
 - **AI-assisted development (Claude Code):**
   - `AGENTS.md` (imported by `CLAUDE.md`) loads the engineering rules in `docs/agents/rules/`, adapted from the agentic-coding-practices repo. `simulation.md` and `godot.md` hold this project's architecture rules: no engine calls in `WaitingSim`, commands in, events out, ticks not seconds, no Godot 3 APIs.

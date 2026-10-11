@@ -1,5 +1,6 @@
-# Proposes moving pinned action SHAs and central NuGet versions. Updates arrive as pull requests;
-# each one lands as its own commit (the dependencies skill).
+# Proposes moving pinned action SHAs, central NuGet versions and the gate image's base. Updates arrive as pull
+# requests; each one lands as its own commit (the dependencies skill). Godot is pinned by hand: its version is in
+# game/WaitingSimulator.Game.csproj and ci/gate.Dockerfile, which PipelineTests holds equal.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -8,5 +9,9 @@ updates:
       interval: weekly
   - package-ecosystem: nuget
     directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /ci
     schedule:
       interval: weekly

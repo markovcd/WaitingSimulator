@@ -1,0 +1,14 @@
+<!-- The Godot client. The SDK version here is the one place that names the Godot version; the gate image must match it. -->
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <PropertyGroup>
+    <!-- The Godot editor rewrites a project without a literal framework to its own default, so this repeats
+         Directory.Build.props; a test holds the two equal. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WaitingSimulator.Game</RootNamespace>
+    <!-- Godot loads the game assembly into its own runtime. -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\sim\WaitingSim\WaitingSim.csproj" />
+  </ItemGroup>
+</Project>

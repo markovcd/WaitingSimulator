@@ -2,7 +2,7 @@
 
 ## Godot 4 and C# only
 
-The client is Godot 4 (.NET build) with C#. No GDScript, and no Godot 3 API: Godot 3 names (`KinematicBody`, `Spatial`, `yield`, `instance()`, `move_and_slide` with arguments, `export` keyword) are wrong here. Before using an API, check it exists in the pinned version (the `Godot.NET.Sdk` version in the game's project file, which is the one place that names it).
+The client is Godot 4 (.NET build) with C#. No GDScript, and no Godot 3 API: Godot 3 names (`KinematicBody`, `Spatial`, `yield`, `instance()`, `move_and_slide` with arguments, `export` keyword) are wrong here. Before using an API, check it exists in the pinned version (the `Godot.NET.Sdk` version in the game's project file; the gate image repeats it, and a test holds the two equal).
 
 Where Godot requires a shape that `code-style.md` would not choose (for example `partial` node classes, or the visibility Godot's source generators need), Godot wins, and only for those classes.
 

@@ -11,9 +11,10 @@ A first-person game about the mundane tension of waiting. In line levels you ste
 
 ## Build and test
 
-Requirements: the .NET SDK version in [global.json](global.json), and [Git LFS](https://git-lfs.com) (run `git lfs install` once; binary assets are stored in LFS per [.gitattributes](.gitattributes)). Godot 4 (.NET build) will be needed once the client exists.
+Requirements: the .NET SDK version in [global.json](global.json), [Git LFS](https://git-lfs.com) (run `git lfs install` once; binary assets are stored in LFS per [.gitattributes](.gitattributes)), and Docker for the gate. To open the game in the editor, Godot 4.7.2 (.NET build), the version [game/WaitingSimulator.Game.csproj](game/WaitingSimulator.Game.csproj) names.
 
-- Gate (build and every test): `dotnet test --solution WaitingSimulator.slnx`
+- Gate (build, every test and a headless Godot start, in the gate image): `./gate.sh` (from Git Bash on Windows)
+- Every test, without Docker or Godot: `dotnet build WaitingSimulator.slnx && dotnet test --solution WaitingSimulator.slnx --no-build`
 - One test class: `dotnet test --project sim/WaitingSim.Tests --filter-class "*CliTests"`
 - The headless runner: `dotnet run --project sim/WaitingSim.Runner -- help`
 - Check a replay against its recorded hashes: `dotnet run --project sim/WaitingSim.Runner -- replay <file>` (`--record` rewrites the hashes)
@@ -21,7 +22,9 @@ Requirements: the .NET SDK version in [global.json](global.json), and [Git LFS](
 
 | Project | What it is |
 |---|---|
+| `game` | The Godot client. Started with `-- --smoke`, it quits once ready; the gate runs it that way. |
 | `sim/WaitingSim` | The sim: every game rule, no engine references. |
 | `sim/WaitingSim.Runner` | Command-line program that plays levels headlessly. |
 | `sim/WaitingSim.Tests` | Tests for the sim and the runner (xunit v3). Golden replays are in `Replays/`. |
 | `data` | Data the sim reads: `tuning.json` and `traits.json`. The tests load the shipped files. |
+| `ci` | The gate image and the script it runs. |

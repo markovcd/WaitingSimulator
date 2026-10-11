@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-    <!-- Godot 4.7 builds against net8.0 and accepts newer targets; net10.0 is the supported LTS. One place names it. -->
+    <!-- Godot 4.7 builds against net8.0 and accepts newer targets; net10.0 is the supported LTS. The game's project file
+         repeats it, since the Godot editor rewrites a project without a literal one; PipelineTests holds the two equal. -->
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

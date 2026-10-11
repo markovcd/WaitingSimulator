@@ -1,7 +1,7 @@
-# Runs the gate (the command AGENTS.md names) on every push to main and every pull request.
-# Restores are locked: GitHub sets CI=true, which turns on RestoreLockedMode in Directory.Build.props,
-# so a package version that moved without its lock file fails here instead of building.
-# Actions are pinned to commit SHAs; Dependabot (.github/dependabot.yml) proposes moving them.
+# Runs the gate (gate.sh, the command AGENTS.md names) on every push to main and every pull request.
+# gate.sh builds the gate image (ci/gate.Dockerfile: the pinned .NET SDK and Godot) and runs every check in it,
+# so CI runs exactly what a local gate run does. Restores inside are always locked to the committed lock files.
+# Actions are pinned to commit SHAs and the image's base by digest; Dependabot (.github/dependabot.yml) proposes moving them.
 name: Gate
 
 on:
@@ -19,17 +19,12 @@ concurrency:
 jobs:
   gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # A run takes a few minutes, most of it pulling the SDK image and downloading Godot.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-        with:
-          global-json-file: global.json
-          cache: true
-          cache-dependency-path: "**/packages.lock.json"
-
       - name: Gate
-        run: dotnet test --solution WaitingSimulator.slnx
+        run: ./gate.sh

@@ -1,0 +1,14 @@
+; Engine configuration file.
+; Edited by hand and by the Godot editor; keep it small (docs/agents/rules/godot.md).
+
+config_version=5
+
+[application]
+
+config/name="Waiting Simulator 2026"
+run/main_scene="res://Client.tscn"
+config/features=PackedStringArray("4.7", "C#")
+
+[dotnet]
+
+project/assembly_name="WaitingSimulator.Game"
