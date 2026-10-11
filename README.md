@@ -11,7 +11,14 @@ A first-person game about the mundane tension of waiting. In line levels you ste
 
 ## Build and test
 
-Pre-prototype: there is no code yet. Once the solution exists (see [TODO.md](TODO.md)):
+Requirements: the .NET SDK version in [global.json](global.json). Godot 4 (.NET build) will be needed once the client exists.
 
-- Requirements: the .NET SDK version Godot 4 uses, and Godot 4 (.NET build) for the client.
-- Gate: `dotnet test WaitingSimulator.sln`
+- Gate (build and every test): `dotnet test --solution WaitingSimulator.slnx`
+- One test class: `dotnet test --project sim/WaitingSim.Tests --filter-class "*CliTests"`
+- The headless runner: `dotnet run --project sim/WaitingSim.Runner -- help`
+
+| Project | What it is |
+|---|---|
+| `sim/WaitingSim` | The sim: every game rule, no engine references. |
+| `sim/WaitingSim.Runner` | Command-line program that plays levels headlessly. |
+| `sim/WaitingSim.Tests` | Tests for the sim and the runner (xunit v3). |

@@ -1,0 +1,19 @@
+T:System.Random;The sim draws randomness only from its own seeded RNG
+M:System.Guid.NewGuid;Ids in the sim come from the seeded RNG or a counter
+P:System.DateTime.Now;Time is an argument: the sim counts ticks
+P:System.DateTime.UtcNow;Time is an argument: the sim counts ticks
+P:System.DateTime.Today;Time is an argument: the sim counts ticks
+P:System.DateTimeOffset.Now;Time is an argument: the sim counts ticks
+P:System.DateTimeOffset.UtcNow;Time is an argument: the sim counts ticks
+T:System.Diagnostics.Stopwatch;Time is an argument: the sim counts ticks
+P:System.Environment.TickCount;Time is an argument: the sim counts ticks
+P:System.Environment.TickCount64;Time is an argument: the sim counts ticks
+T:System.TimeProvider;Time is an argument: the sim counts ticks
+T:System.Threading.Thread;The sim is single-threaded and steps on demand
+T:System.Threading.Timer;The sim is single-threaded and steps on demand
+M:System.Threading.Tasks.Task.Run(System.Action);The sim is single-threaded and steps on demand
+M:System.Threading.Tasks.Task.Delay(System.Int32);The sim is single-threaded and steps on demand
+M:System.Threading.Tasks.Task.Delay(System.TimeSpan);The sim is single-threaded and steps on demand
+T:System.Console;The sim reports through events and snapshots; the runner owns the console
+T:System.IO.File;The sim parses data handed to it; reading files is the caller's job
+T:System.IO.Directory;The sim parses data handed to it; reading files is the caller's job

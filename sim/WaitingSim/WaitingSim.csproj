@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <!-- APIs that break determinism or reach outside the sim; see docs/agents/rules/simulation.md. -->
+    <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WaitingSim.Tests" />
+  </ItemGroup>
+</Project>

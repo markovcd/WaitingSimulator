@@ -2,8 +2,9 @@
 
 A first-person game about the mundane tension of waiting in lines and waiting rooms, built in Godot 4 with C#. See [README.md](README.md) for the build and run commands, [DESIGN.md](DESIGN.md) for the game design, [TECH.md](TECH.md) for the technology plan, `docs/adr/` for the decisions behind the design, and [docs/glossary.md](docs/glossary.md) for the one word each thing is called by.
 
-- **The gate:** `dotnet test WaitingSimulator.sln` from the repository root. It is the truth; a local run can be green about code it skipped. The solution does not exist yet (first item in [TODO.md](TODO.md)); until it does, there is no code to gate. Once a Godot project exists, the gate grows a headless Godot build and runs in a container (see `pipeline.md`).
-- **Fast loop:** `dotnet test sim/WaitingSim.Tests --filter "FullyQualifiedName~<ClassName>"`. Check the count of tests that ran.
+- **The gate:** `dotnet test --solution WaitingSimulator.slnx` from the repository root. It is the truth; a local run can be green about code it skipped. Once a Godot project exists, the gate grows a headless Godot build and runs in a container (see `pipeline.md`).
+- **Fast loop:** `dotnet test --project sim/WaitingSim.Tests --filter-class "*<ClassName>"` (xunit v3 on Microsoft.Testing.Platform; `--filter-method` narrows to one test). Check the count of tests that ran.
+- **Toolchain:** the .NET SDK pinned in `global.json`; the target framework is set once, in `Directory.Build.props`. Package versions are central in `Directory.Packages.props`, and restores are locked to the committed `packages.lock.json` files.
 - **TODO.md** lists work asked for and not yet started. Add to it when the user says "add to the todo", and take an item off in the commit that lands it. A plan, an audit or an out-of-scope problem too long for a line is written up in [docs/handoff/](docs/handoff/README.md) and linked from its item.
 
 Standing rules are in `docs/agents/rules/`. They apply to nearly every task, so read all of them before starting; Claude Code imports them through the paths below:

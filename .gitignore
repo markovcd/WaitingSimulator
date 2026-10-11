@@ -1,0 +1,13 @@
+# .NET build output
+bin/
+obj/
+TestResults/
+*.user
+
+# Godot
+.godot/
+
+# Editors
+.vs/
+.idea/
+.vscode/

@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <!-- Godot 4.7 builds against net8.0 and accepts newer targets; net10.0 is the supported LTS. One place names it. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <!-- Applies the .editorconfig style rules at build time, so they fail the gate rather than only showing in an IDE. -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Restores use the committed packages.lock.json; CI refuses to restore anything the lock file does not name. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+</Project>

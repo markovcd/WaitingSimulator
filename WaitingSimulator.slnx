@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/sim/">
+    <Project Path="sim/WaitingSim.Runner/WaitingSim.Runner.csproj" />
+    <Project Path="sim/WaitingSim.Tests/WaitingSim.Tests.csproj" />
+    <Project Path="sim/WaitingSim/WaitingSim.csproj" />
+  </Folder>
+</Solution>

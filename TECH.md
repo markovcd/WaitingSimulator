@@ -30,7 +30,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 | Area | Choice |
 |---|---|
 | Engine | **Godot 4 (.NET build), C#. Decided.** Pin the latest stable 4.x at project start and upgrade deliberately. |
-| Simulation | Separate `WaitingSim` C# class library targeting the same .NET version as the Godot project, no engine references, unit-tested with xUnit. |
+| Simulation | Separate `WaitingSim` C# class library on .NET 10 (the client targets the same), no engine references, unit-tested with xunit v3. Solution file: `WaitingSimulator.slnx`. |
 | Game client | Godot project that references `WaitingSim` and does only presentation, input and audio. |
 | Tick | 60 Hz fixed step, owned by the sim driver (accumulator), render interpolation between snapshots. |
 | RNG | Own PCG32 or xoshiro128** in the sim with serializable state. Never `System.Random` or engine RNG in sim code. |

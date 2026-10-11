@@ -1,0 +1,5 @@
+[*.cs]
+# Test names are sentences with underscores (docs/agents/rules/testing.md).
+dotnet_diagnostic.CA1707.severity = none
+# A test's name states its rule; it needs no doc comment.
+dotnet_diagnostic.CS1591.severity = none
