@@ -4,7 +4,7 @@ namespace WaitingSim;
 /// The sim's seeded random number generator: PCG32 (pcg-random.org, XSH RR 64/32).
 /// Every random choice in the sim draws from one of these, so a seed replays exactly.
 /// </summary>
-internal sealed class Rng
+public sealed class Rng
 {
     private const ulong Multiplier = 6364136223846793005;
     private const ulong DefaultStream = 54;
@@ -12,7 +12,7 @@ internal sealed class Rng
     private readonly ulong increment;
     private ulong state;
 
-    /// <summary>Starts the generator the way the reference <c>pcg32_srandom_r</c> does.</summary>
+    /// <summary>Starts the generator the way the reference <c>pcg32_srandom_r</c> does. Each stream is an independent sequence.</summary>
     public Rng(ulong seed, ulong stream = DefaultStream)
     {
         increment = (stream << 1) | 1;
@@ -21,6 +21,7 @@ internal sealed class Rng
         NextUInt();
     }
 
+    /// <summary>A uniform 32-bit number.</summary>
     public uint NextUInt()
     {
         var old = state;

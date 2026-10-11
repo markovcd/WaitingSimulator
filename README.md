@@ -16,6 +16,7 @@ Requirements: the .NET SDK version in [global.json](global.json), and [Git LFS](
 - Gate (build and every test): `dotnet test --solution WaitingSimulator.slnx`
 - One test class: `dotnet test --project sim/WaitingSim.Tests --filter-class "*CliTests"`
 - The headless runner: `dotnet run --project sim/WaitingSim.Runner -- help`
+- A tuning sweep, every trait against every scripted player bot: `dotnet run --project sim/WaitingSim.Runner -- sweep` (`--json` for a report a script can read)
 
 | Project | What it is |
 |---|---|
