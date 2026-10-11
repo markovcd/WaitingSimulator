@@ -11,6 +11,9 @@
   <ItemGroup>
     <ProjectReference Include="..\WaitingSim\WaitingSim.csproj" />
     <ProjectReference Include="..\WaitingSim.Runner\WaitingSim.Runner.csproj" />
+    <!-- The client's engine-free parts (driver, head, floor mapping, data loading) are tested here; nothing in a test
+         touches a Godot node, so no engine runs. -->
+    <ProjectReference Include="..\..\game\WaitingSimulator.Game.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- The shipped data files, copied as they are so tests load what the game loads. -->

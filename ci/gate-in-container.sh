@@ -27,7 +27,7 @@ if [[ "$before" != "$after" ]]; then
     exit 1
 fi
 
-# The smoke run quits as soon as the client is ready. A client whose scripts cannot load keeps running instead,
-# so the time limit is the failure; a normal start takes a few seconds.
+# The smoke run plays a few frames of the level and quits, with exit code 1 on a data problem. A client whose scripts
+# cannot load keeps running instead, so the time limit is the failure; a normal start takes a few seconds.
 timeout 120 godot --headless --path game -- --smoke
 echo "gate: passed"

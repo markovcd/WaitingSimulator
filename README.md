@@ -19,12 +19,13 @@ Requirements: the .NET SDK version in [global.json](global.json), [Git LFS](http
 - The headless runner: `dotnet run --project sim/WaitingSim.Runner -- help`
 - Check a replay against its recorded hashes: `dotnet run --project sim/WaitingSim.Runner -- replay <file>` (`--record` rewrites the hashes)
 - A tuning sweep, every trait against every scripted player bot: `dotnet run --project sim/WaitingSim.Runner -- sweep` (`--json` for a report a script can read)
+- Play: open `game/` in Godot 4.7.2 (.NET) and run it. WASD or the left stick walks, the mouse or the right stick looks, holding Q, the right mouse button or the left shoulder glances back, and Esc frees the mouse.
 
 | Project | What it is |
 |---|---|
-| `game` | The Godot client. Started with `-- --smoke`, it quits once ready; the gate runs it that way. |
+| `game` | The Godot client. Started with `-- --smoke`, it plays a few frames of the level and quits, or exits with code 1 on a data problem; the gate runs it that way. |
 | `sim/WaitingSim` | The sim: every game rule, no engine references. |
 | `sim/WaitingSim.Runner` | Command-line program that plays levels headlessly. |
-| `sim/WaitingSim.Tests` | Tests for the sim and the runner (xunit v3). Golden replays are in `Replays/`. |
+| `sim/WaitingSim.Tests` | Tests for the sim, the runner and the client's engine-free parts (xunit v3). Golden replays are in `Replays/`. |
 | `data` | Data the sim reads: `tuning.json`, `traits.json` and the levels in `levels/`. The tests load the shipped files. |
 | `ci` | The gate image and the script it runs. |

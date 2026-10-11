@@ -16,7 +16,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 
 | Say | Means | Code | Not |
 |---|---|---|---|
-| **level** | One playable scenario: a line, a room or a hybrid. Built once, used by both modes. | | map, stage (a **stage** is a patience band) |
+| **level** | One playable scenario: a line, a room or a hybrid. Built once, used by both modes. | `Level` | map, stage (a **stage** is a patience band) |
 | **mode** | The rules wrapper around a level: campaign or arcade. | | game type |
 | **campaign** | The mode where a day of errands runs in order and state carries over. | | story mode |
 | **arcade** | The mode where any level is played alone, scored, with no carry-over. | | |
@@ -52,6 +52,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **command** | One agent's input for one tick, validated by the sim. | `Command` | action, input event |
 | **event** | Something the sim reports happened, for the client to show. | `SimEvent` | signal (a Godot word) |
 | **snapshot** | The read-only sim state the client reads each frame. | `Snapshot` | |
+| **driver** | The client part that steps the sim from frame times and blends what it shows between the last two snapshots. | `Driver` | game loop |
 | **seed** | The number the sim's RNG starts from. | | |
 | **replay** | A seed and a command stream, with state hashes. | `Replay` | recording, demo |
 | **golden replay** | A replay kept in the tests whose hashes must not change. | | |

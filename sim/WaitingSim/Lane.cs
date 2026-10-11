@@ -40,9 +40,19 @@ public sealed class Lane
     public float HalfWidth { get; }
 
     /// <summary>Where <paramref name="point"/> falls against the lane, measured to the nearest point on its line.</summary>
-    public LanePosition Measure(Vector2 point)
+    public LanePosition Measure(Vector2 point) => Nearest(point).Position;
+
+    /// <summary>The way to the front of the line from the point on its line nearest <paramref name="point"/>, one meter long.</summary>
+    public Vector2 TowardFront(Vector2 point)
     {
-        var best = new LanePosition(0f, float.PositiveInfinity);
+        var segment = Nearest(point).Segment;
+        return Vector2.Normalize(points[segment - 1] - points[segment]);
+    }
+
+    /// <summary>The nearest point on the lane's line, and the segment it is on, by the index of the segment's back end.</summary>
+    private (LanePosition Position, int Segment) Nearest(Vector2 point)
+    {
+        var best = (Position: new LanePosition(0f, float.PositiveInfinity), Segment: 1);
         for (var i = 1; i < points.Length; i++)
         {
             var start = points[i - 1];
@@ -50,9 +60,9 @@ public sealed class Lane
             var length = startsAlong[i] - startsAlong[i - 1];
             var t = Math.Clamp(Vector2.Dot(point - start, segment) / (length * length), 0f, 1f);
             var off = Vector2.Distance(point, start + (segment * t));
-            if (off < best.Off)
+            if (off < best.Position.Off)
             {
-                best = new(startsAlong[i - 1] + (t * length), off);
+                best = (new(startsAlong[i - 1] + (t * length), off), i);
             }
         }
 

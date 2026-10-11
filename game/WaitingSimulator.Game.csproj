@@ -11,4 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\sim\WaitingSim\WaitingSim.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WaitingSim.Tests" />
+  </ItemGroup>
 </Project>

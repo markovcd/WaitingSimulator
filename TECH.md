@@ -86,7 +86,8 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 
 ### 4.2 Tick and time
 - 60 Hz fixed step. All durations are stored in ticks (grace window 1.5 s = 90 ticks), so timing rules are exact integers.
-- The Godot side runs its own accumulator in `_Process`, steps the sim 0-N times per frame, and interpolates visuals between the previous and current snapshot. Do not tie the sim to `_PhysicsProcess` or engine physics settings.
+- The client's `Driver` runs the accumulator from `_Process`: it steps the sim 0-6 times per frame (a longer hitch drops the rest, slowing the game rather than stalling it) and blends visuals between the previous and current snapshot. Do not tie the sim to `_PhysicsProcess` or engine physics settings.
+- The client builds its scene in code from a level file (`data/levels/`): the lane, the agents in spawn order, which one the player drives, the clerk's spot and the level's seed. Agents are capsule placeholders until art lands.
 - Pause, slow-motion debugging and fast-forward are all just "step N times".
 
 ### 4.3 Commands in, events out
@@ -141,7 +142,8 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 - Difficulty (§11) is purely a presentation flag that changes which HUD widgets are shown. The sim is identical across difficulties, which matches the design.
 
 ### 5.5 Input
-- InputMap actions: `move`, `look`, `glance_back`, `interact`, `phone`. Hold vs. toggle for the phone is a setting in the input layer, not the sim.
+- InputMap actions, registered in code by `Controls` with their default keys, mouse buttons and gamepad inputs: `move_forward`, `move_back`, `move_left`, `move_right`, the four `look_` directions of the right stick (the mouse turns the head directly), and `glance_back` (hold). `interact` and `phone` join when their rules land. Hold vs. toggle for the phone is a setting in the input layer, not the sim.
+- Glancing back turns the view, not the body: walking still follows the way the body faces.
 - Look sensitivity and dead zones per device. Steam Input later gives free remapping on Steam Deck and gamepads.
 
 ## 6. Platform, services and multiplayer

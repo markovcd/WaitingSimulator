@@ -25,6 +25,18 @@ public sealed class LaneTests
     }
 
     [Theory]
+    [InlineData(2f, 0.3f, -1f, 0f)]
+    [InlineData(4.2f, 3f, 0f, -1f)]
+    [InlineData(-3f, 0f, -1f, 0f)]
+    public void Toward_the_front_runs_back_along_the_part_of_the_lane_nearest_the_point(float x, float y, float frontX, float frontY)
+    {
+        var toward = Bent.TowardFront(new Vector2(x, y));
+
+        Assert.Equal(frontX, toward.X, 0.0001f);
+        Assert.Equal(frontY, toward.Y, 0.0001f);
+    }
+
+    [Theory]
     [InlineData(2f, 0.5f, true)]
     [InlineData(2f, 0.51f, false)]
     [InlineData(-0.6f, 0f, false)]
