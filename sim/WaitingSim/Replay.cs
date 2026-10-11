@@ -174,7 +174,7 @@ public sealed record Replay(
         var (tuningJson, tuning) = Embedded(root, "tuning", Tuning.Parse, problems);
         var (traitsJson, traits) = Embedded(root, "traits", WaitingSim.Traits.Parse, problems);
         var lane = Lane.Read(root, problems);
-        var agents = AgentSpawn.ReadAll(root, traits ?? [], "the replay's traits", problems);
+        var agents = AgentSpawn.ReadAll(root, traits, "the replay's traits", problems);
         var commands = ReadCommands(root, ticks is >= 1 and <= MaxTicks ? ticks : MaxTicks, agents.Count, problems);
         var hashes = ReadHashes(root, problems);
         return new(seed, ticks, tuningJson, tuning!, traitsJson, traits!, lane!, agents, commands, hashes);

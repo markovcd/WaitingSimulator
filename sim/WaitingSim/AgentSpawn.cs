@@ -8,9 +8,9 @@ public sealed record AgentSpawn(Vector2 Position, string? Trait)
 {
     /// <summary>
     /// Reads the <c>agents</c> array. A trait id must be one of <paramref name="traits"/>, which
-    /// <paramref name="traitsName"/> names in the problem; with no traits to check against, any id passes.
+    /// <paramref name="traitsName"/> names in the problem; null traits could not be read, and are not checked against.
     /// </summary>
-    internal static List<AgentSpawn> ReadAll(JsonElement root, IReadOnlyList<Trait> traits, string traitsName, List<string> problems)
+    internal static List<AgentSpawn> ReadAll(JsonElement root, IReadOnlyList<Trait>? traits, string traitsName, List<string> problems)
     {
         var agents = new List<AgentSpawn>();
         var items = JsonFile.Items(root, "agents", problems);
@@ -22,7 +22,7 @@ public sealed record AgentSpawn(Vector2 Position, string? Trait)
             if (items[i].ValueKind == JsonValueKind.Object && items[i].TryGetProperty("trait", out _))
             {
                 trait = JsonFile.Text(items[i], $"{path}.trait", problems);
-                if (trait.Length > 0 && traits.Count > 0 && traits.All(known => known.Id != trait))
+                if (trait.Length > 0 && traits is not null && traits.All(known => known.Id != trait))
                 {
                     problems.Add($"{path}.trait: \"{trait}\" is not one of {traitsName}");
                 }
