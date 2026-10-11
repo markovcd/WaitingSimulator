@@ -43,8 +43,8 @@ internal static class SweepCommand
             }
         }
 
-        var tuning = Load(dataFolder, "tuning.json", Tuning.Parse, error);
-        var traits = Load(dataFolder, "traits.json", Traits.Parse, error);
+        var tuning = DataFile.Load(dataFolder, "tuning.json", Tuning.Parse, error);
+        var traits = DataFile.Load(dataFolder, "traits.json", Traits.Parse, error);
         if (tuning is null || traits is null)
         {
             return ExitCode.DataProblem;
@@ -90,31 +90,6 @@ internal static class SweepCommand
         }
 
         return rows;
-    }
-
-    /// <summary>Reads and parses one data file, or writes what is wrong with it, naming the file, and returns null.</summary>
-    private static T? Load<T>(string folder, string name, Func<string, Parsed<T>> parse, TextWriter error)
-        where T : class
-    {
-        var path = Path.Combine(folder, name);
-        string text;
-        try
-        {
-            text = File.ReadAllText(path);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            error.WriteLine($"{path}: {exception.Message}");
-            return null;
-        }
-
-        var parsed = parse(text);
-        foreach (var problem in parsed.Problems)
-        {
-            error.WriteLine($"{path}: {problem}");
-        }
-
-        return parsed.Value;
     }
 
     private static void WriteTable(List<SweepRow> rows, ulong seed, int lines, TextWriter output)
