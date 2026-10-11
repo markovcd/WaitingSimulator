@@ -33,7 +33,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 | Simulation | Separate `WaitingSim` C# class library on .NET 10 (the client targets the same), no engine references, unit-tested with xunit v3. Solution file: `WaitingSimulator.slnx`. |
 | Game client | Godot project that references `WaitingSim` and does only presentation, input and audio. |
 | Tick | 60 Hz fixed step, owned by the sim driver (accumulator), render interpolation between snapshots. |
-| RNG | Own PCG32 or xoshiro128** in the sim with serializable state. Never `System.Random` or engine RNG in sim code. |
+| RNG | Own PCG32 in the sim (`Rng`), seeded. Never `System.Random` or engine RNG in sim code. |
 | Physics | Sim owns gameplay movement and collision (simple 2D circles vs. static shapes). Engine physics (Jolt) only for cosmetic wobble. |
 | Audio | Godot built-in audio for the prototype. Evaluate FMOD Studio before room mode. AI-generated voice and SFX, variants made by script. |
 | Animation | Humanoid clip library (Mixamo or similar), retargeted in Godot; `AnimationTree` state machine; procedural look-at and lean modifiers. |
@@ -90,8 +90,8 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 - Pause, slow-motion debugging and fast-forward are all just "step N times".
 
 ### 4.3 Commands in, events out
-- Each tick the client samples input into a `PlayerCommand` (move vector, look yaw, glance-back held, phone held, interact pressed). NPC brains produce the same command type, which satisfies §13.3-4 directly.
-- The sim emits typed events: `GapOpened`, `GraceExpired`, `Bumped`, `StageChanged(agent, stage)`, `CutterEntered`, `LeftLane`, `ReenteredLane`, `CalledNumber`, `KickedOut`, `ReachedCounter`.
+- Each tick the client samples input into a `Command`. NPC brains produce the same type, which satisfies §13.3-4 directly. It carries the move vector today; look yaw, glance-back, phone and interact join it as the rules that read them land.
+- The sim emits typed events: `ZoneChanged` (a change into the gap zone is a gap opening), `GraceExpired`, `Bumped`, `StageChanged(agent, stage)`, `CutterEntered`, `LeftLane`, `ReenteredLane`, `CalledNumber`, `KickedOut`, `ReachedCounter`.
 - Presentation maps events to animation, audio and camera. The sim never knows a sound exists.
 
 ### 4.4 Movement and the "strict rules, loose feel" split
@@ -149,7 +149,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 - **Target:** Windows and Linux on Steam, Steam Deck verified. macOS optional. No consoles.
 - **Leaderboards:** Steam leaderboards, one board per level × difficulty. Optionally attach replays as UGC for later verification. Seeded twists (§9) keep runs comparable.
 - **Saves:** campaign state (battery, fatigue, reputation, paperwork) is a sim data object serialized to JSON. Steam Cloud syncs the save folder.
-- **Multiplayer (later):** the same `WaitingSim` runs in a headless .NET server process. Clients send `PlayerCommand`s and receive filtered snapshots containing only what each player could see (§14 visibility doubles as anti-cheat). For co-op without dedicated servers, use host-authoritative play over Steam Networking Sockets (Steam relay handles NAT); use LiteNetLib if leaving Steam. Avoid the engine's high-level multiplayer API so networking stays engine-independent.
+- **Multiplayer (later):** the same `WaitingSim` runs in a headless .NET server process. Clients send `Command`s and receive filtered snapshots containing only what each player could see (§14 visibility doubles as anti-cheat). For co-op without dedicated servers, use host-authoritative play over Steam Networking Sockets (Steam relay handles NAT); use LiteNetLib if leaving Steam. Avoid the engine's high-level multiplayer API so networking stays engine-independent.
 
 ## 7. Tooling and workflow
 
@@ -185,7 +185,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 
 The live list is [TODO.md](TODO.md).
 
-1. Create the `sim/` solution: `WaitingSim`, tests and runner. Implement tick loop, PRNG, `PlayerCommand`, lane projection, spacing zones and the grace timer with unit tests.
+1. Create the `sim/` solution: `WaitingSim`, tests and runner. Implement tick loop, PRNG, `Command`, lane projection, spacing zones and the grace timer with unit tests.
 2. Add `PatienceAgent` with stages and hysteresis, plus JSON traits. Write the runner's first bot sweep.
 3. Create the Godot project: first-person camera, input actions, the sim driver with interpolation, and capsule placeholders for the person ahead, the person behind and the clerk.
 4. Wire events to placeholder audio and animation, and add the debug overlay.

@@ -22,3 +22,4 @@ Requirements: the .NET SDK version in [global.json](global.json), and [Git LFS](
 | `sim/WaitingSim` | The sim: every game rule, no engine references. |
 | `sim/WaitingSim.Runner` | Command-line program that plays levels headlessly. |
 | `sim/WaitingSim.Tests` | Tests for the sim and the runner (xunit v3). |
+| `data` | Tuning the sim reads (`tuning.json`); the tests load the shipped files. |

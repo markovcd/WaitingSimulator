@@ -1,0 +1,22 @@
+using System.Numerics;
+
+namespace WaitingSim;
+
+/// <summary>One agent as the sim last left it.</summary>
+/// <param name="Id">The agent.</param>
+/// <param name="Position">Where it stands on the floor plane, in meters.</param>
+/// <param name="Velocity">How it is moving, in meters per second.</param>
+/// <param name="InLane">Whether it is part of the line.</param>
+/// <param name="Ahead">The person ahead, if it is in the lane and someone is.</param>
+/// <param name="Spacing">Meters along the lane to the person ahead, when there is one.</param>
+/// <param name="Zone">The zone that spacing falls in.</param>
+/// <param name="GapOpenedAt">The tick its gap opened, while it is in <see cref="WaitingSim.Zone.Gap"/>.</param>
+public sealed record AgentSnapshot(
+    AgentId Id,
+    Vector2 Position,
+    Vector2 Velocity,
+    bool InLane,
+    AgentId? Ahead,
+    float? Spacing,
+    Zone? Zone,
+    long? GapOpenedAt);

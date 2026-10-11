@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "graceWindowTicks": 90,
+  "zones": {
+    "bumpBelowMeters": 0.4,
+    "tightBelowMeters": 0.9,
+    "looseBelowMeters": 1.5
+  },
+  "walking": {
+    "speedMetersPerSecond": 1.2,
+    "accelerationMetersPerSecondSquared": 3.0
+  }
+}

@@ -12,4 +12,8 @@
     <ProjectReference Include="..\WaitingSim\WaitingSim.csproj" />
     <ProjectReference Include="..\WaitingSim.Runner\WaitingSim.Runner.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- The shipped data files, copied as they are so tests load what the game loads. -->
+    <None Include="..\..\data\**\*.json" LinkBase="data" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
