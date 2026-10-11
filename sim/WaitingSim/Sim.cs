@@ -10,15 +10,17 @@ public sealed class Sim
 {
     private readonly Tuning tuning;
     private readonly Lane lane;
+    private readonly Rng rng;
     private readonly List<Agent> agents = [];
 
-    /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0.</summary>
-    public Sim(Tuning tuning, Lane lane)
+    /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
+    public Sim(Tuning tuning, Lane lane, ulong seed)
     {
         ArgumentNullException.ThrowIfNull(tuning);
         ArgumentNullException.ThrowIfNull(lane);
         this.tuning = tuning;
         this.lane = lane;
+        rng = new Rng(seed);
     }
 
     /// <summary>How many ticks have been stepped.</summary>
@@ -103,6 +105,31 @@ public sealed class Sim
 
     /// <summary>The state as of the last tick.</summary>
     public Snapshot Snapshot() => new(Tick, [.. agents.Select(agent => agent.Snapshot())]);
+
+    /// <summary>
+    /// A hash of everything the next tick depends on. Two sims with the same hash play on identically;
+    /// replays record it to catch a change in behavior.
+    /// </summary>
+    public ulong StateHash()
+    {
+        var (state, increment) = rng.Position;
+        var hash = new StateHash().Add(Tick).Add(state).Add(increment).Add((long)agents.Count);
+        foreach (var agent in agents)
+        {
+            hash.Add(agent.Position.X).Add(agent.Position.Y)
+                .Add(agent.Velocity.X).Add(agent.Velocity.Y)
+                .Add(agent.InLane)
+                .Add((long)(agent.Ahead?.Value ?? -1))
+                .Add((long)(agent.Zone is { } zone ? (int)zone : -1))
+                .Add(agent.GapOpenedAt ?? -1)
+                .Add(agent.GraceExpired)
+                .Add(agent.Trait?.Id ?? "")
+                .Add(agent.Patience)
+                .Add((long)agent.Stage);
+        }
+
+        return hash.Value;
+    }
 
     /// <summary>
     /// Drains the agent's patience while the person ahead holds a gap open past its grace window, recovers it while

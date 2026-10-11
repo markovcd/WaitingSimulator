@@ -88,7 +88,7 @@ public sealed class PatienceTests
     /// <summary>A lead and the person behind with <paramref name="trait"/>, and the player between them, tight.</summary>
     private static (Sim Sim, AgentId Lead, AgentId Player, AgentId Behind) Line(Trait trait)
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         return (sim, sim.Spawn(new(5, 0), trait), sim.Spawn(new(5.7f, 0)), sim.Spawn(new(6.4f, 0), trait));
     }
 }

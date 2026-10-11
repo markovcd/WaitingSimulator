@@ -21,7 +21,7 @@ internal static class SweepLine
     /// <summary>Plays the line. The same seed moves the lead the same way whatever the trait and bot.</summary>
     public static LineResult Play(Tuning tuning, Trait trait, PlayerBot bot, ulong seed)
     {
-        var sim = new Sim(tuning, Lane);
+        var sim = new Sim(tuning, Lane, seed);
         var lead = sim.Spawn(new(30f, 0));
         var player = sim.Spawn(new(30.7f, 0));
         var behind = sim.Spawn(new(31.4f, 0), trait);

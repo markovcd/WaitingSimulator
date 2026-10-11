@@ -22,7 +22,7 @@ public sealed class SimTests
     [Fact]
     public void Walking_speeds_up_by_the_acceleration_each_tick()
     {
-        var sim = new Sim(Snappy with { WalkAcceleration = 3f }, Straight);
+        var sim = new Sim(Snappy with { WalkAcceleration = 3f }, Straight, seed: 1);
         var agent = sim.Spawn(new(5, 0));
 
         sim.Step(Commands((agent, TowardFront)));
@@ -33,7 +33,7 @@ public sealed class SimTests
     [Fact]
     public void A_command_longer_than_one_walks_no_faster_than_walking_speed()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         var agent = sim.Spawn(new(5, 0));
 
         for (var i = 0; i < 10; i++)
@@ -47,7 +47,7 @@ public sealed class SimTests
     [Fact]
     public void A_command_that_is_not_a_number_is_standing_still()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         var agent = sim.Spawn(new(5, 0));
 
         sim.Step(Commands((agent, new Vector2(float.NaN, 0))));
@@ -58,7 +58,7 @@ public sealed class SimTests
     [Fact]
     public void A_command_for_an_agent_that_does_not_exist_is_refused()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
 
         Assert.Throws<ArgumentException>(() => sim.Step(Commands((new AgentId(3), TowardFront))));
     }
@@ -66,7 +66,7 @@ public sealed class SimTests
     [Fact]
     public void The_front_of_the_line_has_nobody_ahead_and_no_zone()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         var front = sim.Spawn(new(5, 0));
         var behind = sim.Spawn(new(5.7f, 0));
 
@@ -78,7 +78,7 @@ public sealed class SimTests
     [Fact]
     public void A_gap_opens_through_the_zones_as_the_person_ahead_walks_off()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         var ahead = sim.Spawn(new(5, 0));
         var player = sim.Spawn(new(5.7f, 0));
 
@@ -92,7 +92,7 @@ public sealed class SimTests
     [Fact]
     public void The_grace_window_expires_exactly_its_length_after_the_gap_opens_and_only_once()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         var ahead = sim.Spawn(new(5, 0));
         var player = sim.Spawn(new(5.7f, 0));
 
@@ -107,7 +107,7 @@ public sealed class SimTests
     [Fact]
     public void A_gap_closed_within_the_grace_window_never_expires()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         var ahead = sim.Spawn(new(5, 0));
         var player = sim.Spawn(new(5.7f, 0));
         var gapSeen = false;
@@ -129,7 +129,7 @@ public sealed class SimTests
     [Fact]
     public void Stepping_out_of_the_lane_leaves_the_line_and_stepping_back_rejoins_it()
     {
-        var sim = new Sim(Snappy, Straight);
+        var sim = new Sim(Snappy, Straight, seed: 1);
         sim.Spawn(new(5, 0));
         var player = sim.Spawn(new(5.7f, 0));
 
@@ -159,10 +159,43 @@ public sealed class SimTests
         }
     }
 
+    [Fact]
+    public void The_same_seed_and_commands_hash_the_same_on_every_tick()
+    {
+        Assert.Equal(Hashes(seed: 3, move: TowardFront), Hashes(seed: 3, move: TowardFront));
+    }
+
+    [Fact]
+    public void A_different_seed_hashes_differently()
+    {
+        Assert.NotEqual(Hashes(seed: 3, move: TowardFront)[0], Hashes(seed: 4, move: TowardFront)[0]);
+    }
+
+    [Fact]
+    public void The_smallest_change_to_a_command_changes_the_hash()
+    {
+        var nudged = new Vector2(-1, BitConverter.Int32BitsToSingle(1));
+
+        Assert.NotEqual(Hashes(seed: 3, move: TowardFront)[^1], Hashes(seed: 3, move: nudged)[^1]);
+    }
+
+    /// <summary>The state hash after each of 60 ticks of a lead walking off from a tight line.</summary>
+    private static List<ulong> Hashes(ulong seed, Vector2 move)
+    {
+        var sim = new Sim(Snappy, Straight, seed);
+        var lead = sim.Spawn(new(5, 0));
+        sim.Spawn(new(5.7f, 0));
+        return [.. Enumerable.Range(0, 60).Select(_ =>
+        {
+            sim.Step(Commands((lead, move)));
+            return sim.StateHash();
+        })];
+    }
+
     /// <summary>Three agents in a line, each walking somewhere random every half second for a minute.</summary>
     private static (List<SimEvent> Events, List<IReadOnlyList<AgentSnapshot>> States) Played(ulong seed)
     {
-        var sim = new Sim(Snappy with { WalkAcceleration = 3f }, Straight);
+        var sim = new Sim(Snappy with { WalkAcceleration = 3f }, Straight, seed: 1);
         AgentId[] ids = [sim.Spawn(new(2, 0)), sim.Spawn(new(2.6f, 0)), sim.Spawn(new(3.3f, 0))];
         var rng = new Rng(seed);
         var commands = new Dictionary<AgentId, Command>();

@@ -21,6 +21,9 @@ public sealed class Rng
         NextUInt();
     }
 
+    /// <summary>Where the generator is in its sequence; the sim's state hash includes it.</summary>
+    internal (ulong State, ulong Increment) Position => (state, increment);
+
     /// <summary>A uniform 32-bit number.</summary>
     public uint NextUInt()
     {
