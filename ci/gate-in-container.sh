@@ -3,8 +3,9 @@
 # It works on a copy of the read-only checkout at /src, so nothing it builds lands in the caller's tree.
 set -euo pipefail
 
+# The copy belongs to the container's user, not the checkout's owner; git refuses to read a repository owned by another.
 rm -rf /work
-cp -a /src/. /work
+cp -a --no-preserve=ownership /src/. /work
 cd /work
 find . \( -name bin -o -name obj -o -name .godot -o -name TestResults \) -type d -prune -exec rm -rf {} +
 
