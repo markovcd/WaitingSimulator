@@ -17,6 +17,19 @@ public sealed class TuningTests
         }
         """;
 
+    private const string Ripple = """
+        "ripple": {
+            "serviceTicks": { "min": 120, "max": 360 },
+            "reactionTicks": { "min": 15, "max": 60 },
+            "spacingMeters": { "min": 0.6, "max": 1.1 },
+            "noticeMeters": 0.2,
+            "leaveMeters": 1.0
+          },
+          "patience": {
+        """;
+
+    private static readonly string WithRipple = Valid.Replace("\"patience\": {", Ripple, StringComparison.Ordinal);
+
     [Fact]
     public void The_shipped_tuning_loads_without_problems()
     {
@@ -34,6 +47,37 @@ public sealed class TuningTests
         Assert.Equal(
             new Tuning(90, new ZoneLimits(0.4f, 0.9f, 1.5f), 1.2f, 3.0f, new PatienceTuning(new StageLimits(70, 50, 30, 15, 5), 4.0f, 0.5f, 5f)),
             tuning);
+    }
+
+    [Fact]
+    public void A_tuning_file_without_a_ripple_has_a_line_that_moves_only_on_command()
+    {
+        Assert.Null(Tuning.Parse(Valid).Value!.Ripple);
+    }
+
+    [Fact]
+    public void A_ripple_reads_into_its_values()
+    {
+        var ripple = Tuning.Parse(WithRipple).Value!.Ripple;
+
+        Assert.Equal(new RippleTuning(new(120, 360), new(15, 60), new(0.6f, 1.1f), 0.2f, 1.0f), ripple);
+    }
+
+    [Theory]
+    [InlineData("\"min\": 120", "\"min\": -1", "ripple.serviceTicks: min must be from 0 up, and max from min up to 216000")]
+    [InlineData("\"max\": 60", "\"max\": 10", "ripple.reactionTicks: min must be from 0 up, and max from min up to 216000")]
+    [InlineData("\"max\": 360", "\"max\": 300000", "ripple.serviceTicks: min must be from 0 up, and max from min up to 216000")]
+    [InlineData("\"min\": 0.6", "\"min\": 0.3", "ripple.spacingMeters: min must be from zones.bumpBelowMeters up, and max from min up to below zones.looseBelowMeters")]
+    [InlineData("\"max\": 1.1", "\"max\": 1.5", "ripple.spacingMeters: min must be from zones.bumpBelowMeters up, and max from min up to below zones.looseBelowMeters")]
+    [InlineData("\"noticeMeters\": 0.2", "\"noticeMeters\": 0", "ripple.noticeMeters: missing, or not a positive number")]
+    [InlineData("\"leaveMeters\": 1.0", "\"leaveMeters\": \"far\"", "ripple.leaveMeters: missing, or not a positive number")]
+    [InlineData("\"reactionTicks\": { \"min\": 15, \"max\": 60 },", "", "ripple.reactionTicks: missing, or not an object")]
+    public void A_bad_ripple_field_is_reported_by_name(string field, string replacement, string problem)
+    {
+        var parsed = Tuning.Parse(WithRipple.Replace(field, replacement, StringComparison.Ordinal));
+
+        Assert.Null(parsed.Value);
+        Assert.Equal([problem], parsed.Problems);
     }
 
     [Theory]

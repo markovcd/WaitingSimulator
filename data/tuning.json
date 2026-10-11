@@ -10,6 +10,13 @@
     "speedMetersPerSecond": 1.2,
     "accelerationMetersPerSecondSquared": 3.0
   },
+  "ripple": {
+    "serviceTicks": { "min": 120, "max": 360 },
+    "reactionTicks": { "min": 15, "max": 60 },
+    "spacingMeters": { "min": 0.6, "max": 1.1 },
+    "noticeMeters": 0.2,
+    "leaveMeters": 1.0
+  },
   "patience": {
     "stages": {
       "restlessBelow": 70,

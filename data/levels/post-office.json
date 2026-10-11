@@ -2,17 +2,22 @@
   "version": 1,
   "seed": 1,
   "lane": {
-    "points": [[0, 0], [0, 10]],
+    "points": [[0, 0], [0, 14]],
     "halfWidth": 0.5
   },
   "agents": [
-    { "position": [0, 1.0] },
-    { "position": [0, 1.8] },
-    { "position": [0, 2.6] },
-    { "position": [0, 3.4] },
-    { "position": [0, 4.2], "trait": "anxious" },
-    { "position": [0, 5.0], "trait": "patient" }
+    { "position": [0, 0.0] },
+    { "position": [0, 0.8] },
+    { "position": [0, 1.6] },
+    { "position": [0, 2.4] },
+    { "position": [0, 3.2] },
+    { "position": [0, 4.0] },
+    { "position": [0, 4.8] },
+    { "position": [0, 5.6] },
+    { "position": [0, 6.4] },
+    { "position": [0, 7.2], "trait": "anxious" },
+    { "position": [0, 8.0], "trait": "patient" }
   ],
-  "player": 3,
+  "player": 8,
   "clerk": [0, -1.0]
 }

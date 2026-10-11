@@ -1,9 +1,11 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using WaitingSim.Runner;
 
 namespace WaitingSim.Tests;
 
-// The suite's slowest tests: a sweep of one line per trait and bot still plays about 100,000 ticks.
+// The suite's slowest tests, about two seconds a sweep: one line per trait and bot is still 15 lines of 7,200 ticks,
+// each with the 32 agents a line needs for the player never to reach the counter.
 public sealed class SweepCommandTests : IDisposable
 {
     private static readonly string ShippedData = Path.Combine(AppContext.BaseDirectory, "data");
@@ -55,6 +57,21 @@ public sealed class SweepCommandTests : IDisposable
 
         Assert.Equal(ExitCode.DataProblem, code);
         Assert.Equal($"{Path.Combine(folder, "traits.json")}: traits: there must be at least one", error.Trim());
+    }
+
+    [Fact]
+    public void A_tuning_without_a_ripple_is_refused_since_nothing_would_move_the_line()
+    {
+        var tuning = JsonNode.Parse(File.ReadAllText(Path.Combine(ShippedData, "tuning.json")))!.AsObject();
+        tuning.Remove("ripple");
+        File.WriteAllText(Path.Combine(folder, "tuning.json"), tuning.ToJsonString());
+        File.Copy(Path.Combine(ShippedData, "traits.json"), Path.Combine(folder, "traits.json"));
+
+        var (code, output, error) = Run("sweep", "--data", folder);
+
+        Assert.Equal(ExitCode.DataProblem, code);
+        Assert.Empty(output);
+        Assert.Equal($"{Path.Combine(folder, "tuning.json")}: ripple: missing; a swept line moves only by its ripple", error.Trim());
     }
 
     [Theory]

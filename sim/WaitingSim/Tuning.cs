@@ -8,10 +8,14 @@ namespace WaitingSim;
 /// <param name="WalkSpeed">Top walking speed, in meters per second.</param>
 /// <param name="WalkAcceleration">How quickly walking speeds up, slows down and turns, in meters per second squared.</param>
 /// <param name="Patience">How patience drains, recovers and shows.</param>
-public sealed record Tuning(int GraceWindowTicks, ZoneLimits Zones, float WalkSpeed, float WalkAcceleration, PatienceTuning Patience)
+/// <param name="Ripple">How the line moves on its own; without it, an agent given no command stands still.</param>
+public sealed record Tuning(int GraceWindowTicks, ZoneLimits Zones, float WalkSpeed, float WalkAcceleration, PatienceTuning Patience, RippleTuning? Ripple = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
+
+    /// <summary>The longest duration a ripple draws: an hour.</summary>
+    public const int MaxRippleTicks = 60 * 60 * TickRate.PerSecond;
 
     /// <summary>Reads a tuning file's text. Problems name the field they concern.</summary>
     public static Parsed<Tuning> Parse(string json) => JsonFile.Read(json, "tuning", FormatVersion, Read);
@@ -37,7 +41,48 @@ public sealed record Tuning(int GraceWindowTicks, ZoneLimits Zones, float WalkSp
         var speed = JsonFile.Positive(walking, "walking.speedMetersPerSecond", problems);
         var acceleration = JsonFile.Positive(walking, "walking.accelerationMetersPerSecondSquared", problems);
 
-        return new(graceWindowTicks, new ZoneLimits(bumpBelow, tightBelow, looseBelow), speed, acceleration, ReadPatience(root, problems));
+        var limits = new ZoneLimits(bumpBelow, tightBelow, looseBelow);
+        return new(graceWindowTicks, limits, speed, acceleration, ReadPatience(root, problems), ReadRipple(root, limits, problems));
+    }
+
+    /// <summary>Reads the <c>ripple</c> object, which a tuning file may leave out.</summary>
+    private static RippleTuning? ReadRipple(JsonElement root, ZoneLimits zones, List<string> problems)
+    {
+        if (!root.TryGetProperty("ripple", out _))
+        {
+            return null;
+        }
+
+        var ripple = JsonFile.Section(root, "ripple", problems);
+        var service = ReadTicks(ripple, "ripple.serviceTicks", problems);
+        var reaction = ReadTicks(ripple, "ripple.reactionTicks", problems);
+        var spacingSection = JsonFile.Section(ripple, "ripple.spacingMeters", problems);
+        var spacing = new MeterRange(
+            JsonFile.Positive(spacingSection, "ripple.spacingMeters.min", problems),
+            JsonFile.Positive(spacingSection, "ripple.spacingMeters.max", problems));
+        if (!(zones.BumpBelow <= spacing.Min && spacing.Min <= spacing.Max && spacing.Max < zones.LooseBelow) && problems.Count == 0)
+        {
+            problems.Add("ripple.spacingMeters: min must be from zones.bumpBelowMeters up, and max from min up to below zones.looseBelowMeters");
+        }
+
+        return new(
+            service,
+            reaction,
+            spacing,
+            JsonFile.Positive(ripple, "ripple.noticeMeters", problems),
+            JsonFile.Positive(ripple, "ripple.leaveMeters", problems));
+    }
+
+    private static TickRange ReadTicks(JsonElement? parent, string path, List<string> problems)
+    {
+        var section = JsonFile.Section(parent, path, problems);
+        var range = new TickRange(JsonFile.Integer(section, $"{path}.min", problems), JsonFile.Integer(section, $"{path}.max", problems));
+        if (!(range.Min >= 0 && range.Min <= range.Max && range.Max <= MaxRippleTicks) && problems.Count == 0)
+        {
+            problems.Add(JsonFile.Invariant($"{path}: min must be from 0 up, and max from min up to {MaxRippleTicks}"));
+        }
+
+        return range;
     }
 
     private static PatienceTuning ReadPatience(JsonElement root, List<string> problems)

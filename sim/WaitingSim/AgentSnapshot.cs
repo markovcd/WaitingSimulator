@@ -14,6 +14,7 @@ namespace WaitingSim;
 /// <param name="Trait">Its trait's id; null for an agent without patience, like the player.</param>
 /// <param name="Patience">Its patience, from full down to 0.</param>
 /// <param name="Stage">The stage it shows.</param>
+/// <param name="Step">Where it is in the ripple, when the line moves it.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -25,4 +26,5 @@ public sealed record AgentSnapshot(
     long? GapOpenedAt,
     string? Trait,
     float? Patience,
-    Stage? Stage);
+    Stage? Stage,
+    LineStep Step);

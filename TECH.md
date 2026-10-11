@@ -91,7 +91,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 - Pause, slow-motion debugging and fast-forward are all just "step N times".
 
 ### 4.3 Commands in, events out
-- Each tick the client samples input into a `Command`. NPC brains produce the same type, which satisfies §13.3-4 directly. It carries the move vector today; look yaw, glance-back, phone and interact join it as the rules that read them land.
+- Each tick the client samples input into a `Command`. NPC brains produce the same type, which satisfies §13.3-4 directly. The line is the sim's own brain: an agent given no command that tick is moved by the line (§4.6). It carries the move vector today; look yaw, glance-back, phone and interact join it as the rules that read them land.
 - The sim emits typed events: `ZoneChanged` (a change into the gap zone is a gap opening), `GraceExpired`, `Bumped`, `StageChanged` (the stage an agent shows), `PatienceRanOut`, `CutterEntered`, `LeftLane`, `ReenteredLane`, `CalledNumber`, `KickedOut`, `ReachedCounter`.
 - Presentation maps events to animation, audio and camera. The sim never knows a sound exists.
 
@@ -110,10 +110,11 @@ This is the most important technical call in the plan.
 
 ### 4.6 Patience and agents
 - An agent spawned with a `Trait` has patience: a value, and the stage it is really in. Each tick it drains while the person ahead holds a gap open past the grace window, recovers while they stay tight on theirs, and takes a one-off hit when the person behind walks into it. Rates and stage limits (with the hysteresis margin) are in `data/tuning.json`; a trait scales the rates and names the stages it shows, so a hidden stage looks like the last shown one before it. Traits are records in `data/traits.json`, which keeps the "fixed vs. random per run" question (§8) a data change.
-- NPC behavior: start with a small explicit state machine per agent (idle, shuffle, step forward, react, push past). Behavior trees are overkill at this scale.
+- The ripple is a small state machine per agent (`LineStep`): standing, noticed, stepping up, being served, leaving, done. An agent notices once the person ahead is `noticeMeters` past the spacing it likes, steps up after a reaction delay, and stops where braking leaves it at that spacing. The front walks up to the counter at the front of the lane, is served, then walks out of the lane to the side. Durations and the spacing are drawn per agent within the ranges in `data/tuning.json`'s `ripple`, each agent from its own RNG stream, so nothing an agent does changes another's draws. A tuning without `ripple` (as in older replays) leaves agents without commands standing still.
+- NPC behavior beyond the ripple grows the same way (react, push past). Behavior trees are overkill at this scale.
 
 ### 4.7 Headless runner as a design tool
-`WaitingSim.Runner` plays thousands of lines with scripted bot players and outputs patience curves and kick-out rates per trait mix. `sweep` is the first: every trait in `data/traits.json` as the person behind an attentive, a slow and a distracted bot, with the mean final patience, how often patience ran out, grace expiries and a patience curve sampled every 10 s. Use it to tune grace windows, drain rates and cutter frequency before playtests, and to sanity-check that difficulty modifiers in arcade mode behave as intended.
+`WaitingSim.Runner` plays thousands of lines with scripted bot players and outputs patience curves and kick-out rates per trait mix. `sweep` is the first: every trait in `data/traits.json` as the person behind an attentive, a slow and a distracted bot, 30 people back in a line the ripple moves, with the mean final patience, how often patience ran out, grace expiries and a patience curve sampled every 10 s. Use it to tune grace windows, drain rates and cutter frequency before playtests, and to sanity-check that difficulty modifiers in arcade mode behave as intended.
 
 ## 5. Presentation
 

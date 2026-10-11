@@ -5,7 +5,7 @@ namespace WaitingSimulator.Game;
 
 /// <summary>
 /// Steps the sim at its tick rate from the client's frame times, and keeps the last two snapshots so a frame can show
-/// the agents part way between ticks. The player's command holds from one frame to the next; NPCs stand still.
+/// the agents part way between ticks. The player's command holds from one frame to the next; the line moves everyone else.
 /// </summary>
 internal sealed class Driver
 {

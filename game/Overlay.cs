@@ -5,8 +5,8 @@ using WaitingSim;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The debug overlay's text: the tick and seed, then a row per agent with its zone, spacing, grace left, patience and
-/// stage. The smoke run logs it too, so every value it shows can be read without a window.
+/// The debug overlay's text: the tick and seed, then a row per agent with its zone, spacing, grace left, where the line
+/// has it in the ripple, patience and stage. The smoke run logs it too, so every value it shows can be read without a window.
 /// </summary>
 internal static class Overlay
 {
@@ -37,6 +37,11 @@ internal static class Overlay
         else
         {
             row.Append(CultureInfo.InvariantCulture, $"  zone {Name(agent.Zone),-5}  spacing {Meters(agent.Spacing),-6}  grace {Grace(agent, tick, tuning),-7}");
+        }
+
+        if (tuning.Ripple is not null && agent.Id != level.Player)
+        {
+            row.Append(CultureInfo.InvariantCulture, $"  step {Name<LineStep>(agent.Step),-11}");
         }
 
         if (agent is { Patience: { } patience, Stage: { } stage })

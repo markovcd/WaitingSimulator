@@ -8,8 +8,12 @@ namespace WaitingSim;
 /// </summary>
 public sealed class Sim
 {
+    // Each agent draws from a stream of its own, numbered from here so none is the sim's.
+    private const ulong AgentStreams = 1UL << 32;
+
     private readonly Tuning tuning;
     private readonly Lane lane;
+    private readonly ulong seed;
     private readonly Rng rng;
     private readonly List<Agent> agents = [];
 
@@ -20,6 +24,7 @@ public sealed class Sim
         ArgumentNullException.ThrowIfNull(lane);
         this.tuning = tuning;
         this.lane = lane;
+        this.seed = seed;
         rng = new Rng(seed);
     }
 
@@ -28,7 +33,7 @@ public sealed class Sim
 
     /// <summary>
     /// Places a new agent at <paramref name="position"/>, standing still, with full patience if it has a
-    /// <paramref name="trait"/>. Level setup: it reports no events.
+    /// <paramref name="trait"/>. With a ripple, it draws the spacing it likes to stand at. Level setup: it reports no events.
     /// </summary>
     public AgentId Spawn(Vector2 position, Trait? trait = null)
     {
@@ -38,7 +43,13 @@ public sealed class Sim
         }
 
         var id = new AgentId(agents.Count);
-        agents.Add(new Agent(id, position, trait));
+        var spawned = new Agent(id, position, trait, new Rng(seed, AgentStreams + (ulong)id.Value));
+        if (tuning.Ripple is { } ripple)
+        {
+            spawned.PreferredSpacing = ripple.SpacingMeters.Draw(spawned.Rng);
+        }
+
+        agents.Add(spawned);
         Classify();
         foreach (var agent in agents)
         {
@@ -49,7 +60,7 @@ public sealed class Sim
     }
 
     /// <summary>
-    /// Advances one tick. Each agent acts on its command in <paramref name="commands"/>, or stands still without one.
+    /// Advances one tick. Each agent acts on its command in <paramref name="commands"/>; without one, the line moves it.
     /// Returns what happened: movement through the lane and zones first, then patience, each in agent id order.
     /// </summary>
     public IReadOnlyList<SimEvent> Step(IReadOnlyDictionary<AgentId, Command> commands)
@@ -66,7 +77,7 @@ public sealed class Sim
         Tick++;
         foreach (var agent in agents)
         {
-            Walk(agent, commands.TryGetValue(agent.Id, out var command) ? command.Validated() : Command.Idle);
+            Walk(agent, commands.TryGetValue(agent.Id, out var command) ? command.Validated() : FollowLine(agent));
         }
 
         var before = agents.Select(agent => (agent.InLane, agent.Zone)).ToList();
@@ -126,6 +137,11 @@ public sealed class Sim
                 .Add(agent.Trait?.Id ?? "")
                 .Add(agent.Patience)
                 .Add((long)agent.Stage);
+            if (tuning.Ripple is not null)
+            {
+                var (agentState, agentIncrement) = agent.Rng.Position;
+                hash.Add(agentState).Add(agentIncrement).Add(agent.PreferredSpacing).Add((long)agent.Step).Add(agent.StepEndsAt);
+            }
         }
 
         return hash.Value;
@@ -169,6 +185,64 @@ public sealed class Sim
         {
             events.Add(new PatienceRanOut(Tick, agent.Id));
         }
+    }
+
+    /// <summary>
+    /// The command the line gives an agent nobody commands. It notices the person ahead move off and steps up after a
+    /// reaction delay; at the front it walks up to the counter, is served, and leaves the lane to the side. Without a
+    /// ripple it stands still.
+    /// </summary>
+    private Command FollowLine(Agent agent)
+    {
+        if (tuning.Ripple is not { } ripple)
+        {
+            return Command.Idle;
+        }
+
+        // How far back the agent is from where it wants to stand: its spacing behind the person ahead, or the counter.
+        var toGo = agent.Spacing is { } spacing ? spacing - agent.PreferredSpacing : agent.Lane.Along;
+        switch (agent.Step)
+        {
+            case LineStep.Standing when agent.InLane && toGo > ripple.NoticeMeters:
+                Begin(agent, LineStep.Noticed, ripple.ReactionTicks);
+                break;
+            case LineStep.Standing when agent is { InLane: true, Ahead: null }:
+                Begin(agent, LineStep.BeingServed, ripple.ServiceTicks);
+                break;
+            case LineStep.Noticed when Tick >= agent.StepEndsAt:
+                agent.Step = agent.InLane && toGo > 0f ? LineStep.SteppingUp : LineStep.Standing;
+                break;
+            case LineStep.BeingServed when Tick >= agent.StepEndsAt:
+                agent.Step = LineStep.Leaving;
+                break;
+            case LineStep.Leaving when agent.Lane.Off >= lane.HalfWidth + ripple.LeaveMeters:
+                agent.Step = LineStep.Done;
+                break;
+        }
+
+        // Stops walking once what is left is what it takes to slow down.
+        var braking = agent.Velocity.LengthSquared() / (2f * tuning.WalkAcceleration);
+        if (agent.Step == LineStep.SteppingUp && (!agent.InLane || toGo <= braking))
+        {
+            agent.Step = LineStep.Standing;
+        }
+
+        return agent.Step switch
+        {
+            LineStep.SteppingUp => new(lane.TowardFront(agent.Position)),
+            LineStep.Leaving => new(Aside(lane.TowardFront(agent.Position))),
+            _ => Command.Idle,
+        };
+    }
+
+    /// <summary>A quarter turn from <paramref name="direction"/>: the way a served agent leaves the lane.</summary>
+    private static Vector2 Aside(Vector2 direction) => new(-direction.Y, direction.X);
+
+    /// <summary>Puts the agent at <paramref name="step"/> until a duration drawn from <paramref name="ticks"/> has passed.</summary>
+    private void Begin(Agent agent, LineStep step, TickRange ticks)
+    {
+        agent.Step = step;
+        agent.StepEndsAt = Tick + ticks.Draw(agent.Rng);
     }
 
     /// <summary>Eases the agent's velocity toward its wanted one by at most a tick's acceleration, then moves it.</summary>

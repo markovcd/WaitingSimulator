@@ -1,0 +1,372 @@
+{
+  "version": 1,
+  "seed": 11,
+  "ticks": 2400,
+  "tuning": {
+    "version": 1,
+    "graceWindowTicks": 90,
+    "zones": {
+      "bumpBelowMeters": 0.4,
+      "tightBelowMeters": 0.9,
+      "looseBelowMeters": 1.5
+    },
+    "walking": {
+      "speedMetersPerSecond": 1.2,
+      "accelerationMetersPerSecondSquared": 3.0
+    },
+    "ripple": {
+      "serviceTicks": {
+        "min": 120,
+        "max": 360
+      },
+      "reactionTicks": {
+        "min": 15,
+        "max": 60
+      },
+      "spacingMeters": {
+        "min": 0.6,
+        "max": 1.1
+      },
+      "noticeMeters": 0.2,
+      "leaveMeters": 1.0
+    },
+    "patience": {
+      "stages": {
+        "restlessBelow": 70,
+        "annoyedBelow": 50,
+        "confrontingBelow": 30,
+        "fedUpBelow": 15,
+        "recoverMargin": 5
+      },
+      "gapDrainPerSecond": 4.0,
+      "tightRecoveryPerSecond": 0.5,
+      "bumpHit": 5
+    }
+  },
+  "traits": {
+    "version": 1,
+    "traits": [
+      {
+        "id": "patient",
+        "drainScale": 0.5,
+        "recoveryScale": 2.0,
+        "bumpScale": 0.5,
+        "shownStages": [
+          "calm",
+          "restless",
+          "annoyed",
+          "confronting",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "anxious",
+        "drainScale": 1.5,
+        "recoveryScale": 1.0,
+        "bumpScale": 1.5,
+        "shownStages": [
+          "calm",
+          "restless",
+          "annoyed",
+          "confronting",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "aggressive",
+        "drainScale": 1.5,
+        "recoveryScale": 0.5,
+        "bumpScale": 2.0,
+        "shownStages": [
+          "calm",
+          "confronting",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "passive-aggressive",
+        "drainScale": 1.0,
+        "recoveryScale": 0.5,
+        "bumpScale": 1.0,
+        "shownStages": [
+          "calm",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "oblivious",
+        "drainScale": 0.25,
+        "recoveryScale": 1.0,
+        "bumpScale": 0.25,
+        "shownStages": [
+          "calm",
+          "annoyed",
+          "fedUp"
+        ]
+      }
+    ]
+  },
+  "lane": {
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        12,
+        0
+      ]
+    ],
+    "halfWidth": 0.5
+  },
+  "agents": [
+    {
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "position": [
+        0.8,
+        0
+      ]
+    },
+    {
+      "position": [
+        1.6,
+        0
+      ]
+    },
+    {
+      "position": [
+        2.4,
+        0
+      ]
+    },
+    {
+      "position": [
+        3.2,
+        0
+      ]
+    },
+    {
+      "position": [
+        4,
+        0
+      ],
+      "trait": "anxious"
+    },
+    {
+      "position": [
+        4.8,
+        0
+      ],
+      "trait": "patient"
+    }
+  ],
+  "commands": [
+    {
+      "tick": 1,
+      "agent": 4,
+      "move": [
+        0,
+        0
+      ]
+    },
+    {
+      "tick": 1500,
+      "agent": 4,
+      "move": [
+        -1,
+        0
+      ]
+    },
+    {
+      "tick": 1560,
+      "agent": 4,
+      "move": [
+        0,
+        0
+      ]
+    },
+    {
+      "tick": 1900,
+      "agent": 4,
+      "move": [
+        0,
+        1
+      ]
+    },
+    {
+      "tick": 1940,
+      "agent": 4,
+      "move": [
+        0,
+        0
+      ]
+    }
+  ],
+  "hashes": [
+    {
+      "tick": 60,
+      "hash": "a8a23c4c9e99cf89"
+    },
+    {
+      "tick": 120,
+      "hash": "1ed43705b250c365"
+    },
+    {
+      "tick": 180,
+      "hash": "cfe1edce4413a2e0"
+    },
+    {
+      "tick": 240,
+      "hash": "acd128fd2bc85cec"
+    },
+    {
+      "tick": 300,
+      "hash": "d4a9bf64f6be114f"
+    },
+    {
+      "tick": 360,
+      "hash": "ca3e32baf04651ad"
+    },
+    {
+      "tick": 420,
+      "hash": "62ad942dd1dbcd0f"
+    },
+    {
+      "tick": 480,
+      "hash": "e2b6d9ae7ae335b2"
+    },
+    {
+      "tick": 540,
+      "hash": "53d297259b338d94"
+    },
+    {
+      "tick": 600,
+      "hash": "40a53fe678c36d90"
+    },
+    {
+      "tick": 660,
+      "hash": "a1b2e2b88e297792"
+    },
+    {
+      "tick": 720,
+      "hash": "2d188321c71b0f1d"
+    },
+    {
+      "tick": 780,
+      "hash": "0f100b339e118ce6"
+    },
+    {
+      "tick": 840,
+      "hash": "5a4497b3332c40f2"
+    },
+    {
+      "tick": 900,
+      "hash": "ffe2428635d00cc7"
+    },
+    {
+      "tick": 960,
+      "hash": "1707c4a3a89232db"
+    },
+    {
+      "tick": 1020,
+      "hash": "b3b1893a4aaa0000"
+    },
+    {
+      "tick": 1080,
+      "hash": "5feb1e5be25b66c1"
+    },
+    {
+      "tick": 1140,
+      "hash": "84eac9db3ed29f37"
+    },
+    {
+      "tick": 1200,
+      "hash": "4cc1ccd852392c1d"
+    },
+    {
+      "tick": 1260,
+      "hash": "4e6c0a528136a584"
+    },
+    {
+      "tick": 1320,
+      "hash": "1083a8ecbbf1144f"
+    },
+    {
+      "tick": 1380,
+      "hash": "d54f41431cfd2a5b"
+    },
+    {
+      "tick": 1440,
+      "hash": "92821289d89d87b4"
+    },
+    {
+      "tick": 1500,
+      "hash": "c4dd55cbd45da57d"
+    },
+    {
+      "tick": 1560,
+      "hash": "ff99a886bee23df9"
+    },
+    {
+      "tick": 1620,
+      "hash": "6157733400774275"
+    },
+    {
+      "tick": 1680,
+      "hash": "17716299c9f28792"
+    },
+    {
+      "tick": 1740,
+      "hash": "81b1a15aac7befb6"
+    },
+    {
+      "tick": 1800,
+      "hash": "7c106b5c90cf5c8d"
+    },
+    {
+      "tick": 1860,
+      "hash": "c0b2034fa8e82c89"
+    },
+    {
+      "tick": 1920,
+      "hash": "b9d91481fb2bff78"
+    },
+    {
+      "tick": 1980,
+      "hash": "772d299ef565b640"
+    },
+    {
+      "tick": 2040,
+      "hash": "f2c276450886dba9"
+    },
+    {
+      "tick": 2100,
+      "hash": "b0cc457748487e4c"
+    },
+    {
+      "tick": 2160,
+      "hash": "b2cca204ebd053c5"
+    },
+    {
+      "tick": 2220,
+      "hash": "4cd573f43f3140d7"
+    },
+    {
+      "tick": 2280,
+      "hash": "6ef57c1bd6f3865b"
+    },
+    {
+      "tick": 2340,
+      "hash": "6a9cc10b95ac61f8"
+    },
+    {
+      "tick": 2400,
+      "hash": "dde421a19ca0fcbc"
+    }
+  ]
+}

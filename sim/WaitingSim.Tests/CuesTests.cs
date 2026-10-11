@@ -56,5 +56,5 @@ public sealed class CuesTests
     }
 
     private static AgentSnapshot Agent(AgentId id, AgentId? ahead, Zone? zone, Stage? stage) =>
-        new(id, Vector2.Zero, Vector2.Zero, true, ahead, zone is null ? null : 0.5f, zone, null, stage is null ? null : "anxious", stage is null ? null : 50f, stage);
+        new(id, Vector2.Zero, Vector2.Zero, true, ahead, zone is null ? null : 0.5f, zone, null, stage is null ? null : "anxious", stage is null ? null : 50f, stage, LineStep.Standing);
 }

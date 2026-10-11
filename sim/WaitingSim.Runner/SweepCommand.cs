@@ -50,6 +50,12 @@ internal static class SweepCommand
             return ExitCode.DataProblem;
         }
 
+        if (tuning.Ripple is null)
+        {
+            error.WriteLine($"{Path.Combine(dataFolder, "tuning.json")}: ripple: missing; a swept line moves only by its ripple");
+            return ExitCode.DataProblem;
+        }
+
         var rows = Sweep(tuning, traits, seed, lines);
         if (json)
         {
