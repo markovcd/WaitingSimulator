@@ -115,6 +115,8 @@ This is the most important technical call in the plan.
 - NPC behavior beyond the ripple grows the same way (react, push past). Behavior trees are overkill at this scale.
 
 ### 4.7 Headless runner as a design tool
+Each agent carries a tally of its mistakes (bumps, gaps left open past grace, places lost, cut ins missed and made) and the tick it reached the counter, both in its snapshot; the tally names the worst. The state hash leaves both out: they record what happened and nothing later depends on them. `play` runs a level from `data/levels/` with a scripted bot until the player reaches the counter and reports the time and the tally (`--json`); a test plays every shipped level that way.
+
 `WaitingSim.Runner` plays thousands of lines with scripted bot players and outputs patience curves and kick-out rates per trait mix. `sweep` is the first: every trait in `data/traits.json` as the person behind an attentive, a slow and a distracted bot, 30 people back in a line the ripple moves, with the mean final patience, how often patience ran out, grace expiries and a patience curve sampled every 10 s. Use it to tune grace windows, drain rates and cutter frequency before playtests, and to sanity-check that difficulty modifiers in arcade mode behave as intended.
 
 ## 5. Presentation

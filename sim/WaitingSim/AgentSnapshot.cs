@@ -17,6 +17,8 @@ namespace WaitingSim;
 /// <param name="Step">Where it is in the ripple, when the line moves it.</param>
 /// <param name="SpotHeldUntil">While it is out of the lane with its place held, the tick the hold runs out.</param>
 /// <param name="Refused">Whether the line refused it a place for cutting in without room.</param>
+/// <param name="Tally">The mistakes it has made.</param>
+/// <param name="ReachedCounterAt">The tick it first reached the counter, once it has.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -31,4 +33,6 @@ public sealed record AgentSnapshot(
     Stage? Stage,
     LineStep Step,
     long? SpotHeldUntil,
-    bool Refused);
+    bool Refused,
+    Tally Tally,
+    long? ReachedCounterAt);

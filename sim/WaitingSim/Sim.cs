@@ -121,11 +121,22 @@ public sealed class Sim
             }
 
             TrackGap(agent, events);
+            if (agent is { ReachedCounterAt: null, InLane: true, Refused: false, Ahead: null } && agent.Lane.Along < tuning.Zones.BumpBelow)
+            {
+                agent.ReachedCounterAt = Tick;
+                events.Add(new ReachedCounter(Tick, agent.Id));
+            }
         }
 
         foreach (var agent in agents)
         {
             WearPatience(agent, bumped[agent.Id.Value], cutHits[agent.Id.Value], events);
+        }
+
+        foreach (var happened in events)
+        {
+            var agent = agents[happened.Agent.Value];
+            agent.Tally = agent.Tally.Counting(happened);
         }
 
         return events;
@@ -136,7 +147,8 @@ public sealed class Sim
 
     /// <summary>
     /// A hash of everything the next tick depends on. Two sims with the same hash play on identically;
-    /// replays record it to catch a change in behavior.
+    /// replays record it to catch a change in behavior. It leaves out each agent's tally and when it reached the
+    /// counter: a record of what happened, which no movement or patience depends on.
     /// </summary>
     public ulong StateHash()
     {

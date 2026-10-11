@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace WaitingSim.Runner;
 
 /// <summary>
@@ -10,8 +8,6 @@ internal static class SweepLine
 {
     public const int Seconds = 120;
     public const int SampleSeconds = 10;
-
-    public static readonly Vector2 TowardFront = new(-1, 0);
 
     // Enough people ahead that the player never reaches the counter in a run.
     private const int PeopleAhead = 30;
@@ -34,7 +30,7 @@ internal static class SweepLine
 
         var player = sim.Spawn(new(PeopleAhead * StartSpacing, 0));
         var behind = sim.Spawn(new((PeopleAhead + 1) * StartSpacing, 0), trait);
-        var brain = new PlayerBrain(bot, new Rng(seed, stream: 2));
+        var brain = new PlayerBrain(bot, Lane, new Rng(seed, stream: 2));
 
         var ranOut = false;
         var graceExpiries = 0;

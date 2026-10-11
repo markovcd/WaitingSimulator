@@ -43,6 +43,8 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **trait** | An NPC's personality as data: patient, anxious, aggressive, passive-aggressive, oblivious. | `Trait` | personality type, class |
 | **kick-out** | What happens when patience reaches 0: pushed past, staff called, or the crowd turns. | | game over |
 | **distraction** | Anything that competes with watching the line or listening for the call. | | |
+| **tally** | The count of each mistake an agent made on its way to the counter; the clerk names the worst. | `Tally`, `Mistake` | score, record |
+| **result screen** | What shows once the player reaches the counter: the clerk's line, the time in line and the tally. | `ResultScreen` | game over screen |
 | **clerk** | The person at the counter who ends a level with one line. | | NPC at the desk |
 | **twist** | A seeded alternative outcome at the counter ("Wrong queue."). | | |
 

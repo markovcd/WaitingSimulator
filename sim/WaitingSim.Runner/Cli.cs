@@ -16,6 +16,13 @@ internal static class Cli
                     --seed <n>       The first line's seed (default: 1).
                     --lines <n>      Lines per trait and bot, 1 to 10000 (default: 20).
                     --json           Report as JSON.
+          play    Play a level with a scripted player bot until the player reaches the
+                  counter, and report how long it took and the worst mistake made.
+                    --data <folder>  Where tuning.json, traits.json and levels/ are (default: data).
+                    --level <name>   The level file in levels/, without .json (default: post-office).
+                    --bot <bot>      attentive, slow or distracted (default: attentive).
+                    --seconds <n>    Give up after this long, 1 to 3600 (default: 600).
+                    --json           Report as JSON.
           replay <file>
                   Play a replay and check it reaches the state hashes it recorded.
                     --record         Write the hashes it plays to into the file instead.
@@ -37,6 +44,11 @@ internal static class Cli
         if (args is ["replay", ..])
         {
             return ReplayCommandLine.Run([.. args.Skip(1)], output, error);
+        }
+
+        if (args is ["play", ..])
+        {
+            return PlayCommand.Run([.. args.Skip(1)], output, error);
         }
 
         if (args is ["sweep", ..])

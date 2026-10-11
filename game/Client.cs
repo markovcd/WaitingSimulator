@@ -6,7 +6,8 @@ namespace WaitingSimulator.Game;
 /// <summary>
 /// The client's root node: loads the level, builds placeholder scenery for it, and each frame turns input into the
 /// player's command, steps the sim, shows where it put everyone and how they stand, and plays the cues its events call
-/// for. F3 toggles the debug overlay. Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits,
+/// for. Once the player reaches the counter, input stops and the result screen shows until they line up again. F3
+/// toggles the debug overlay. Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits,
 /// which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
 /// </summary>
 public sealed partial class Client : Node3D
@@ -24,6 +25,7 @@ public sealed partial class Client : Node3D
     private Motion? motion;
     private Camera3D? camera;
     private Label? overlay;
+    private Label? result;
     private Node3D?[] bodies = [];
     private AudioStreamPlayer3D[] voices = [];
 
@@ -71,7 +73,14 @@ public sealed partial class Client : Node3D
         head.Turn(-look.X * turn, -look.Y * turn);
         head.GlancingBack = Input.IsActionPressed(Controls.GlanceBack);
         var stick = Input.GetVector(Controls.MoveLeft, Controls.MoveRight, Controls.MoveForward, Controls.MoveBack);
-        var events = driver.Advance(delta, Floor.Walk(new(stick.X, stick.Y), head.Yaw));
+        var served = Served();
+        var events = driver.Advance(delta, served ? Command.Idle : Floor.Walk(new(stick.X, stick.Y), head.Yaw));
+        if (!served && Served())
+        {
+            result!.Text = ResultScreen.Text(driver.Current.Agents[level.Player.Value]);
+            result.Visible = true;
+        }
+
         foreach (var cue in Cues.From(events, driver.Current))
         {
             motion.Show(cue, driver.Current.Tick);
@@ -101,6 +110,10 @@ public sealed partial class Client : Node3D
         {
             head?.Turn(-motion.ScreenRelative.X * Controls.MouseRadiansPerPixel, -motion.ScreenRelative.Y * Controls.MouseRadiansPerPixel);
         }
+        else if (@event.IsActionPressed(Controls.LineUpAgain) && Served())
+        {
+            GetTree().ReloadCurrentScene();
+        }
         else if (@event.IsActionPressed(Controls.DebugOverlay))
         {
             overlay!.Visible = !overlay.Visible;
@@ -110,6 +123,9 @@ public sealed partial class Client : Node3D
             Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
         }
     }
+
+    /// <summary>Whether the player has reached the counter, which ends the level.</summary>
+    private bool Served() => driver is not null && level is not null && driver.Current.Agents[level.Player.Value].ReachedCounterAt is not null;
 
     /// <summary>The repo's <c>data/</c>, beside the Godot project.</summary>
     private static string DataFolder() => System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "data"));
@@ -149,6 +165,7 @@ public sealed partial class Client : Node3D
         clerk.Rotation = new Vector3(0f, Floor.YawFacing(-level.Lane.TowardFront(level.Clerk)), 0f);
         AddChild(clerk);
         overlay = Scenery.Overlay(this);
+        result = Scenery.Result(this);
     }
 
     /// <summary>Puts every body and the eyes where the sim has them this frame, each body facing the front and posed.</summary>

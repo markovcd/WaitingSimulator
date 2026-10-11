@@ -96,5 +96,23 @@ internal static class Scenery
         return label;
     }
 
+    /// <summary>The result screen, hidden until the player reaches the counter: a label in the middle of the view.</summary>
+    public static Label Result(Node parent)
+    {
+        var layer = new CanvasLayer { Name = "Result" };
+        var label = new Label
+        {
+            Name = "Text",
+            Visible = false,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        label.AddThemeColorOverride("font_color", Colors.Black);
+        layer.AddChild(label);
+        parent.AddChild(layer);
+        return label;
+    }
+
     private static StandardMaterial3D Flat(Color color) => new() { AlbedoColor = color };
 }

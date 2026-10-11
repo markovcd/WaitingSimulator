@@ -1,7 +1,10 @@
 namespace WaitingSim.Runner;
 
-/// <summary>Turns what a scripted player sees into its command each tick.</summary>
-internal sealed class PlayerBrain(PlayerBot bot, Rng rng)
+/// <summary>
+/// Turns what a scripted player sees into its command each tick: close up on the person ahead, or at the front, step
+/// up to the counter.
+/// </summary>
+internal sealed class PlayerBrain(PlayerBot bot, Lane lane, Rng rng)
 {
     /// <summary>The spacing a bot closes to, in meters; walking stops short of it by the braking distance.</summary>
     public const float WantedSpacing = 0.75f;
@@ -14,7 +17,7 @@ internal sealed class PlayerBrain(PlayerBot bot, Rng rng)
 
     public Command Next(AgentSnapshot self)
     {
-        var behind = self.Spacing > WantedSpacing;
+        var behind = self.Spacing is { } spacing ? spacing > WantedSpacing : self is { InLane: true, ReachedCounterAt: null };
         ticksSinceGap = behind ? ticksSinceGap + 1 : 0;
         if (bot == PlayerBot.Distracted)
         {
@@ -32,6 +35,6 @@ internal sealed class PlayerBrain(PlayerBot bot, Rng rng)
         }
 
         var walking = bot == PlayerBot.Slow ? ticksSinceGap > SlowReactionTicks : behind;
-        return walking ? new(SweepLine.TowardFront) : Command.Idle;
+        return walking ? new(lane.TowardFront(self.Position)) : Command.Idle;
     }
 }

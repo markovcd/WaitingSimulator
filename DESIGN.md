@@ -158,6 +158,8 @@ Mode behavior:
 - Twists are seeded per level (not random per run) so leaderboards stay comparable and players can learn.
 
 Prototype scope: "reach the counter, clerk says one line, result screen." Add twists after the core loop feels good.
+- Reaching the counter means stepping right up to it at the front of the line, about as close as a bump to a person.
+- Penalized success in the prototype: the clerk's line names the worst mistake made on the way (cutting in, a failed cut in, a lost place, a gap left open past its grace window, a bump), otherwise a flat "Next.". The result screen shows the time in line and every mistake counted.
 
 ## 10. Controls (first draft)
 

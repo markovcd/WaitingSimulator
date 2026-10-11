@@ -54,7 +54,7 @@ public sealed class RippleTests
 
         Assert.Equal(ServiceTicks, served);
         Assert.Equal(LineStep.Done, Agent(sim, front).Step);
-        Assert.IsType<LeftLane>(Assert.Single(events));
+        Assert.Equal([typeof(ReachedCounter), typeof(LeftLane)], events.Select(e => e.GetType()).ToList());
         Assert.True(Straight.Measure(Agent(sim, front).Position).Off >= Straight.HalfWidth + LeaveMeters);
         Assert.Equal(Vector2.Zero, Agent(sim, front).Velocity);
     }
