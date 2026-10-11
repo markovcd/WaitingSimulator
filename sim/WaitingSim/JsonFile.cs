@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Numerics;
 using System.Text.Json;
 
 namespace WaitingSim;
@@ -101,6 +102,54 @@ internal static class JsonFile
 
         problems.Add($"{path}: missing, or not a positive number");
         return 0f;
+    }
+
+    /// <summary>The non-negative whole number at <paramref name="path"/>, up to 2^64 - 1, or 0 with a problem.</summary>
+    public static ulong Unsigned(JsonElement? parent, string path, List<string> problems)
+    {
+        if (parent is not { } element)
+        {
+            return 0;
+        }
+
+        if (element.TryGetProperty(Name(path), out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetUInt64(out var number))
+        {
+            return number;
+        }
+
+        problems.Add($"{path}: missing, or not a whole number from 0 up");
+        return 0;
+    }
+
+    /// <summary>The point written as <c>[x, y]</c> at <paramref name="path"/>, or zero with a problem.</summary>
+    public static Vector2 Point(JsonElement? parent, string path, List<string> problems)
+    {
+        if (parent is not { } element)
+        {
+            return Vector2.Zero;
+        }
+
+        if (element.TryGetProperty(Name(path), out var value) && Point(value) is { } point)
+        {
+            return point;
+        }
+
+        problems.Add($"{path}: missing, or not a point [x, y] of two finite numbers");
+        return Vector2.Zero;
+    }
+
+    /// <summary>An <c>[x, y]</c> array of two finite numbers as a point, or null.</summary>
+    public static Vector2? Point(JsonElement value)
+    {
+        if (value.ValueKind != JsonValueKind.Array || value.GetArrayLength() != 2)
+        {
+            return null;
+        }
+
+        return value[0].ValueKind == JsonValueKind.Number && value[0].TryGetSingle(out var x) && float.IsFinite(x)
+            && value[1].ValueKind == JsonValueKind.Number && value[1].TryGetSingle(out var y) && float.IsFinite(y)
+                ? new Vector2(x, y)
+                : null;
     }
 
     /// <summary>The non-empty string at <paramref name="path"/>, or an empty one with a problem.</summary>

@@ -16,27 +16,24 @@ public sealed class Lane
     public Lane(IReadOnlyList<Vector2> points, float halfWidth)
     {
         ArgumentNullException.ThrowIfNull(points);
-        ArgumentOutOfRangeException.ThrowIfLessThan(points.Count, 2, nameof(points));
-        if (!float.IsFinite(halfWidth) || halfWidth <= 0f)
+        if (Problem(points, halfWidth) is { } problem)
         {
-            throw new ArgumentOutOfRangeException(nameof(halfWidth), halfWidth, "The half width is a positive distance.");
+            throw new ArgumentException(problem, nameof(points));
         }
 
         this.points = [.. points];
         startsAlong = new float[this.points.Length];
         for (var i = 1; i < this.points.Length; i++)
         {
-            var length = Vector2.Distance(this.points[i - 1], this.points[i]);
-            if (!float.IsFinite(length) || length <= 0f)
-            {
-                throw new ArgumentException($"Lane points {i - 1} and {i} are the same point or not finite.", nameof(points));
-            }
-
-            startsAlong[i] = startsAlong[i - 1] + length;
+            startsAlong[i] = startsAlong[i - 1] + Vector2.Distance(this.points[i - 1], this.points[i]);
         }
 
+        Points = Array.AsReadOnly(this.points);
         HalfWidth = halfWidth;
     }
+
+    /// <summary>The lane's line, front first.</summary>
+    public IReadOnlyList<Vector2> Points { get; }
 
     /// <summary>How far from the line an agent can stand and still be in the lane, in meters.</summary>
     public float HalfWidth { get; }
@@ -59,6 +56,32 @@ public sealed class Lane
         }
 
         return best;
+    }
+
+    /// <summary>What is wrong with a lane of these <paramref name="points"/> and <paramref name="halfWidth"/>, or null if nothing is.</summary>
+    public static string? Problem(IReadOnlyList<Vector2> points, float halfWidth)
+    {
+        ArgumentNullException.ThrowIfNull(points);
+        if (points.Count < 2)
+        {
+            return "A lane needs at least two points.";
+        }
+
+        if (!float.IsFinite(halfWidth) || halfWidth <= 0f)
+        {
+            return "The half width is a positive distance.";
+        }
+
+        for (var i = 1; i < points.Count; i++)
+        {
+            var length = Vector2.Distance(points[i - 1], points[i]);
+            if (!float.IsFinite(length) || length <= 0f)
+            {
+                return $"Lane points {i - 1} and {i} are the same point or not finite.";
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Whether a point at <paramref name="position"/> is inside the lane.</summary>

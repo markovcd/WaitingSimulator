@@ -105,7 +105,7 @@ This is the most important technical call in the plan.
 ### 4.5 Determinism
 - Integer ticks for all timers, an own PRNG with serializable state, no `Dictionary` iteration-order dependence, no wall-clock reads, and no engine calls in sim code.
 - Floats are fine for v1 positions; same build on the same platform replays identically in practice. Every N ticks, record a state hash in replays; a hash mismatch flags drift. Move to fixed-point only if cross-platform replay verification becomes a real requirement.
-- **Golden replay tests:** commit recorded command streams plus expected final state hashes. CI fails if a code change silently alters outcomes.
+- **Golden replay tests:** `sim/WaitingSim.Tests/Replays/` holds replay files (format version 1): a seed, the lane, the agents to spawn, every change of command, and the state hash every second and after the last tick. Each carries its own tuning and traits, so a data change never moves a golden. The tests play every file and fail at the first tick whose hash differs; `waitingsim-runner replay <file>` does the same from the command line, and `--record` rewrites the hashes.
 
 ### 4.6 Patience and agents
 - An agent spawned with a `Trait` has patience: a value, and the stage it is really in. Each tick it drains while the person ahead holds a gap open past the grace window, recovers while they stay tight on theirs, and takes a one-off hit when the person behind walks into it. Rates and stage limits (with the hysteresis margin) are in `data/tuning.json`; a trait scales the rates and names the stages it shows, so a hidden stage looks like the last shown one before it. Traits are records in `data/traits.json`, which keeps the "fixed vs. random per run" question (§8) a data change.

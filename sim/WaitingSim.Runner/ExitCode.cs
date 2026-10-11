@@ -10,4 +10,7 @@ internal static class ExitCode
 
     /// <summary>A data file is missing, unreadable or has problems; stderr names the file and field.</summary>
     public const int DataProblem = 3;
+
+    /// <summary>A replay played to different state hashes than it recorded; stderr names the first tick.</summary>
+    public const int ReplayDiverged = 4;
 }

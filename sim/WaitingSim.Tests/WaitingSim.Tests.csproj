@@ -15,5 +15,7 @@
   <ItemGroup>
     <!-- The shipped data files, copied as they are so tests load what the game loads. -->
     <None Include="..\..\data\**\*.json" LinkBase="data" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Golden replays: recorded command streams whose state hashes must not change. -->
+    <None Include="Replays\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

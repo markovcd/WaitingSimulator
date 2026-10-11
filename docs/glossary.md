@@ -53,7 +53,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **event** | Something the sim reports happened, for the client to show. | `SimEvent` | signal (a Godot word) |
 | **snapshot** | The read-only sim state the client reads each frame. | `Snapshot` | |
 | **seed** | The number the sim's RNG starts from. | | |
-| **replay** | A seed and a command stream, with state hashes. | | recording, demo |
+| **replay** | A seed and a command stream, with state hashes. | `Replay` | recording, demo |
 | **golden replay** | A replay kept in the tests whose hashes must not change. | | |
 | **runner** | The command-line program that plays levels headlessly. | `WaitingSim.Runner` | |
 | **tuning** | The data file of knobs the sim reads. | `Tuning` | config, settings (those are the player's) |

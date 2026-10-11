@@ -34,4 +34,4 @@ Grace windows, drain and recovery rates, trait definitions, cutter frequency and
 
 ## Golden replays are the sim's snapshots
 
-A golden replay is a recorded seed and command stream with the expected state hashes. A change that alters one is a behavior change: re-record it only when the change was the point, say so in the commit message, and never re-record to make a red test green (`honest-tests.md`).
+A golden replay is a recorded seed and command stream with the expected state hashes. A change that alters one is a behavior change: re-record it (`waitingsim-runner replay <file> --record`) only when the change was the point, say so in the commit message, and never re-record to make a red test green (`honest-tests.md`).
