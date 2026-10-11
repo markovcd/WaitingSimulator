@@ -196,7 +196,7 @@ These cost almost nothing now and keep multiplayer possible later.
 4. Player input is a command validated by the simulation ("step forward"), not a direct state change.
 5. No `Game.Player` singleton; pass the agent around.
 
-Engine: Godot 4 (C#) recommended, with Unity 6 as the fallback if consoles become a launch requirement. The simulation lives in an engine-agnostic netstandard2.1 library. See [TECH.md](TECH.md) for the full stack and rationale.
+Engine: **Godot 4 with C# (decided).** The simulation lives in an engine-free .NET library. Target platforms are PC and Steam Deck. See [TECH.md](TECH.md) for the full stack and rationale.
 
 ## 14. Multiplayer (future, out of v1)
 
