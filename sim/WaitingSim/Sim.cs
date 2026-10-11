@@ -50,6 +50,7 @@ public sealed class Sim
         }
 
         agents.Add(spawned);
+        Measure();
         Classify();
         foreach (var agent in agents)
         {
@@ -80,7 +81,18 @@ public sealed class Sim
             Walk(agent, commands.TryGetValue(agent.Id, out var command) ? command.Validated() : FollowLine(agent));
         }
 
-        var before = agents.Select(agent => (agent.InLane, agent.Zone)).ToList();
+        var before = agents.Select(agent => (agent.InLane, agent.Zone, agent.Lane.Along)).ToList();
+        Measure();
+        var placed = new List<SimEvent>?[agents.Count];
+        var cutHits = new float[agents.Count];
+        if (tuning.StepOut is { } stepOut)
+        {
+            for (var i = 0; i < agents.Count; i++)
+            {
+                placed[i] = StepInOrOut(agents[i], before[i].InLane, before[i].Along, stepOut, cutHits);
+            }
+        }
+
         Classify();
 
         var events = new List<SimEvent>();
@@ -88,10 +100,15 @@ public sealed class Sim
         for (var i = 0; i < agents.Count; i++)
         {
             var agent = agents[i];
-            var (wasInLane, oldZone) = before[i];
+            var (wasInLane, oldZone, _) = before[i];
             if (agent.InLane != wasInLane)
             {
                 events.Add(agent.InLane ? new ReenteredLane(Tick, agent.Id) : new LeftLane(Tick, agent.Id));
+            }
+
+            if (placed[i] is { } outcomes)
+            {
+                events.AddRange(outcomes);
             }
 
             if (agent.Zone != oldZone)
@@ -108,7 +125,7 @@ public sealed class Sim
 
         foreach (var agent in agents)
         {
-            WearPatience(agent, bumped[agent.Id.Value], events);
+            WearPatience(agent, bumped[agent.Id.Value], cutHits[agent.Id.Value], events);
         }
 
         return events;
@@ -142,6 +159,11 @@ public sealed class Sim
                 var (agentState, agentIncrement) = agent.Rng.Position;
                 hash.Add(agentState).Add(agentIncrement).Add(agent.PreferredSpacing).Add((long)agent.Step).Add(agent.StepEndsAt);
             }
+
+            if (tuning.StepOut is not null)
+            {
+                hash.Add(agent.HeldAlong ?? -1f).Add(agent.HoldEndsAt).Add((long)(agent.HeldBehind?.Value ?? -1)).Add(agent.Refused);
+            }
         }
 
         return hash.Value;
@@ -149,9 +171,9 @@ public sealed class Sim
 
     /// <summary>
     /// Drains the agent's patience while the person ahead holds a gap open past its grace window, recovers it while
-    /// they stay tight on theirs, and takes a hit when the person behind walked into it.
+    /// they stay tight on theirs, and takes a hit when the person behind walked into it or someone cut in ahead of it.
     /// </summary>
-    private void WearPatience(Agent agent, bool bumped, List<SimEvent> events)
+    private void WearPatience(Agent agent, bool bumped, float cutHit, List<SimEvent> events)
     {
         if (agent.Trait is not { } trait)
         {
@@ -170,6 +192,8 @@ public sealed class Sim
         {
             change -= rates.BumpHit * trait.BumpScale;
         }
+
+        change -= cutHit;
 
         var before = agent.Patience;
         var shownBefore = trait.Shown(agent.Stage);
@@ -203,14 +227,14 @@ public sealed class Sim
         var toGo = agent.Spacing is { } spacing ? spacing - agent.PreferredSpacing : agent.Lane.Along;
         switch (agent.Step)
         {
-            case LineStep.Standing when agent.InLane && toGo > ripple.NoticeMeters:
+            case LineStep.Standing when agent is { InLane: true, Refused: false } && toGo > ripple.NoticeMeters:
                 Begin(agent, LineStep.Noticed, ripple.ReactionTicks);
                 break;
-            case LineStep.Standing when agent is { InLane: true, Ahead: null }:
+            case LineStep.Standing when agent is { InLane: true, Refused: false, Ahead: null }:
                 Begin(agent, LineStep.BeingServed, ripple.ServiceTicks);
                 break;
             case LineStep.Noticed when Tick >= agent.StepEndsAt:
-                agent.Step = agent.InLane && toGo > 0f ? LineStep.SteppingUp : LineStep.Standing;
+                agent.Step = agent is { InLane: true, Refused: false } && toGo > 0f ? LineStep.SteppingUp : LineStep.Standing;
                 break;
             case LineStep.BeingServed when Tick >= agent.StepEndsAt:
                 agent.Step = LineStep.Leaving;
@@ -222,7 +246,7 @@ public sealed class Sim
 
         // Stops walking once what is left is what it takes to slow down.
         var braking = agent.Velocity.LengthSquared() / (2f * tuning.WalkAcceleration);
-        if (agent.Step == LineStep.SteppingUp && (!agent.InLane || toGo <= braking))
+        if (agent.Step == LineStep.SteppingUp && (agent is not { InLane: true, Refused: false } || toGo <= braking))
         {
             agent.Step = LineStep.Standing;
         }
@@ -256,27 +280,107 @@ public sealed class Sim
         agent.Position += agent.Velocity / TickRate.PerSecond;
     }
 
-    /// <summary>Measures every agent against the lane and finds each one's person ahead, spacing and zone.</summary>
-    private void Classify()
+    /// <summary>
+    /// What stepping out of the lane or into it this tick did to the agent's place in the line. Stepping out holds the
+    /// place for a while; stepping back in ahead of whoever stood behind returns to it. Stepping in anywhere else but
+    /// the back cuts in: the person behind takes a hit in <paramref name="cutHits"/>, and with no room to stand the
+    /// line refuses the agent a place. The events say what happened to the place.
+    /// </summary>
+    private List<SimEvent>? StepInOrOut(Agent agent, bool wasInLane, float wasAlong, StepOutTuning stepOut, float[] cutHits)
+    {
+        if (wasInLane && !agent.InLane)
+        {
+            if (agent is { Refused: false, Step: not (LineStep.Leaving or LineStep.Done) })
+            {
+                agent.HeldAlong = wasAlong;
+                agent.HoldEndsAt = Tick + stepOut.SpotHoldTicks;
+                agent.HeldBehind = agents.FirstOrDefault(other => other.Ahead == agent.Id)?.Id;
+            }
+
+            agent.Refused = false;
+            return null;
+        }
+
+        if (wasInLane || !agent.InLane)
+        {
+            return agent.HeldAlong is not null && Tick >= agent.HoldEndsAt ? [LoseSpot(agent)] : null;
+        }
+
+        var along = agent.Lane.Along;
+        var others = agents.Where(other => other != agent && other.InLine).ToList();
+        var behind = others.Where(other => Behind(other, along, agent.Id)).MinBy(other => (other.LineAlong, other.Id.Value));
+        var ahead = others.Where(other => !Behind(other, along, agent.Id)).MaxBy(other => (other.LineAlong, other.Id.Value));
+        var holding = agent.HeldAlong is not null;
+        if (holding && behind?.Id == agent.HeldBehind)
+        {
+            agent.HeldAlong = null;
+            agent.HeldBehind = null;
+            return null;
+        }
+
+        var outcomes = new List<SimEvent>();
+        if (behind is not null)
+        {
+            var room = behind.LineAlong - along >= tuning.Zones.BumpBelow
+                && (ahead is null || along - ahead.LineAlong >= tuning.Zones.BumpBelow);
+            agent.Refused = !room;
+            cutHits[behind.Id.Value] += !room ? stepOut.MissHit : behind switch
+            {
+                { Zone: Zone.Gap, GraceExpired: true } => stepOut.PastGraceHit,
+                { Zone: Zone.Gap } => stepOut.GapHit,
+                _ => stepOut.LooseHit,
+            };
+            outcomes.Add(room ? new CutIn(Tick, agent.Id, behind.Id) : new CutInMissed(Tick, agent.Id, behind.Id));
+        }
+
+        if (holding)
+        {
+            outcomes.Add(LoseSpot(agent));
+        }
+
+        return outcomes;
+    }
+
+    /// <summary>Whether <paramref name="other"/> stands behind a place at <paramref name="along"/> taken by agent <paramref name="id"/>.</summary>
+    private static bool Behind(Agent other, float along, AgentId id) =>
+        other.LineAlong > along || (other.LineAlong == along && other.Id.Value > id.Value);
+
+    private SpotLost LoseSpot(Agent agent)
+    {
+        agent.HeldAlong = null;
+        agent.HeldBehind = null;
+        return new SpotLost(Tick, agent.Id);
+    }
+
+    /// <summary>Measures every agent against the lane.</summary>
+    private void Measure()
     {
         foreach (var agent in agents)
         {
             agent.Lane = lane.Measure(agent.Position);
             agent.InLane = lane.Holds(agent.Lane);
+        }
+    }
+
+    /// <summary>Finds the person ahead of everyone in the line, their spacing and their zone.</summary>
+    private void Classify()
+    {
+        foreach (var agent in agents)
+        {
             agent.Ahead = null;
             agent.Spacing = null;
             agent.Zone = null;
         }
 
-        var line = agents.Where(agent => agent.InLane).ToList();
-        line.Sort((a, b) => a.Lane.Along != b.Lane.Along
-            ? a.Lane.Along.CompareTo(b.Lane.Along)
+        var line = agents.Where(agent => agent.InLine).ToList();
+        line.Sort((a, b) => a.LineAlong != b.LineAlong
+            ? a.LineAlong.CompareTo(b.LineAlong)
             : a.Id.Value.CompareTo(b.Id.Value));
         for (var i = 1; i < line.Count; i++)
         {
             var agent = line[i];
             var ahead = line[i - 1];
-            var spacing = agent.Lane.Along - ahead.Lane.Along;
+            var spacing = agent.LineAlong - ahead.LineAlong;
             agent.Ahead = ahead.Id;
             agent.Spacing = spacing;
             agent.Zone = tuning.Zones.ZoneAt(spacing);

@@ -73,9 +73,9 @@ The front moves in bursts, and the movement travels back with a variable delay. 
 - A burst moves the line by the spacing of whoever steps up to the counter, so some bursts open a gap and some only loosen the line.
 
 ### Leaving the line
-- **Prototype rule:** leaving the lane volume means you are out of the line.
-- **Later:** a spot-hold timer (about 5 s) so stepping out becomes a risky tool (pick up an item, peek down the line, let someone through). Costs: a patience hit, cutter risk, reputation. Possible save-a-spot item (jacket or bag).
-- Implement the lane as a trigger volume. The player agent has an `InLane` state and fires `LeftLane` and `ReenteredLane` events from day one, so the hold timer is a small change later.
+- **Spot hold:** stepping out of the lane holds your place for about 5 s, so stepping out is a risky tool (pick up an item, peek down the line, let someone through). The person behind does not step into a held place, but if the line moves on, the gap it leaves counts against you as usual. Step back in ahead of the same person and you are back; stay out past the hold and the place is gone.
+- **Cutting in (the gamble):** step into the lane anywhere but your held place or the back of the line and you cut in ahead of whoever is behind that spot. Whether you make it is decided by positions alone: you need room to stand clear of a bump on both sides when you step in, so walking speed and the ripple decide the race for a gap. Made it: the person behind takes a patience hit graded by how open they had left the gap (least for a gap past its grace window, then an open gap, most for a loose spacing). Missed: the line refuses you a place until you step out again, you lose your held place, and the person you tried to cut takes a hit.
+- **Later:** cutter risk while away, reputation, a save-a-spot item (jacket or bag).
 
 ## 7. Room Mechanics (outline, needs detail)
 
@@ -228,7 +228,7 @@ Differentiator: the gap-and-patience loop, the person behind you as a character,
 
 ## 17. Deferred (Later List)
 
-- Spot-hold timer when leaving the lane, save-a-spot item, cutter risk while away
+- Save-a-spot item, cutter risk while away
 - Personality assignment rules
 - Line mood (shared annoyance)
 - Wrong-window twists and carry-over effects

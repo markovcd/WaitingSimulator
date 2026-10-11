@@ -9,13 +9,21 @@ namespace WaitingSim;
 /// <param name="WalkAcceleration">How quickly walking speeds up, slows down and turns, in meters per second squared.</param>
 /// <param name="Patience">How patience drains, recovers and shows.</param>
 /// <param name="Ripple">How the line moves on its own; without it, an agent given no command stands still.</param>
-public sealed record Tuning(int GraceWindowTicks, ZoneLimits Zones, float WalkSpeed, float WalkAcceleration, PatienceTuning Patience, RippleTuning? Ripple = null)
+/// <param name="StepOut">How the line treats an agent that steps out and back in; without it, stepping out leaves the line at once and stepping in joins it anywhere.</param>
+public sealed record Tuning(
+    int GraceWindowTicks,
+    ZoneLimits Zones,
+    float WalkSpeed,
+    float WalkAcceleration,
+    PatienceTuning Patience,
+    RippleTuning? Ripple = null,
+    StepOutTuning? StepOut = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
 
-    /// <summary>The longest duration a ripple draws: an hour.</summary>
-    public const int MaxRippleTicks = 60 * 60 * TickRate.PerSecond;
+    /// <summary>The longest duration a tuning sets: an hour.</summary>
+    public const int MaxDurationTicks = 60 * 60 * TickRate.PerSecond;
 
     /// <summary>Reads a tuning file's text. Problems name the field they concern.</summary>
     public static Parsed<Tuning> Parse(string json) => JsonFile.Read(json, "tuning", FormatVersion, Read);
@@ -42,7 +50,35 @@ public sealed record Tuning(int GraceWindowTicks, ZoneLimits Zones, float WalkSp
         var acceleration = JsonFile.Positive(walking, "walking.accelerationMetersPerSecondSquared", problems);
 
         var limits = new ZoneLimits(bumpBelow, tightBelow, looseBelow);
-        return new(graceWindowTicks, limits, speed, acceleration, ReadPatience(root, problems), ReadRipple(root, limits, problems));
+        return new(graceWindowTicks, limits, speed, acceleration, ReadPatience(root, problems), ReadRipple(root, limits, problems), ReadStepOut(root, problems));
+    }
+
+    /// <summary>Reads the <c>stepOut</c> object, which a tuning file may leave out.</summary>
+    private static StepOutTuning? ReadStepOut(JsonElement root, List<string> problems)
+    {
+        if (!root.TryGetProperty("stepOut", out _))
+        {
+            return null;
+        }
+
+        var stepOut = JsonFile.Section(root, "stepOut", problems);
+        var holdTicks = JsonFile.Integer(stepOut, "stepOut.spotHoldTicks", problems);
+        if (holdTicks is < 0 or > MaxDurationTicks && problems.Count == 0)
+        {
+            problems.Add(JsonFile.Invariant($"stepOut.spotHoldTicks: must be from 0 up to {MaxDurationTicks}"));
+        }
+
+        var cutIn = JsonFile.Section(stepOut, "stepOut.cutIn", problems);
+        var pastGrace = JsonFile.Positive(cutIn, "stepOut.cutIn.pastGraceHit", problems);
+        var gap = JsonFile.Positive(cutIn, "stepOut.cutIn.gapHit", problems);
+        var loose = JsonFile.Positive(cutIn, "stepOut.cutIn.looseHit", problems);
+        var miss = JsonFile.Positive(cutIn, "stepOut.cutIn.missHit", problems);
+        if (!(pastGrace <= gap && gap <= loose) && problems.Count == 0)
+        {
+            problems.Add("stepOut.cutIn: pastGraceHit, gapHit and looseHit must not decrease in that order");
+        }
+
+        return new(holdTicks, pastGrace, gap, loose, miss);
     }
 
     /// <summary>Reads the <c>ripple</c> object, which a tuning file may leave out.</summary>
@@ -77,9 +113,9 @@ public sealed record Tuning(int GraceWindowTicks, ZoneLimits Zones, float WalkSp
     {
         var section = JsonFile.Section(parent, path, problems);
         var range = new TickRange(JsonFile.Integer(section, $"{path}.min", problems), JsonFile.Integer(section, $"{path}.max", problems));
-        if (!(range.Min >= 0 && range.Min <= range.Max && range.Max <= MaxRippleTicks) && problems.Count == 0)
+        if (!(range.Min >= 0 && range.Min <= range.Max && range.Max <= MaxDurationTicks) && problems.Count == 0)
         {
-            problems.Add(JsonFile.Invariant($"{path}: min must be from 0 up, and max from min up to {MaxRippleTicks}"));
+            problems.Add(JsonFile.Invariant($"{path}: min must be from 0 up, and max from min up to {MaxDurationTicks}"));
         }
 
         return range;

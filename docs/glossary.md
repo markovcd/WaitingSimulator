@@ -32,6 +32,9 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **zone** | One of the spacing bands to the person ahead: bump, tight, loose, gap. | `Zone` | |
 | **bump** | Walking into the person ahead. | | collision (in prose) |
 | **ripple** | Line movement traveling back from the front with a delay. | `RippleTuning`, `LineStep` | wave |
+| **spot hold** | How long the line keeps an agent's place after it steps out of the lane. | `SpotHoldTicks` | reservation, save |
+| **peek** | Stepping out of the lane to look down the line, on a spot hold. | | lean out |
+| **cut in** | Stepping into the line ahead of someone, anywhere but your own held place or the back. What the player does; an NPC doing it unprompted is a **cutter**. | `CutIn` | skip, jump the queue |
 | **counter** | Where the clerk serves the front of the line: the front end of the lane. | | desk |
 | **cutter** | An NPC that slides into an open gap ahead of the player. | | line-cutter, skipper |
 | **patience** | An NPC's 0–100 tolerance of the player. Hidden from the player except on easy. | `Patience` | mood, anger |

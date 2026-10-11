@@ -19,7 +19,25 @@ internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, Rng rng)
 
     public LanePosition Lane { get; set; }
 
+    /// <summary>Whether the agent stands in the lane, part of the line or not.</summary>
     public bool InLane { get; set; }
+
+    /// <summary>Where along the lane the line holds the agent's place while it is out of the lane.</summary>
+    public float? HeldAlong { get; set; }
+
+    public long HoldEndsAt { get; set; }
+
+    /// <summary>Who stood behind the agent when it stepped out: stepping back in ahead of them is returning to its place.</summary>
+    public AgentId? HeldBehind { get; set; }
+
+    /// <summary>Whether the line refused the agent a place when it cut in without room. It ends when the agent steps out.</summary>
+    public bool Refused { get; set; }
+
+    /// <summary>Whether the agent is part of the line: standing in the lane and not refused, or out of it with its place held.</summary>
+    public bool InLine => (InLane && !Refused) || HeldAlong is not null;
+
+    /// <summary>Where along the lane the agent's place in the line is.</summary>
+    public float LineAlong => HeldAlong ?? Lane.Along;
 
     public AgentId? Ahead { get; set; }
 
@@ -45,6 +63,8 @@ internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, Rng rng)
     public long StepEndsAt { get; set; }
 
     public AgentSnapshot Snapshot() => Trait is null
-        ? new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, null, null, null, Step)
-        : new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, Trait.Id, Patience, Trait.Shown(Stage), Step);
+        ? new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, null, null, null, Step, SpotHeldUntil, Refused)
+        : new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, Trait.Id, Patience, Trait.Shown(Stage), Step, SpotHeldUntil, Refused);
+
+    private long? SpotHeldUntil => HeldAlong is null ? null : HoldEndsAt;
 }

@@ -30,6 +30,16 @@ public sealed class TuningTests
 
     private static readonly string WithRipple = Valid.Replace("\"patience\": {", Ripple, StringComparison.Ordinal);
 
+    private const string StepOut = """
+        "stepOut": {
+            "spotHoldTicks": 300,
+            "cutIn": { "pastGraceHit": 10, "gapHit": 20, "looseHit": 35, "missHit": 15 }
+          },
+          "patience": {
+        """;
+
+    private static readonly string WithStepOut = Valid.Replace("\"patience\": {", StepOut, StringComparison.Ordinal);
+
     [Fact]
     public void The_shipped_tuning_loads_without_problems()
     {
@@ -75,6 +85,34 @@ public sealed class TuningTests
     public void A_bad_ripple_field_is_reported_by_name(string field, string replacement, string problem)
     {
         var parsed = Tuning.Parse(WithRipple.Replace(field, replacement, StringComparison.Ordinal));
+
+        Assert.Null(parsed.Value);
+        Assert.Equal([problem], parsed.Problems);
+    }
+
+    [Fact]
+    public void A_tuning_file_without_a_step_out_holds_no_place_and_charges_nothing_for_cutting_in()
+    {
+        Assert.Null(Tuning.Parse(Valid).Value!.StepOut);
+    }
+
+    [Fact]
+    public void A_step_out_reads_into_its_values()
+    {
+        var stepOut = Tuning.Parse(WithStepOut).Value!.StepOut;
+
+        Assert.Equal(new StepOutTuning(300, 10, 20, 35, 15), stepOut);
+    }
+
+    [Theory]
+    [InlineData("\"spotHoldTicks\": 300", "\"spotHoldTicks\": -1", "stepOut.spotHoldTicks: must be from 0 up to 216000")]
+    [InlineData("\"spotHoldTicks\": 300", "\"spotHoldTicks\": 1.5", "stepOut.spotHoldTicks: missing, or not a whole number")]
+    [InlineData("\"gapHit\": 20", "\"gapHit\": 40", "stepOut.cutIn: pastGraceHit, gapHit and looseHit must not decrease in that order")]
+    [InlineData("\"missHit\": 15", "\"missHit\": 0", "stepOut.cutIn.missHit: missing, or not a positive number")]
+    [InlineData("\"cutIn\"", "\"cutOut\"", "stepOut.cutIn: missing, or not an object")]
+    public void A_bad_step_out_field_is_reported_by_name(string field, string replacement, string problem)
+    {
+        var parsed = Tuning.Parse(WithStepOut.Replace(field, replacement, StringComparison.Ordinal));
 
         Assert.Null(parsed.Value);
         Assert.Equal([problem], parsed.Problems);

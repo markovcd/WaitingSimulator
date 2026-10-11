@@ -5,8 +5,8 @@ using WaitingSim;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The debug overlay's text: the tick and seed, then a row per agent with its zone, spacing, grace left, where the line
-/// has it in the ripple, patience and stage. The smoke run logs it too, so every value it shows can be read without a window.
+/// The debug overlay's text: the tick and seed, then a row per agent with its zone, spacing, grace left (or how long
+/// its place is held while it is out of the lane), where the line has it in the ripple, patience and stage. The smoke run logs it too, so every value it shows can be read without a window.
 /// </summary>
 internal static class Overlay
 {
@@ -33,6 +33,14 @@ internal static class Overlay
         if (!agent.InLane)
         {
             row.Append("  out of the lane");
+            if (agent.SpotHeldUntil is { } until)
+            {
+                row.Append(CultureInfo.InvariantCulture, $"  spot held {Seconds(until - tick)}");
+            }
+        }
+        else if (agent.Refused)
+        {
+            row.Append("  refused a place");
         }
         else
         {
@@ -61,8 +69,10 @@ internal static class Overlay
         }
 
         var left = tuning.GraceWindowTicks - (tick - opened);
-        return left > 0 ? string.Create(CultureInfo.InvariantCulture, $"{(float)left / TickRate.PerSecond:0.00} s") : "expired";
+        return left > 0 ? Seconds(left) : "expired";
     }
+
+    private static string Seconds(long ticks) => string.Create(CultureInfo.InvariantCulture, $"{(float)ticks / TickRate.PerSecond:0.00} s");
 
     private static string Meters(float? spacing) =>
         spacing is { } meters ? string.Create(CultureInfo.InvariantCulture, $"{meters:0.00} m") : "-";

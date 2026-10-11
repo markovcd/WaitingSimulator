@@ -92,7 +92,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 
 ### 4.3 Commands in, events out
 - Each tick the client samples input into a `Command`. NPC brains produce the same type, which satisfies §13.3-4 directly. The line is the sim's own brain: an agent given no command that tick is moved by the line (§4.6). It carries the move vector today; look yaw, glance-back, phone and interact join it as the rules that read them land.
-- The sim emits typed events: `ZoneChanged` (a change into the gap zone is a gap opening), `GraceExpired`, `Bumped`, `StageChanged` (the stage an agent shows), `PatienceRanOut`, `CutterEntered`, `LeftLane`, `ReenteredLane`, `CalledNumber`, `KickedOut`, `ReachedCounter`.
+- The sim emits typed events: `ZoneChanged` (a change into the gap zone is a gap opening), `GraceExpired`, `Bumped`, `StageChanged` (the stage an agent shows), `PatienceRanOut`, `CutterEntered`, `LeftLane`, `ReenteredLane`, `SpotLost`, `CutIn`, `CutInMissed`, `CalledNumber`, `KickedOut`, `ReachedCounter`.
 - Presentation maps events to animation, audio and camera. The sim never knows a sound exists.
 
 ### 4.4 Movement and the "strict rules, loose feel" split
@@ -111,6 +111,7 @@ This is the most important technical call in the plan.
 ### 4.6 Patience and agents
 - An agent spawned with a `Trait` has patience: a value, and the stage it is really in. Each tick it drains while the person ahead holds a gap open past the grace window, recovers while they stay tight on theirs, and takes a one-off hit when the person behind walks into it. Rates and stage limits (with the hysteresis margin) are in `data/tuning.json`; a trait scales the rates and names the stages it shows, so a hidden stage looks like the last shown one before it. Traits are records in `data/traits.json`, which keeps the "fixed vs. random per run" question (§8) a data change.
 - The ripple is a small state machine per agent (`LineStep`): standing, noticed, stepping up, being served, leaving, done. An agent notices once the person ahead is `noticeMeters` past the spacing it likes, steps up after a reaction delay, and stops where braking leaves it at that spacing. The front walks up to the counter at the front of the lane, is served, then walks out of the lane to the side. Durations and the spacing are drawn per agent within the ranges in `data/tuning.json`'s `ripple`, each agent from its own RNG stream, so nothing an agent does changes another's draws. A tuning without `ripple` (as in older replays) leaves agents without commands standing still.
+- Stepping out and back in (`stepOut` in `data/tuning.json`): an agent that leaves the lane keeps its place in the line at the spot it left for `spotHoldTicks`, so the person behind measures spacing and zones to that spot. Stepping back in ahead of whoever stood behind returns to it; anywhere else ahead of someone is a cut in, made only with bump-free room on both sides, and costs the person behind a hit graded by their zone. A missed cut in leaves the agent refused a place until it steps out. A tuning without `stepOut` keeps the older rule: out of the lane is out of the line, and stepping in anywhere joins it.
 - NPC behavior beyond the ripple grows the same way (react, push past). Behavior trees are overkill at this scale.
 
 ### 4.7 Headless runner as a design tool
