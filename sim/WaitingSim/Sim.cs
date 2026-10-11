@@ -12,10 +12,13 @@ public sealed class Sim
     private const ulong AgentStreams = 1UL << 32;
 
     private readonly Tuning tuning;
-    private readonly Lane lane;
     private readonly ulong seed;
     private readonly Rng rng;
-    private readonly List<Agent> agents = [];
+    private readonly Line line;
+    private readonly Patience patience;
+    private readonly Ripple? ripple;
+    private readonly StepOut? stepOut;
+    private readonly Cutters? cutters;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
     public Sim(Tuning tuning, Lane lane, ulong seed)
@@ -23,9 +26,13 @@ public sealed class Sim
         ArgumentNullException.ThrowIfNull(tuning);
         ArgumentNullException.ThrowIfNull(lane);
         this.tuning = tuning;
-        this.lane = lane;
         this.seed = seed;
         rng = new Rng(seed);
+        line = new Line(lane, tuning.Zones);
+        patience = new Patience(tuning.Patience, line);
+        ripple = tuning.Ripple is { } rippleTuning ? new Ripple(rippleTuning, lane, tuning.WalkAcceleration) : null;
+        stepOut = tuning.StepOut is { } stepOutTuning ? new StepOut(stepOutTuning, tuning.Zones, line) : null;
+        cutters = tuning.Cutter is { } cutterTuning ? new Cutters(cutterTuning, tuning.GraceWindowTicks, lane, line) : null;
     }
 
     /// <summary>How many ticks have been stepped.</summary>
@@ -43,17 +50,17 @@ public sealed class Sim
             throw new ArgumentOutOfRangeException(nameof(position), position, "An agent spawns at a finite position.");
         }
 
-        var id = new AgentId(agents.Count);
+        var id = new AgentId(line.Agents.Count);
         var spawned = new Agent(id, position, trait, cutter, new Rng(seed, AgentStreams + (ulong)id.Value));
-        if (tuning.Ripple is { } ripple)
+        if (tuning.Ripple is { } rippleTuning)
         {
-            spawned.PreferredSpacing = ripple.SpacingMeters.Draw(spawned.Rng);
+            spawned.PreferredSpacing = rippleTuning.SpacingMeters.Draw(spawned.Rng);
         }
 
-        agents.Add(spawned);
-        Measure();
-        Classify();
-        foreach (var agent in agents)
+        line.Add(spawned);
+        line.Measure();
+        line.Classify();
+        foreach (var agent in line.Agents)
         {
             TrackGap(agent, events: null);
         }
@@ -68,6 +75,7 @@ public sealed class Sim
     public IReadOnlyList<SimEvent> Step(IReadOnlyDictionary<AgentId, Command> commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
+        var agents = line.Agents;
         foreach (var id in commands.Keys)
         {
             if (id.Value < 0 || id.Value >= agents.Count)
@@ -83,23 +91,23 @@ public sealed class Sim
         }
 
         var before = agents.Select(agent => (agent.InLane, agent.Zone, agent.Lane.Along)).ToList();
-        Measure();
+        line.Measure();
         var placed = new List<SimEvent>?[agents.Count];
         var cutHits = new float[agents.Count];
         for (var i = 0; i < agents.Count; i++)
         {
             var agent = agents[i];
-            if (agent is { Step: LineStep.Cutting, InLane: true } && !before[i].InLane && tuning.Cutter is { } cutter)
+            if (agent is { Step: LineStep.Cutting, InLane: true } && !before[i].InLane && cutters is not null)
             {
-                placed[i] = SlideIn(agent, cutter, cutHits);
+                placed[i] = cutters.SlideIn(agent, Tick, cutHits);
             }
-            else if (tuning.StepOut is { } stepOut)
+            else if (stepOut is not null)
             {
-                placed[i] = StepInOrOut(agent, before[i].InLane, before[i].Along, stepOut, cutHits);
+                placed[i] = stepOut.Place(agent, before[i].InLane, before[i].Along, Tick, cutHits);
             }
         }
 
-        Classify();
+        line.Classify();
 
         var events = new List<SimEvent>();
         var bumped = new bool[agents.Count];
@@ -136,24 +144,17 @@ public sealed class Sim
 
         foreach (var agent in agents)
         {
-            WearPatience(agent, bumped[agent.Id.Value], cutHits[agent.Id.Value], events);
+            patience.Wear(agent, bumped[agent.Id.Value], cutHits[agent.Id.Value], Tick, events);
         }
 
-        foreach (var ranOut in events.OfType<PatienceRanOut>().ToList())
-        {
-            if (agents[ranOut.Agent.Value].Ahead is { } ahead)
-            {
-                events.Add(KickOut(agents[ahead.Value], ranOut.Agent));
-            }
-        }
-
+        patience.KickOuts(Tick, events);
         foreach (var happened in events)
         {
-            var agent = agents[happened.Agent.Value];
+            var agent = line[happened.Agent];
             agent.Tally = agent.Tally.Counting(happened, agent.Id);
             if (happened is CutterEntered entered)
             {
-                agents[entered.Behind.Value].Tally = agents[entered.Behind.Value].Tally.Counting(happened, entered.Behind);
+                line[entered.Behind].Tally = line[entered.Behind].Tally.Counting(happened, entered.Behind);
             }
         }
 
@@ -161,7 +162,7 @@ public sealed class Sim
     }
 
     /// <summary>The state as of the last tick.</summary>
-    public Snapshot Snapshot() => new(Tick, [.. agents.Select(agent => agent.Snapshot())]);
+    public Snapshot Snapshot() => new(Tick, [.. line.Agents.Select(agent => agent.Snapshot())]);
 
     /// <summary>
     /// A hash of everything the next tick depends on. Two sims with the same hash play on identically;
@@ -171,8 +172,8 @@ public sealed class Sim
     public ulong StateHash()
     {
         var (state, increment) = rng.Position;
-        var hash = new StateHash().Add(Tick).Add(state).Add(increment).Add((long)agents.Count);
-        foreach (var agent in agents)
+        var hash = new StateHash().Add(Tick).Add(state).Add(increment).Add((long)line.Agents.Count);
+        foreach (var agent in line.Agents)
         {
             hash.Add(agent.Position.X).Add(agent.Position.Y)
                 .Add(agent.Velocity.X).Add(agent.Velocity.Y)
@@ -193,109 +194,15 @@ public sealed class Sim
         return hash.Value;
     }
 
-    /// <summary>
-    /// Drains the agent's patience while the person ahead holds a gap open past its grace window, recovers it while
-    /// they stay tight on theirs, and takes a hit when the person behind walked into it or someone cut in ahead of it.
-    /// </summary>
-    private void WearPatience(Agent agent, bool bumped, float cutHit, List<SimEvent> events)
-    {
-        if (agent.Trait is not { } trait)
-        {
-            return;
-        }
-
-        var rates = tuning.Patience;
-        var ahead = agent.Ahead is { } id ? agents[id.Value] : null;
-        var change = ahead switch
-        {
-            { Zone: Zone.Gap, GraceExpired: true } => -rates.GapDrainPerSecond * trait.DrainScale / TickRate.PerSecond,
-            { Zone: Zone.Tight } => rates.TightRecoveryPerSecond * trait.RecoveryScale / TickRate.PerSecond,
-            _ => 0f,
-        };
-        if (bumped)
-        {
-            change -= rates.BumpHit * trait.BumpScale;
-        }
-
-        change -= cutHit;
-
-        var before = agent.Patience;
-        var shownBefore = trait.Shown(agent.Stage);
-        agent.Patience = Math.Clamp(before + change, 0f, PatienceTuning.Full);
-        agent.Stage = rates.Stages.After(agent.Stage, agent.Patience);
-        var shown = trait.Shown(agent.Stage);
-        if (shown != shownBefore)
-        {
-            events.Add(new StageChanged(Tick, agent.Id, shownBefore, shown));
-        }
-
-        if (agent.Patience == 0f && before > 0f)
-        {
-            events.Add(new PatienceRanOut(Tick, agent.Id));
-        }
-    }
-
-    /// <summary>
-    /// The command the line gives an agent nobody commands. It notices the person ahead move off and steps up after a
-    /// reaction delay; at the front it walks up to the counter, is served, and leaves the lane to the side. Without a
-    /// ripple it stands still.
-    /// </summary>
+    /// <summary>The command for an agent nobody commands: a waiting cutter's, the ripple's, or standing still without either.</summary>
     private Command FollowLine(Agent agent)
     {
-        if (agent is { Cutter: true, InLane: false, Step: LineStep.Standing or LineStep.Cutting } && tuning.Cutter is { } cutter)
+        if (agent is { Cutter: true, InLane: false, Step: LineStep.Standing or LineStep.Cutting } && cutters is not null)
         {
-            return Cut(agent, cutter);
+            return cutters.Next(agent, Tick);
         }
 
-        if (tuning.Ripple is not { } ripple)
-        {
-            return Command.Idle;
-        }
-
-        // How far back the agent is from where it wants to stand: its spacing behind the person ahead, or the counter.
-        var toGo = agent.Spacing is { } spacing ? spacing - agent.PreferredSpacing : agent.Lane.Along;
-        switch (agent.Step)
-        {
-            case LineStep.Standing when agent is { InLane: true, Refused: false } && toGo > ripple.NoticeMeters:
-                Begin(agent, LineStep.Noticed, ripple.ReactionTicks);
-                break;
-            case LineStep.Standing when agent is { InLane: true, Refused: false, Ahead: null }:
-                Begin(agent, LineStep.BeingServed, ripple.ServiceTicks);
-                break;
-            case LineStep.Noticed when Tick >= agent.StepEndsAt:
-                agent.Step = agent is { InLane: true, Refused: false } && toGo > 0f ? LineStep.SteppingUp : LineStep.Standing;
-                break;
-            case LineStep.BeingServed when Tick >= agent.StepEndsAt:
-                agent.Step = LineStep.Leaving;
-                break;
-            case LineStep.Leaving when agent.Lane.Off >= lane.HalfWidth + ripple.LeaveMeters:
-                agent.Step = LineStep.Done;
-                break;
-        }
-
-        // Stops walking once what is left is what it takes to slow down.
-        var braking = agent.Velocity.LengthSquared() / (2f * tuning.WalkAcceleration);
-        if (agent.Step == LineStep.SteppingUp && (agent is not { InLane: true, Refused: false } || toGo <= braking))
-        {
-            agent.Step = LineStep.Standing;
-        }
-
-        return agent.Step switch
-        {
-            LineStep.SteppingUp => new(lane.TowardFront(agent.Position)),
-            LineStep.Leaving => new(Aside(lane.TowardFront(agent.Position))),
-            _ => Command.Idle,
-        };
-    }
-
-    /// <summary>A quarter turn from <paramref name="direction"/>: the way a served agent leaves the lane.</summary>
-    private static Vector2 Aside(Vector2 direction) => new(-direction.Y, direction.X);
-
-    /// <summary>Puts the agent at <paramref name="step"/> until a duration drawn from <paramref name="ticks"/> has passed.</summary>
-    private void Begin(Agent agent, LineStep step, TickRange ticks)
-    {
-        agent.Step = step;
-        agent.StepEndsAt = Tick + ticks.Draw(agent.Rng);
+        return ripple?.Next(agent, Tick) ?? Command.Idle;
     }
 
     /// <summary>Eases the agent's velocity toward its wanted one by at most a tick's acceleration, then moves it.</summary>
@@ -307,171 +214,6 @@ public sealed class Sim
         var length = change.Length();
         agent.Velocity = length > maxChange ? agent.Velocity + (change * (maxChange / length)) : wanted;
         agent.Position += agent.Velocity / TickRate.PerSecond;
-    }
-
-    /// <summary>
-    /// What stepping out of the lane or into it this tick did to the agent's place in the line. Stepping out holds the
-    /// place for a while; stepping back in ahead of whoever stood behind returns to it. Stepping in anywhere else but
-    /// the back cuts in: the person behind takes a hit in <paramref name="cutHits"/>, and with no room to stand the
-    /// line refuses the agent a place. The events say what happened to the place.
-    /// </summary>
-    private List<SimEvent>? StepInOrOut(Agent agent, bool wasInLane, float wasAlong, StepOutTuning stepOut, float[] cutHits)
-    {
-        if (wasInLane && !agent.InLane)
-        {
-            if (agent is { Refused: false, Step: not (LineStep.Leaving or LineStep.Done) })
-            {
-                agent.HeldAlong = wasAlong;
-                agent.HoldEndsAt = Tick + stepOut.SpotHoldTicks;
-                agent.HeldBehind = agents.FirstOrDefault(other => other.Ahead == agent.Id)?.Id;
-            }
-
-            agent.Refused = false;
-            return null;
-        }
-
-        if (wasInLane || !agent.InLane)
-        {
-            return agent.HeldAlong is not null && Tick >= agent.HoldEndsAt ? [LoseSpot(agent)] : null;
-        }
-
-        var along = agent.Lane.Along;
-        var (ahead, behind) = Around(agent, along);
-        var holding = agent.HeldAlong is not null;
-        if (holding && behind?.Id == agent.HeldBehind)
-        {
-            agent.HeldAlong = null;
-            agent.HeldBehind = null;
-            return null;
-        }
-
-        var outcomes = new List<SimEvent>();
-        if (behind is not null)
-        {
-            var room = behind.LineAlong - along >= tuning.Zones.BumpBelow
-                && (ahead is null || along - ahead.LineAlong >= tuning.Zones.BumpBelow);
-            agent.Refused = !room;
-            cutHits[behind.Id.Value] += !room ? stepOut.MissHit : behind switch
-            {
-                { Zone: Zone.Gap, GraceExpired: true } => stepOut.PastGraceHit,
-                { Zone: Zone.Gap } => stepOut.GapHit,
-                _ => stepOut.LooseHit,
-            };
-            outcomes.Add(room ? new CutIn(Tick, agent.Id, behind.Id) : new CutInMissed(Tick, agent.Id, behind.Id));
-        }
-
-        if (holding)
-        {
-            outcomes.Add(LoseSpot(agent));
-        }
-
-        return outcomes;
-    }
-
-    /// <summary>
-    /// The cutter's command: walk to the middle of the gap nearest it that has stayed open
-    /// <see cref="CutterTuning.AfterGraceTicks"/> past its grace window, or stand while there is none.
-    /// </summary>
-    private Command Cut(Agent agent, CutterTuning cutter)
-    {
-        var target = agents
-            .Where(other => other is { InLine: true, Zone: Zone.Gap, GapOpenedAt: { } opened } && Tick - opened >= tuning.GraceWindowTicks + cutter.AfterGraceTicks)
-            .MinBy(other => (Math.Abs(other.LineAlong - agent.Lane.Along), other.Id.Value));
-        if (target is not { Spacing: { } spacing })
-        {
-            agent.Step = LineStep.Standing;
-            return Command.Idle;
-        }
-
-        agent.Step = LineStep.Cutting;
-        var toward = lane.PointAt(target.LineAlong - (spacing / 2f)) - agent.Position;
-        return toward == Vector2.Zero ? Command.Idle : new(Vector2.Normalize(toward));
-    }
-
-    /// <summary>
-    /// A cutter stepping into the lane slides in wherever it stands. The person behind the one it got ahead of blames
-    /// them, taking a hit in <paramref name="cutHits"/>.
-    /// </summary>
-    private List<SimEvent>? SlideIn(Agent agent, CutterTuning cutter, float[] cutHits)
-    {
-        agent.Step = LineStep.Standing;
-        if (Around(agent, agent.Lane.Along).Behind is not { } behind)
-        {
-            return null;
-        }
-
-        if (agents.FirstOrDefault(other => other.Ahead == behind.Id) is { } blaming)
-        {
-            cutHits[blaming.Id.Value] += cutter.BlameHit;
-        }
-
-        return [new CutterEntered(Tick, agent.Id, behind.Id)];
-    }
-
-    /// <summary>Who in the line would stand ahead of and behind <paramref name="agent"/> if it took a place at <paramref name="along"/>.</summary>
-    private (Agent? Ahead, Agent? Behind) Around(Agent agent, float along)
-    {
-        var others = agents.Where(other => other != agent && other.InLine).ToList();
-        return (
-            others.Where(other => !Behind(other, along, agent.Id)).MaxBy(other => (other.LineAlong, other.Id.Value)),
-            others.Where(other => Behind(other, along, agent.Id)).MinBy(other => (other.LineAlong, other.Id.Value)));
-    }
-
-    /// <summary>Whether <paramref name="other"/> stands behind a place at <paramref name="along"/> taken by agent <paramref name="id"/>.</summary>
-    private static bool Behind(Agent other, float along, AgentId id) =>
-        other.LineAlong > along || (other.LineAlong == along && other.Id.Value > id.Value);
-
-    private SpotLost LoseSpot(Agent agent)
-    {
-        agent.HeldAlong = null;
-        agent.HeldBehind = null;
-        return new SpotLost(Tick, agent.Id);
-    }
-
-    /// <summary>Takes the agent's place in the line from it, held or not; an agent the line moves walks off.</summary>
-    private KickedOut KickOut(Agent agent, AgentId by)
-    {
-        agent.Refused = agent.InLane;
-        agent.HeldAlong = null;
-        agent.HeldBehind = null;
-        agent.Step = LineStep.Leaving;
-        agent.KickedOutAt ??= Tick;
-        return new KickedOut(Tick, agent.Id, by);
-    }
-
-    /// <summary>Measures every agent against the lane.</summary>
-    private void Measure()
-    {
-        foreach (var agent in agents)
-        {
-            agent.Lane = lane.Measure(agent.Position);
-            agent.InLane = lane.Holds(agent.Lane);
-        }
-    }
-
-    /// <summary>Finds the person ahead of everyone in the line, their spacing and their zone.</summary>
-    private void Classify()
-    {
-        foreach (var agent in agents)
-        {
-            agent.Ahead = null;
-            agent.Spacing = null;
-            agent.Zone = null;
-        }
-
-        var line = agents.Where(agent => agent.InLine).ToList();
-        line.Sort((a, b) => a.LineAlong != b.LineAlong
-            ? a.LineAlong.CompareTo(b.LineAlong)
-            : a.Id.Value.CompareTo(b.Id.Value));
-        for (var i = 1; i < line.Count; i++)
-        {
-            var agent = line[i];
-            var ahead = line[i - 1];
-            var spacing = agent.LineAlong - ahead.LineAlong;
-            agent.Ahead = ahead.Id;
-            agent.Spacing = spacing;
-            agent.Zone = tuning.Zones.ZoneAt(spacing);
-        }
     }
 
     /// <summary>Starts, runs out or clears the agent's grace window to match its zone.</summary>
