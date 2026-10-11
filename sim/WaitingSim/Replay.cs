@@ -51,7 +51,7 @@ public sealed record Replay(
         var sim = new Sim(Tuning, Lane, Seed);
         foreach (var agent in Agents)
         {
-            sim.Spawn(agent.Position, agent.Trait is { } id ? Traits.Single(trait => trait.Id == id) : null);
+            sim.Spawn(agent.Position, agent.Trait is { } id ? Traits.Single(trait => trait.Id == id) : null, agent.Cutter);
         }
 
         var held = new Dictionary<AgentId, Command>();
@@ -127,6 +127,11 @@ public sealed record Replay(
                 if (agent.Trait is { } trait)
                 {
                     writer.WriteString("trait", trait);
+                }
+
+                if (agent.Cutter)
+                {
+                    writer.WriteBoolean("cutter", true);
                 }
 
                 writer.WriteEndObject();

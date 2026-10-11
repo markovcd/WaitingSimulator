@@ -9,6 +9,7 @@ namespace WaitingSim;
 /// <param name="WalkAcceleration">How quickly walking speeds up, slows down and turns, in meters per second squared.</param>
 /// <param name="Patience">How patience drains, recovers and shows.</param>
 /// <param name="Ripple">How the line moves on its own; without it, an agent given no command stands still.</param>
+/// <param name="Cutter">When a cutter slides into a gap; without it, cutters stand where they are.</param>
 /// <param name="StepOut">How the line treats an agent that steps out and back in; without it, stepping out leaves the line at once and stepping in joins it anywhere.</param>
 public sealed record Tuning(
     int GraceWindowTicks,
@@ -17,7 +18,8 @@ public sealed record Tuning(
     float WalkAcceleration,
     PatienceTuning Patience,
     RippleTuning? Ripple = null,
-    StepOutTuning? StepOut = null)
+    StepOutTuning? StepOut = null,
+    CutterTuning? Cutter = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -50,7 +52,33 @@ public sealed record Tuning(
         var acceleration = JsonFile.Positive(walking, "walking.accelerationMetersPerSecondSquared", problems);
 
         var limits = new ZoneLimits(bumpBelow, tightBelow, looseBelow);
-        return new(graceWindowTicks, limits, speed, acceleration, ReadPatience(root, problems), ReadRipple(root, limits, problems), ReadStepOut(root, problems));
+        return new(
+            graceWindowTicks,
+            limits,
+            speed,
+            acceleration,
+            ReadPatience(root, problems),
+            ReadRipple(root, limits, problems),
+            ReadStepOut(root, problems),
+            ReadCutter(root, problems));
+    }
+
+    /// <summary>Reads the <c>cutter</c> object, which a tuning file may leave out.</summary>
+    private static CutterTuning? ReadCutter(JsonElement root, List<string> problems)
+    {
+        if (!root.TryGetProperty("cutter", out _))
+        {
+            return null;
+        }
+
+        var cutter = JsonFile.Section(root, "cutter", problems);
+        var afterGrace = JsonFile.Integer(cutter, "cutter.afterGraceTicks", problems);
+        if (afterGrace is < 0 or > MaxDurationTicks && problems.Count == 0)
+        {
+            problems.Add(JsonFile.Invariant($"cutter.afterGraceTicks: must be from 0 up to {MaxDurationTicks}"));
+        }
+
+        return new(afterGrace, JsonFile.Positive(cutter, "cutter.blameHit", problems));
     }
 
     /// <summary>Reads the <c>stepOut</c> object, which a tuning file may leave out.</summary>

@@ -65,6 +65,7 @@ Levels are built once and reused. A level is a scenario; the mode is the rules w
 
 ### Cutters
 If the gap stays open too long, a cutter slides in front. You lose position and the person behind blames you (large patience hit).
+- **Prototype rule:** a level places cutters beside the line. Once a gap has stayed open past its grace window for a further delay (about 2 s), the nearest cutter walks to the middle of it and slides in; if the gap closes first, it stops where it is and waits for the next one. Letting one in is a mistake on the result screen.
 
 ### The line ripple
 The front moves in bursts, and the movement travels back with a variable delay. Reading and anticipating the ripple is the core skill.

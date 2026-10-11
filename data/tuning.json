@@ -21,6 +21,10 @@
     "spotHoldTicks": 300,
     "cutIn": { "pastGraceHit": 10, "gapHit": 20, "looseHit": 35, "missHit": 15 }
   },
+  "cutter": {
+    "afterGraceTicks": 120,
+    "blameHit": 40
+  },
   "patience": {
     "stages": {
       "restlessBelow": 70,

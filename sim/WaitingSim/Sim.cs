@@ -33,9 +33,10 @@ public sealed class Sim
 
     /// <summary>
     /// Places a new agent at <paramref name="position"/>, standing still, with full patience if it has a
-    /// <paramref name="trait"/>. With a ripple, it draws the spacing it likes to stand at. Level setup: it reports no events.
+    /// <paramref name="trait"/>. A <paramref name="cutter"/> waits for a gap left open too long. With a ripple, it draws
+    /// the spacing it likes to stand at. Level setup: it reports no events.
     /// </summary>
-    public AgentId Spawn(Vector2 position, Trait? trait = null)
+    public AgentId Spawn(Vector2 position, Trait? trait = null, bool cutter = false)
     {
         if (!float.IsFinite(position.X) || !float.IsFinite(position.Y))
         {
@@ -43,7 +44,7 @@ public sealed class Sim
         }
 
         var id = new AgentId(agents.Count);
-        var spawned = new Agent(id, position, trait, new Rng(seed, AgentStreams + (ulong)id.Value));
+        var spawned = new Agent(id, position, trait, cutter, new Rng(seed, AgentStreams + (ulong)id.Value));
         if (tuning.Ripple is { } ripple)
         {
             spawned.PreferredSpacing = ripple.SpacingMeters.Draw(spawned.Rng);
@@ -85,11 +86,16 @@ public sealed class Sim
         Measure();
         var placed = new List<SimEvent>?[agents.Count];
         var cutHits = new float[agents.Count];
-        if (tuning.StepOut is { } stepOut)
+        for (var i = 0; i < agents.Count; i++)
         {
-            for (var i = 0; i < agents.Count; i++)
+            var agent = agents[i];
+            if (agent is { Step: LineStep.Cutting, InLane: true } && !before[i].InLane && tuning.Cutter is { } cutter)
             {
-                placed[i] = StepInOrOut(agents[i], before[i].InLane, before[i].Along, stepOut, cutHits);
+                placed[i] = SlideIn(agent, cutter, cutHits);
+            }
+            else if (tuning.StepOut is { } stepOut)
+            {
+                placed[i] = StepInOrOut(agent, before[i].InLane, before[i].Along, stepOut, cutHits);
             }
         }
 
@@ -144,7 +150,11 @@ public sealed class Sim
         foreach (var happened in events)
         {
             var agent = agents[happened.Agent.Value];
-            agent.Tally = agent.Tally.Counting(happened);
+            agent.Tally = agent.Tally.Counting(happened, agent.Id);
+            if (happened is CutterEntered entered)
+            {
+                agents[entered.Behind.Value].Tally = agents[entered.Behind.Value].Tally.Counting(happened, entered.Behind);
+            }
         }
 
         return events;
@@ -176,7 +186,8 @@ public sealed class Sim
                 .Add((long)agent.Stage);
             var (agentState, agentIncrement) = agent.Rng.Position;
             hash.Add(agentState).Add(agentIncrement).Add(agent.PreferredSpacing).Add((long)agent.Step).Add(agent.StepEndsAt)
-                .Add(agent.HeldAlong ?? -1f).Add(agent.HoldEndsAt).Add((long)(agent.HeldBehind?.Value ?? -1)).Add(agent.Refused);
+                .Add(agent.HeldAlong ?? -1f).Add(agent.HoldEndsAt).Add((long)(agent.HeldBehind?.Value ?? -1)).Add(agent.Refused)
+                .Add(agent.Cutter);
         }
 
         return hash.Value;
@@ -231,6 +242,11 @@ public sealed class Sim
     /// </summary>
     private Command FollowLine(Agent agent)
     {
+        if (agent is { Cutter: true, InLane: false, Step: LineStep.Standing or LineStep.Cutting } && tuning.Cutter is { } cutter)
+        {
+            return Cut(agent, cutter);
+        }
+
         if (tuning.Ripple is not { } ripple)
         {
             return Command.Idle;
@@ -320,9 +336,7 @@ public sealed class Sim
         }
 
         var along = agent.Lane.Along;
-        var others = agents.Where(other => other != agent && other.InLine).ToList();
-        var behind = others.Where(other => Behind(other, along, agent.Id)).MinBy(other => (other.LineAlong, other.Id.Value));
-        var ahead = others.Where(other => !Behind(other, along, agent.Id)).MaxBy(other => (other.LineAlong, other.Id.Value));
+        var (ahead, behind) = Around(agent, along);
         var holding = agent.HeldAlong is not null;
         if (holding && behind?.Id == agent.HeldBehind)
         {
@@ -352,6 +366,55 @@ public sealed class Sim
         }
 
         return outcomes;
+    }
+
+    /// <summary>
+    /// The cutter's command: walk to the middle of the gap nearest it that has stayed open
+    /// <see cref="CutterTuning.AfterGraceTicks"/> past its grace window, or stand while there is none.
+    /// </summary>
+    private Command Cut(Agent agent, CutterTuning cutter)
+    {
+        var target = agents
+            .Where(other => other is { InLine: true, Zone: Zone.Gap, GapOpenedAt: { } opened } && Tick - opened >= tuning.GraceWindowTicks + cutter.AfterGraceTicks)
+            .MinBy(other => (Math.Abs(other.LineAlong - agent.Lane.Along), other.Id.Value));
+        if (target is not { Spacing: { } spacing })
+        {
+            agent.Step = LineStep.Standing;
+            return Command.Idle;
+        }
+
+        agent.Step = LineStep.Cutting;
+        var toward = lane.PointAt(target.LineAlong - (spacing / 2f)) - agent.Position;
+        return toward == Vector2.Zero ? Command.Idle : new(Vector2.Normalize(toward));
+    }
+
+    /// <summary>
+    /// A cutter stepping into the lane slides in wherever it stands. The person behind the one it got ahead of blames
+    /// them, taking a hit in <paramref name="cutHits"/>.
+    /// </summary>
+    private List<SimEvent>? SlideIn(Agent agent, CutterTuning cutter, float[] cutHits)
+    {
+        agent.Step = LineStep.Standing;
+        if (Around(agent, agent.Lane.Along).Behind is not { } behind)
+        {
+            return null;
+        }
+
+        if (agents.FirstOrDefault(other => other.Ahead == behind.Id) is { } blaming)
+        {
+            cutHits[blaming.Id.Value] += cutter.BlameHit;
+        }
+
+        return [new CutterEntered(Tick, agent.Id, behind.Id)];
+    }
+
+    /// <summary>Who in the line would stand ahead of and behind <paramref name="agent"/> if it took a place at <paramref name="along"/>.</summary>
+    private (Agent? Ahead, Agent? Behind) Around(Agent agent, float along)
+    {
+        var others = agents.Where(other => other != agent && other.InLine).ToList();
+        return (
+            others.Where(other => !Behind(other, along, agent.Id)).MaxBy(other => (other.LineAlong, other.Id.Value)),
+            others.Where(other => Behind(other, along, agent.Id)).MinBy(other => (other.LineAlong, other.Id.Value)));
     }
 
     /// <summary>Whether <paramref name="other"/> stands behind a place at <paramref name="along"/> taken by agent <paramref name="id"/>.</summary>

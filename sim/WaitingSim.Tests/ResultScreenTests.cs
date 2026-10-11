@@ -8,7 +8,7 @@ public sealed class ResultScreenTests
     [Fact]
     public void The_result_screen_shows_the_clerk_s_line_the_time_in_line_and_every_mistake_counted()
     {
-        var tally = new Tally(Bumps: 2, GapsLeftOpen: 1, PlacesLost: 0, MissedCutIns: 0, CutIns: 0);
+        var tally = new Tally(Bumps: 2, GapsLeftOpen: 1, PlacesLost: 0, CuttersLetIn: 0, MissedCutIns: 0, CutIns: 0);
 
         var text = ResultScreen.Text(Player(tally, reachedAt: 83 * TickRate.PerSecond));
 

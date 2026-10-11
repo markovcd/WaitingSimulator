@@ -1,0 +1,307 @@
+{
+  "version": 1,
+  "seed": 3,
+  "ticks": 1800,
+  "tuning": {
+    "version": 1,
+    "graceWindowTicks": 90,
+    "zones": {
+      "bumpBelowMeters": 0.4,
+      "tightBelowMeters": 0.9,
+      "looseBelowMeters": 1.5
+    },
+    "walking": {
+      "speedMetersPerSecond": 1.2,
+      "accelerationMetersPerSecondSquared": 3.0
+    },
+    "ripple": {
+      "serviceTicks": {
+        "min": 120,
+        "max": 360
+      },
+      "reactionTicks": {
+        "min": 15,
+        "max": 60
+      },
+      "spacingMeters": {
+        "min": 0.6,
+        "max": 1.1
+      },
+      "noticeMeters": 0.2,
+      "leaveMeters": 1.0
+    },
+    "stepOut": {
+      "spotHoldTicks": 300,
+      "cutIn": {
+        "pastGraceHit": 10,
+        "gapHit": 20,
+        "looseHit": 35,
+        "missHit": 15
+      }
+    },
+    "cutter": {
+      "afterGraceTicks": 120,
+      "blameHit": 40
+    },
+    "patience": {
+      "stages": {
+        "restlessBelow": 70,
+        "annoyedBelow": 50,
+        "confrontingBelow": 30,
+        "fedUpBelow": 15,
+        "recoverMargin": 5
+      },
+      "gapDrainPerSecond": 4.0,
+      "tightRecoveryPerSecond": 0.5,
+      "bumpHit": 5
+    }
+  },
+  "traits": {
+    "version": 1,
+    "traits": [
+      {
+        "id": "patient",
+        "drainScale": 0.5,
+        "recoveryScale": 2.0,
+        "bumpScale": 0.5,
+        "shownStages": [
+          "calm",
+          "restless",
+          "annoyed",
+          "confronting",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "anxious",
+        "drainScale": 1.5,
+        "recoveryScale": 1.0,
+        "bumpScale": 1.5,
+        "shownStages": [
+          "calm",
+          "restless",
+          "annoyed",
+          "confronting",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "aggressive",
+        "drainScale": 1.5,
+        "recoveryScale": 0.5,
+        "bumpScale": 2.0,
+        "shownStages": [
+          "calm",
+          "confronting",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "passive-aggressive",
+        "drainScale": 1.0,
+        "recoveryScale": 0.5,
+        "bumpScale": 1.0,
+        "shownStages": [
+          "calm",
+          "fedUp"
+        ]
+      },
+      {
+        "id": "oblivious",
+        "drainScale": 0.25,
+        "recoveryScale": 1.0,
+        "bumpScale": 0.25,
+        "shownStages": [
+          "calm",
+          "annoyed",
+          "fedUp"
+        ]
+      }
+    ]
+  },
+  "lane": {
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        10,
+        0
+      ]
+    ],
+    "halfWidth": 0.5
+  },
+  "agents": [
+    {
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "position": [
+        0.8,
+        0
+      ]
+    },
+    {
+      "position": [
+        1.6,
+        0
+      ]
+    },
+    {
+      "position": [
+        2.4,
+        0
+      ]
+    },
+    {
+      "position": [
+        3.2,
+        0
+      ],
+      "trait": "aggressive"
+    },
+    {
+      "position": [
+        2.8,
+        1.5
+      ],
+      "cutter": true
+    }
+  ],
+  "commands": [
+    {
+      "tick": 1,
+      "agent": 3,
+      "move": [
+        0,
+        0
+      ]
+    }
+  ],
+  "hashes": [
+    {
+      "tick": 60,
+      "hash": "e92fa670a1e39d68"
+    },
+    {
+      "tick": 120,
+      "hash": "1e6fd02341337e74"
+    },
+    {
+      "tick": 180,
+      "hash": "74538ae17a079d60"
+    },
+    {
+      "tick": 240,
+      "hash": "e67a5aed6a0bc63d"
+    },
+    {
+      "tick": 300,
+      "hash": "71df1729d24fe0ec"
+    },
+    {
+      "tick": 360,
+      "hash": "548cbd15016060f9"
+    },
+    {
+      "tick": 420,
+      "hash": "f011c2f88e956b88"
+    },
+    {
+      "tick": 480,
+      "hash": "5d47c8fa49e4eb88"
+    },
+    {
+      "tick": 540,
+      "hash": "58ff811ddaff1f73"
+    },
+    {
+      "tick": 600,
+      "hash": "e62513533832e2e6"
+    },
+    {
+      "tick": 660,
+      "hash": "b2ce1f322fc53150"
+    },
+    {
+      "tick": 720,
+      "hash": "60b1321d883ec3d5"
+    },
+    {
+      "tick": 780,
+      "hash": "c30aa6ccb18dbeee"
+    },
+    {
+      "tick": 840,
+      "hash": "e556c4ee44a60bd8"
+    },
+    {
+      "tick": 900,
+      "hash": "02fb6b25af5cdf4e"
+    },
+    {
+      "tick": 960,
+      "hash": "f9c1ee78b363e080"
+    },
+    {
+      "tick": 1020,
+      "hash": "93f39deb5ce585c2"
+    },
+    {
+      "tick": 1080,
+      "hash": "c85ead082bf5745e"
+    },
+    {
+      "tick": 1140,
+      "hash": "2513390d31698b43"
+    },
+    {
+      "tick": 1200,
+      "hash": "015d9ea5b5b98c0e"
+    },
+    {
+      "tick": 1260,
+      "hash": "eecc4449e066354a"
+    },
+    {
+      "tick": 1320,
+      "hash": "1246c5cb48a33a1d"
+    },
+    {
+      "tick": 1380,
+      "hash": "82ed4089a4a556f2"
+    },
+    {
+      "tick": 1440,
+      "hash": "45630c5c129b10f9"
+    },
+    {
+      "tick": 1500,
+      "hash": "7a84282ec06cbc3d"
+    },
+    {
+      "tick": 1560,
+      "hash": "266d15469d93bf1c"
+    },
+    {
+      "tick": 1620,
+      "hash": "5f9d46d037cf7a80"
+    },
+    {
+      "tick": 1680,
+      "hash": "2e5a412b3561ed94"
+    },
+    {
+      "tick": 1740,
+      "hash": "0eab495275478818"
+    },
+    {
+      "tick": 1800,
+      "hash": "5b0bb913e4d080f7"
+    }
+  ]
+}

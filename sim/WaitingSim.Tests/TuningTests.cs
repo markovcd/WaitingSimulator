@@ -91,6 +91,28 @@ public sealed class TuningTests
     }
 
     [Fact]
+    public void A_cutter_reads_into_its_values_and_a_tuning_file_may_leave_it_out()
+    {
+        var withCutter = Valid.Replace("\"patience\": {", "\"cutter\": { \"afterGraceTicks\": 120, \"blameHit\": 40 },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal(new CutterTuning(120, 40), Tuning.Parse(withCutter).Value!.Cutter);
+        Assert.Null(Tuning.Parse(Valid).Value!.Cutter);
+    }
+
+    [Theory]
+    [InlineData("\"afterGraceTicks\": 120", "\"afterGraceTicks\": -5", "cutter.afterGraceTicks: must be from 0 up to 216000")]
+    [InlineData("\"blameHit\": 40", "\"blameHit\": 0", "cutter.blameHit: missing, or not a positive number")]
+    public void A_bad_cutter_field_is_reported_by_name(string field, string replacement, string problem)
+    {
+        var withCutter = Valid.Replace("\"patience\": {", "\"cutter\": { \"afterGraceTicks\": 120, \"blameHit\": 40 },\n  \"patience\": {", StringComparison.Ordinal);
+
+        var parsed = Tuning.Parse(withCutter.Replace(field, replacement, StringComparison.Ordinal));
+
+        Assert.Null(parsed.Value);
+        Assert.Equal([problem], parsed.Problems);
+    }
+
+    [Fact]
     public void A_tuning_file_without_a_step_out_holds_no_place_and_charges_nothing_for_cutting_in()
     {
         Assert.Null(Tuning.Parse(Valid).Value!.StepOut);

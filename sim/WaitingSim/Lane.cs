@@ -42,6 +42,21 @@ public sealed class Lane
     /// <summary>Where <paramref name="point"/> falls against the lane, measured to the nearest point on its line.</summary>
     public LanePosition Measure(Vector2 point) => Nearest(point).Position;
 
+    /// <summary>The point on the lane's line <paramref name="along"/> meters from its front, held to the lane's ends.</summary>
+    public Vector2 PointAt(float along)
+    {
+        for (var i = 1; i < points.Length; i++)
+        {
+            if (along <= startsAlong[i] || i == points.Length - 1)
+            {
+                var t = Math.Clamp((along - startsAlong[i - 1]) / (startsAlong[i] - startsAlong[i - 1]), 0f, 1f);
+                return Vector2.Lerp(points[i - 1], points[i], t);
+            }
+        }
+
+        return points[0];
+    }
+
     /// <summary>The way to the front of the line from the point on its line nearest <paramref name="point"/>, one meter long.</summary>
     public Vector2 TowardFront(Vector2 point)
     {

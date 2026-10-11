@@ -66,6 +66,23 @@ internal static class JsonFile
         return null;
     }
 
+    /// <summary>The true or false at <paramref name="path"/>, or false with a problem.</summary>
+    public static bool Boolean(JsonElement? parent, string path, List<string> problems)
+    {
+        if (parent is not { } element)
+        {
+            return false;
+        }
+
+        if (element.TryGetProperty(Name(path), out var value) && value.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            return value.GetBoolean();
+        }
+
+        problems.Add($"{path}: missing, or not true or false");
+        return false;
+    }
+
     /// <summary>The whole number at <paramref name="path"/>, or 0 with a problem.</summary>
     public static int Integer(JsonElement? parent, string path, List<string> problems)
     {

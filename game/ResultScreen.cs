@@ -29,6 +29,7 @@ internal static class ResultScreen
         Row(text, "BUMPS", tally.Bumps);
         Row(text, "GAPS LEFT OPEN", tally.GapsLeftOpen);
         Row(text, "PLACES LOST", tally.PlacesLost);
+        Row(text, "CUTTERS LET IN", tally.CuttersLetIn);
         Row(text, "TIMES FAILED TO CUT IN", tally.MissedCutIns);
         Row(text, "TIMES CUT IN", tally.CutIns);
         text.Append("\nPRESS R OR START TO LINE UP AGAIN");

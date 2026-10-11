@@ -20,4 +20,7 @@ public enum LineStep
 
     /// <summary>Served and clear of the line; it stands where it stopped.</summary>
     Done,
+
+    /// <summary>A cutter walking to a gap left open too long, to slide into it.</summary>
+    Cutting,
 }

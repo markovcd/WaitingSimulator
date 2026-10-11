@@ -16,6 +16,19 @@ public sealed class LaneTests
         Assert.Equal(0.3f, position.Off, 0.0001f);
     }
 
+    [Theory]
+    [InlineData(2f, 2f, 0f)]
+    [InlineData(6f, 4f, 2f)]
+    [InlineData(-1f, 0f, 0f)]
+    [InlineData(99f, 4f, 4f)]
+    public void A_distance_along_the_lane_is_a_point_on_its_line_held_to_its_ends(float along, float x, float y)
+    {
+        var point = Bent.PointAt(along);
+
+        Assert.Equal(x, point.X, 0.0001f);
+        Assert.Equal(y, point.Y, 0.0001f);
+    }
+
     [Fact]
     public void Distance_past_a_bend_is_measured_around_it_not_across_it()
     {

@@ -12,6 +12,9 @@ public enum Mistake
     /// <summary>Stepped out of the lane and lost its place.</summary>
     LostPlace,
 
+    /// <summary>Left a gap open so long a cutter slid into it.</summary>
+    LetCutterIn,
+
     /// <summary>Tried to cut in without room to stand.</summary>
     MissedCutIn,
 

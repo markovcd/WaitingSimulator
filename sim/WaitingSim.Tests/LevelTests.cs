@@ -78,6 +78,22 @@ public sealed class LevelTests
     }
 
     [Fact]
+    public void An_agent_marked_as_a_cutter_is_spawned_as_one()
+    {
+        var level = Level.Parse(Valid.Replace("\"trait\": \"anxious\" }", "\"trait\": \"anxious\" },\n    { \"position\": [1.5, 3], \"cutter\": true }", StringComparison.Ordinal), Traits).Value!;
+
+        Assert.Equal([false, false, false, true], level.Agents.Select(agent => agent.Cutter).ToList());
+    }
+
+    [Fact]
+    public void A_cutter_mark_that_is_not_true_or_false_is_reported()
+    {
+        var parsed = Level.Parse(Valid.Replace("\"trait\": \"anxious\" }", "\"trait\": \"anxious\", \"cutter\": \"yes\" }", StringComparison.Ordinal), Traits);
+
+        Assert.Equal(["agents[2].cutter: missing, or not true or false"], parsed.Problems);
+    }
+
+    [Fact]
     public void A_trait_id_is_checked_even_when_no_traits_are_known()
     {
         var parsed = Level.Parse(Valid, []);

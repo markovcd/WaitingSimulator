@@ -3,7 +3,7 @@ using System.Numerics;
 namespace WaitingSim;
 
 /// <summary>An agent's mutable state inside the sim.</summary>
-internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, Rng rng)
+internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, bool cutter, Rng rng)
 {
     public AgentId Id { get; } = id;
 
@@ -12,6 +12,9 @@ internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, Rng rng)
 
     /// <summary>The agent's personality; an agent without one, like the player, has no patience.</summary>
     public Trait? Trait { get; } = trait;
+
+    /// <summary>Whether the agent waits beside the line for a gap left open too long, to slide into it.</summary>
+    public bool Cutter { get; } = cutter;
 
     public Vector2 Position { get; set; } = position;
 

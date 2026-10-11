@@ -3,8 +3,11 @@ using System.Text.Json;
 
 namespace WaitingSim;
 
-/// <summary>An agent a level or a replay spawns, in id order: where it starts, and its trait id if it has patience.</summary>
-public sealed record AgentSpawn(Vector2 Position, string? Trait)
+/// <summary>
+/// An agent a level or a replay spawns, in id order: where it starts, its trait id if it has patience, and whether it
+/// is a cutter.
+/// </summary>
+public sealed record AgentSpawn(Vector2 Position, string? Trait, bool Cutter = false)
 {
     /// <summary>
     /// Reads the <c>agents</c> array. A trait id must be one of <paramref name="traits"/>, which
@@ -28,7 +31,9 @@ public sealed record AgentSpawn(Vector2 Position, string? Trait)
                 }
             }
 
-            agents.Add(new AgentSpawn(position, trait));
+            var cutter = items[i].ValueKind == JsonValueKind.Object && items[i].TryGetProperty("cutter", out _)
+                && JsonFile.Boolean(items[i], $"{path}.cutter", problems);
+            agents.Add(new AgentSpawn(position, trait, cutter));
         }
 
         return agents;

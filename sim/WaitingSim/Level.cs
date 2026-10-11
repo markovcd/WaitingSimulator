@@ -28,7 +28,7 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
         var sim = new Sim(tuning, Lane, Seed);
         foreach (var agent in Agents)
         {
-            sim.Spawn(agent.Position, agent.Trait is { } id ? Traits.Single(trait => trait.Id == id) : null);
+            sim.Spawn(agent.Position, agent.Trait is { } id ? Traits.Single(trait => trait.Id == id) : null, agent.Cutter);
         }
 
         return sim;

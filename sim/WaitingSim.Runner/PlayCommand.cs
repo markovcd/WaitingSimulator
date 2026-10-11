@@ -74,7 +74,7 @@ internal static class PlayCommand
                     reachedCounter = player.ReachedCounterAt is not null,
                     kickedOut = kicked,
                     seconds = endedSeconds,
-                    tally = new { tally.Bumps, tally.GapsLeftOpen, tally.PlacesLost, tally.MissedCutIns, tally.CutIns },
+                    tally = new { tally.Bumps, tally.GapsLeftOpen, tally.PlacesLost, tally.CuttersLetIn, tally.MissedCutIns, tally.CutIns },
                     worst,
                 },
                 JsonOptions));

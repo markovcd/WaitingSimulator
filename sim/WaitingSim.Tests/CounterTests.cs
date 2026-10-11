@@ -65,19 +65,20 @@ public sealed class CounterTests
         Run(sim, 200, _ => Commands((ahead, TowardFront)));
         Run(sim, 260, snapshot => Commands((player, snapshot.Agents[player.Value].Zone == Zone.Bump ? Vector2.Zero : TowardFront)));
 
-        Assert.Equal(new Tally(Bumps: 1, GapsLeftOpen: 1, PlacesLost: 0, MissedCutIns: 0, CutIns: 0), Agent(sim, player).Tally);
+        Assert.Equal(new Tally(Bumps: 1, GapsLeftOpen: 1, PlacesLost: 0, CuttersLetIn: 0, MissedCutIns: 0, CutIns: 0), Agent(sim, player).Tally);
         Assert.Equal(default, Agent(sim, ahead).Tally);
     }
 
     [Theory]
-    [InlineData(0, 0, 0, 0, 0, null)]
-    [InlineData(3, 0, 0, 0, 0, Mistake.Bump)]
-    [InlineData(3, 1, 0, 0, 0, Mistake.GapLeftOpen)]
-    [InlineData(3, 1, 1, 0, 0, Mistake.LostPlace)]
-    [InlineData(3, 1, 1, 1, 0, Mistake.MissedCutIn)]
-    [InlineData(0, 0, 0, 1, 1, Mistake.CutIn)]
-    public void The_worst_mistake_is_the_most_serious_made_at_least_once(int bumps, int gaps, int places, int missed, int cutIns, Mistake? worst)
+    [InlineData(0, 0, 0, 0, 0, 0, null)]
+    [InlineData(3, 0, 0, 0, 0, 0, Mistake.Bump)]
+    [InlineData(3, 1, 0, 0, 0, 0, Mistake.GapLeftOpen)]
+    [InlineData(3, 1, 1, 0, 0, 0, Mistake.LostPlace)]
+    [InlineData(3, 1, 1, 1, 0, 0, Mistake.LetCutterIn)]
+    [InlineData(3, 1, 1, 1, 1, 0, Mistake.MissedCutIn)]
+    [InlineData(0, 0, 0, 0, 1, 1, Mistake.CutIn)]
+    public void The_worst_mistake_is_the_most_serious_made_at_least_once(int bumps, int gaps, int places, int cutters, int missed, int cutIns, Mistake? worst)
     {
-        Assert.Equal(worst, new Tally(bumps, gaps, places, missed, cutIns).Worst);
+        Assert.Equal(worst, new Tally(bumps, gaps, places, cutters, missed, cutIns).Worst);
     }
 }
