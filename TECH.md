@@ -81,6 +81,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 /data/                      JSON: traits, levels, tuning presets
 /art/                       raw AI outputs and Blender sources (LFS)
 /tools/                     Blender normalization script, audio variant scripts
+/docs/                      ADRs, glossary, agent rules, handoff notes
 ```
 
 ### 4.2 Tick and time
@@ -156,7 +157,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 - **CI (GitHub Actions):** on every push, `dotnet test` the sim (fast, no engine). On tags, export with headless Godot and upload builds as artifacts.
 - **Debug tools:** in-game overlay with patience values, zones, grace timer, RNG seed and tick; record-and-replay hotkey; a "step one tick" pause mode. These cost little given the architecture and are essential for tuning the hidden meter (§8 readability risk).
 - **AI-assisted development (Claude Code):**
-  - A `CLAUDE.md` at the repo root pins the Godot version, states the architecture rules (no engine calls in `WaitingSim`, commands in, events out, ticks not seconds) and warns against Godot 3 APIs.
+  - `AGENTS.md` (imported by `CLAUDE.md`) loads the engineering rules in `docs/agents/rules/`, adapted from the agentic-coding-practices repo. `simulation.md` and `godot.md` hold this project's architecture rules: no engine calls in `WaitingSim`, commands in, events out, ticks not seconds, no Godot 3 APIs.
   - Claude Code writes code, tests, scenes, shaders, data and tooling, and verifies with `dotnet build`, `dotnet test` and `godot --headless`. The human playtests, judges feel and visuals, and curates assets.
   - Keep `.tscn` files small; build repetitive content (NPC spawns, level geometry) from data in code, since large hand-edited scenes break easily.
   - Run Claude Code locally next to the editor so it can launch the game and read its output.
@@ -170,7 +171,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 | Sim-owned movement feels worse than engine controller | Build the movement model first; tune inertia in the runner and in-game with live JSON reload. |
 | Godot audio too limited for room mode | FMOD spike before room mode (§5.1). |
 | AI assets look inconsistent | Mandatory normalization script plus the unifying shader; reject generations that don't survive both. |
-| AI-written code breaks rules silently | Golden replay tests and unit tests in CI; `CLAUDE.md` architecture rules. |
+| AI-written code breaks rules silently | Golden replay tests and unit tests in CI; the rules in `docs/agents/rules/`, enforced by analyzers where possible. |
 | Float determinism drift | State hashes in replays plus golden replay tests in CI. |
 | Hidden meter unreadable | Debug overlay plus runner data to separate "the tuning is wrong" from "the cue is unclear". |
 
@@ -182,7 +183,9 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 
 ## 10. First steps
 
-1. Add `CLAUDE.md`. Create the `sim/` solution: `WaitingSim`, tests and runner. Implement tick loop, PRNG, `PlayerCommand`, lane projection, spacing zones and the grace timer with unit tests.
+The live list is [TODO.md](TODO.md).
+
+1. Create the `sim/` solution: `WaitingSim`, tests and runner. Implement tick loop, PRNG, `PlayerCommand`, lane projection, spacing zones and the grace timer with unit tests.
 2. Add `PatienceAgent` with stages and hysteresis, plus JSON traits. Write the runner's first bot sweep.
 3. Create the Godot project: first-person camera, input actions, the sim driver with interpolation, and capsule placeholders for the person ahead, the person behind and the clerk.
 4. Wire events to placeholder audio and animation, and add the debug overlay.
