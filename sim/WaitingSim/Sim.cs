@@ -19,6 +19,7 @@ public sealed class Sim
     private readonly Ripple? ripple;
     private readonly StepOut? stepOut;
     private readonly Cutters? cutters;
+    private readonly Bodies? bodies;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
     public Sim(Tuning tuning, Lane lane, ulong seed)
@@ -33,6 +34,7 @@ public sealed class Sim
         ripple = tuning.Ripple is { } rippleTuning ? new Ripple(rippleTuning, lane, tuning.WalkAcceleration) : null;
         stepOut = tuning.StepOut is { } stepOutTuning ? new StepOut(stepOutTuning, tuning.Zones, line) : null;
         cutters = tuning.Cutter is { } cutterTuning ? new Cutters(cutterTuning, tuning.GraceWindowTicks, lane, line) : null;
+        bodies = tuning.Bodies is { } bodyTuning ? new Bodies(bodyTuning, line) : null;
     }
 
     /// <summary>How many ticks have been stepped.</summary>
@@ -89,6 +91,8 @@ public sealed class Sim
         {
             Walk(agent, commands.TryGetValue(agent.Id, out var command) ? command.Validated() : FollowLine(agent));
         }
+
+        bodies?.Separate();
 
         var before = agents.Select(agent => (agent.InLane, agent.Zone, agent.Lane.Along)).ToList();
         line.Measure();

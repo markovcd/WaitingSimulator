@@ -40,6 +40,9 @@ public sealed class TuningTests
 
     private static readonly string WithStepOut = Valid.Replace("\"patience\": {", StepOut, StringComparison.Ordinal);
 
+    private static readonly string WithBodies = Valid.Replace(
+        "\"patience\": {", "\"bodies\": { \"radiusMeters\": 0.18, \"rebound\": 0.5 },\n  \"patience\": {", StringComparison.Ordinal);
+
     [Fact]
     public void The_shipped_tuning_loads_without_problems()
     {
@@ -47,6 +50,33 @@ public sealed class TuningTests
 
         Assert.Empty(parsed.Problems);
         Assert.NotNull(parsed.Value);
+    }
+
+    [Fact]
+    public void The_shipped_tuning_keeps_agents_out_of_each_other()
+    {
+        var tuning = Tuning.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "tuning.json"))).Value!;
+
+        Assert.NotNull(tuning.Bodies);
+    }
+
+    [Fact]
+    public void Bodies_read_into_their_values_and_a_tuning_file_may_leave_them_out()
+    {
+        Assert.Equal(new BodyTuning(0.18f, 0.5f), Tuning.Parse(WithBodies).Value!.Bodies);
+        Assert.Null(Tuning.Parse(Valid).Value!.Bodies);
+    }
+
+    [Theory]
+    [InlineData("\"radiusMeters\": 0.18", "\"radiusMeters\": 0.2", "bodies.radiusMeters: two radii must be below zones.bumpBelowMeters, or walking into someone is never a bump")]
+    [InlineData("\"radiusMeters\": 0.18", "\"radiusMeters\": 0", "bodies.radiusMeters: missing, or not a positive number")]
+    [InlineData("\"rebound\": 0.5", "\"rebound\": 1.5", "bodies.rebound: must be at most 1")]
+    public void A_bad_bodies_field_is_reported_by_name(string field, string replacement, string problem)
+    {
+        var parsed = Tuning.Parse(WithBodies.Replace(field, replacement, StringComparison.Ordinal));
+
+        Assert.Null(parsed.Value);
+        Assert.Equal([problem], parsed.Problems);
     }
 
     [Fact]

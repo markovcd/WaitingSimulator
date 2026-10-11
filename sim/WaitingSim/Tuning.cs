@@ -11,6 +11,7 @@ namespace WaitingSim;
 /// <param name="Ripple">How the line moves on its own; without it, an agent given no command stands still.</param>
 /// <param name="Cutter">When a cutter slides into a gap; without it, cutters stand where they are.</param>
 /// <param name="StepOut">How the line treats an agent that steps out and back in; without it, stepping out leaves the line at once and stepping in joins it anywhere.</param>
+/// <param name="Bodies">How agents keep out of each other; without it, agents walk through each other.</param>
 public sealed record Tuning(
     int GraceWindowTicks,
     ZoneLimits Zones,
@@ -19,7 +20,8 @@ public sealed record Tuning(
     PatienceTuning Patience,
     RippleTuning? Ripple = null,
     StepOutTuning? StepOut = null,
-    CutterTuning? Cutter = null)
+    CutterTuning? Cutter = null,
+    BodyTuning? Bodies = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -60,7 +62,32 @@ public sealed record Tuning(
             ReadPatience(root, problems),
             ReadRipple(root, limits, problems),
             ReadStepOut(root, problems),
-            ReadCutter(root, problems));
+            ReadCutter(root, problems),
+            ReadBodies(root, limits, problems));
+    }
+
+    /// <summary>Reads the <c>bodies</c> object, which a tuning file may leave out.</summary>
+    private static BodyTuning? ReadBodies(JsonElement root, ZoneLimits zones, List<string> problems)
+    {
+        if (!root.TryGetProperty("bodies", out _))
+        {
+            return null;
+        }
+
+        var bodies = JsonFile.Section(root, "bodies", problems);
+        var radius = JsonFile.Positive(bodies, "bodies.radiusMeters", problems);
+        if (!(radius * 2f < zones.BumpBelow) && problems.Count == 0)
+        {
+            problems.Add("bodies.radiusMeters: two radii must be below zones.bumpBelowMeters, or walking into someone is never a bump");
+        }
+
+        var rebound = JsonFile.Positive(bodies, "bodies.rebound", problems);
+        if (rebound > 1f && problems.Count == 0)
+        {
+            problems.Add("bodies.rebound: must be at most 1");
+        }
+
+        return new(radius, rebound);
     }
 
     /// <summary>Reads the <c>cutter</c> object, which a tuning file may leave out.</summary>
