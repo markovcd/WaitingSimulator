@@ -27,7 +27,7 @@ public sealed record Replay(
     string TraitsJson,
     IReadOnlyList<Trait> Traits,
     Lane Lane,
-    IReadOnlyList<ReplayAgent> Agents,
+    IReadOnlyList<AgentSpawn> Agents,
     IReadOnlyList<ReplayCommand> Commands,
     IReadOnlyList<ReplayHash> Hashes)
 {
@@ -173,8 +173,8 @@ public sealed record Replay(
 
         var (tuningJson, tuning) = Embedded(root, "tuning", Tuning.Parse, problems);
         var (traitsJson, traits) = Embedded(root, "traits", WaitingSim.Traits.Parse, problems);
-        var lane = ReadLane(root, problems);
-        var agents = ReadAgents(root, traits ?? [], problems);
+        var lane = Lane.Read(root, problems);
+        var agents = AgentSpawn.ReadAll(root, traits ?? [], "the replay's traits", problems);
         var commands = ReadCommands(root, ticks is >= 1 and <= MaxTicks ? ticks : MaxTicks, agents.Count, problems);
         var hashes = ReadHashes(root, problems);
         return new(seed, ticks, tuningJson, tuning!, traitsJson, traits!, lane!, agents, commands, hashes);
@@ -193,59 +193,6 @@ public sealed record Replay(
         var parsed = parse(json);
         problems.AddRange(parsed.Problems.Select(problem => $"{name}: {problem}"));
         return (json, parsed.Value);
-    }
-
-    private static Lane? ReadLane(JsonElement root, List<string> problems)
-    {
-        var section = JsonFile.Section(root, "lane", problems);
-        var items = JsonFile.Items(section, "lane.points", problems);
-        var points = items.Select(JsonFile.Point).ToList();
-        for (var i = 0; i < points.Count; i++)
-        {
-            if (points[i] is null)
-            {
-                problems.Add(JsonFile.Invariant($"lane.points[{i}]: not a point [x, y] of two finite numbers"));
-            }
-        }
-
-        var halfWidth = JsonFile.Positive(section, "lane.halfWidth", problems);
-        if (problems.Count > 0)
-        {
-            return null;
-        }
-
-        var shape = points.Select(point => point!.Value).ToList();
-        if (Lane.Problem(shape, halfWidth) is { } problem)
-        {
-            problems.Add($"lane: {problem}");
-            return null;
-        }
-
-        return new Lane(shape, halfWidth);
-    }
-
-    private static List<ReplayAgent> ReadAgents(JsonElement root, IReadOnlyList<Trait> traits, List<string> problems)
-    {
-        var agents = new List<ReplayAgent>();
-        var items = JsonFile.Items(root, "agents", problems);
-        for (var i = 0; i < items.Count; i++)
-        {
-            var path = JsonFile.Invariant($"agents[{i}]");
-            var position = JsonFile.Point(items[i], $"{path}.position", problems);
-            string? trait = null;
-            if (items[i].ValueKind == JsonValueKind.Object && items[i].TryGetProperty("trait", out _))
-            {
-                trait = JsonFile.Text(items[i], $"{path}.trait", problems);
-                if (trait.Length > 0 && traits.Count > 0 && traits.All(known => known.Id != trait))
-                {
-                    problems.Add($"{path}.trait: \"{trait}\" is not one of the replay's traits");
-                }
-            }
-
-            agents.Add(new ReplayAgent(position, trait));
-        }
-
-        return agents;
     }
 
     /// <summary>Reads the commands, each between the one before it and <paramref name="lastTick"/>.</summary>

@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json;
 
 namespace WaitingSim;
 
@@ -82,6 +83,36 @@ public sealed class Lane
         }
 
         return null;
+    }
+
+    /// <summary>Reads the <c>lane</c> object: its points and half width. Null, with problems, when it cannot make a lane.</summary>
+    internal static Lane? Read(JsonElement root, List<string> problems)
+    {
+        var section = JsonFile.Section(root, "lane", problems);
+        var items = JsonFile.Items(section, "lane.points", problems);
+        var points = items.Select(JsonFile.Point).ToList();
+        for (var i = 0; i < points.Count; i++)
+        {
+            if (points[i] is null)
+            {
+                problems.Add(JsonFile.Invariant($"lane.points[{i}]: not a point [x, y] of two finite numbers"));
+            }
+        }
+
+        var halfWidth = JsonFile.Positive(section, "lane.halfWidth", problems);
+        if (problems.Count > 0)
+        {
+            return null;
+        }
+
+        var shape = points.Select(point => point!.Value).ToList();
+        if (Problem(shape, halfWidth) is { } problem)
+        {
+            problems.Add($"lane: {problem}");
+            return null;
+        }
+
+        return new Lane(shape, halfWidth);
     }
 
     /// <summary>Whether a point at <paramref name="position"/> is inside the lane.</summary>
