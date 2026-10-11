@@ -41,7 +41,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **stage** | A band of patience with its own visible behavior, from calm through restless, annoyed and confronting to fed up; changes with hysteresis. | `Stage` | level, phase |
 | **cue** | A visible or audible behavior that reveals a stage or an event. | `Cue` | tell, signal |
 | **trait** | An NPC's personality as data: patient, anxious, aggressive, passive-aggressive, oblivious. | `Trait` | personality type, class |
-| **kick-out** | What happens when patience reaches 0: pushed past, staff called, or the crowd turns. | | game over |
+| **kick-out** | What happens when patience reaches 0: pushed past, staff called, or the crowd turns. | `KickedOut` | game over |
 | **distraction** | Anything that competes with watching the line or listening for the call. | | |
 | **tally** | The count of each mistake an agent made on its way to the counter; the clerk names the worst. | `Tally`, `Mistake` | score, record |
 | **result screen** | What shows once the player reaches the counter: the clerk's line, the time in line and the tally. | `ResultScreen` | game over screen |

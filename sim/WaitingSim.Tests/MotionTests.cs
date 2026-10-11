@@ -56,5 +56,5 @@ public sealed class MotionTests
     }
 
     private static AgentSnapshot Agent(int id, Stage stage) =>
-        new(new AgentId(id), Vector2.Zero, Vector2.Zero, true, null, null, null, null, "anxious", 50f, stage, LineStep.Standing, null, false, default, null);
+        new(new AgentId(id), Vector2.Zero, Vector2.Zero, true, null, null, null, null, "anxious", 50f, stage, LineStep.Standing, null, false, default, null, null);
 }

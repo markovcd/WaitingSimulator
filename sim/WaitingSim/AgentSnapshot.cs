@@ -19,6 +19,7 @@ namespace WaitingSim;
 /// <param name="Refused">Whether the line refused it a place for cutting in without room.</param>
 /// <param name="Tally">The mistakes it has made.</param>
 /// <param name="ReachedCounterAt">The tick it first reached the counter, once it has.</param>
+/// <param name="KickedOutAt">The tick it was first kicked out of the line, once it has been.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -35,4 +36,5 @@ public sealed record AgentSnapshot(
     long? SpotHeldUntil,
     bool Refused,
     Tally Tally,
-    long? ReachedCounterAt);
+    long? ReachedCounterAt,
+    long? KickedOutAt);

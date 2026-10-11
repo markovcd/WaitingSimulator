@@ -20,7 +20,7 @@ Requirements: the .NET SDK version in [global.json](global.json), [Git LFS](http
 - Check a replay against its recorded hashes: `dotnet run --project sim/WaitingSim.Runner -- replay <file>` (`--record` rewrites the hashes)
 - Play a level to the counter with a scripted bot: `dotnet run --project sim/WaitingSim.Runner -- play` (`--bot slow`, `--level <name>`, `--json`)
 - A tuning sweep, every trait against every scripted player bot: `dotnet run --project sim/WaitingSim.Runner -- sweep` (`--json` for a report a script can read)
-- Play: open `game/` in Godot 4.7.2 (.NET) and run it. WASD or the left stick walks, the mouse or the right stick looks, holding Q, the right mouse button or the left shoulder glances back, F3 toggles the debug overlay, and Esc frees the mouse. Reaching the counter ends the level with the clerk's line and a result screen; R or Start lines up again.
+- Play: open `game/` in Godot 4.7.2 (.NET) and run it. WASD or the left stick walks, the mouse or the right stick looks, holding Q, the right mouse button or the left shoulder glances back, F3 toggles the debug overlay, and Esc frees the mouse. Reaching the counter, or being kicked out when the person behind runs out of patience, ends the level with a result screen; R or Start lines up again.
 
 | Project | What it is |
 |---|---|

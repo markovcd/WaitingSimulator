@@ -62,7 +62,7 @@ public sealed class Sim
 
     /// <summary>
     /// Advances one tick. Each agent acts on its command in <paramref name="commands"/>; without one, the line moves it.
-    /// Returns what happened: movement through the lane and zones first, then patience, each in agent id order.
+    /// Returns what happened: movement through the lane and zones first, then patience, each in agent id order, then kick-outs.
     /// </summary>
     public IReadOnlyList<SimEvent> Step(IReadOnlyDictionary<AgentId, Command> commands)
     {
@@ -131,6 +131,14 @@ public sealed class Sim
         foreach (var agent in agents)
         {
             WearPatience(agent, bumped[agent.Id.Value], cutHits[agent.Id.Value], events);
+        }
+
+        foreach (var ranOut in events.OfType<PatienceRanOut>().ToList())
+        {
+            if (agents[ranOut.Agent.Value].Ahead is { } ahead)
+            {
+                events.Add(KickOut(agents[ahead.Value], ranOut.Agent));
+            }
         }
 
         foreach (var happened in events)
@@ -355,6 +363,17 @@ public sealed class Sim
         agent.HeldAlong = null;
         agent.HeldBehind = null;
         return new SpotLost(Tick, agent.Id);
+    }
+
+    /// <summary>Takes the agent's place in the line from it, held or not; an agent the line moves walks off.</summary>
+    private KickedOut KickOut(Agent agent, AgentId by)
+    {
+        agent.Refused = agent.InLane;
+        agent.HeldAlong = null;
+        agent.HeldBehind = null;
+        agent.Step = LineStep.Leaving;
+        agent.KickedOutAt ??= Tick;
+        return new KickedOut(Tick, agent.Id, by);
     }
 
     /// <summary>Measures every agent against the lane.</summary>

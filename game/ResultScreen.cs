@@ -4,22 +4,27 @@ using WaitingSim;
 
 namespace WaitingSimulator.Game;
 
-/// <summary>The screen shown once the player reaches the counter: the clerk's line, the time it took and every mistake counted.</summary>
+/// <summary>
+/// The screen shown once the level ends, at the counter or kicked out of the line: the clerk's line or the push past,
+/// the time in line and every mistake counted.
+/// </summary>
 internal static class ResultScreen
 {
     public static string Text(AgentSnapshot player)
     {
         ArgumentNullException.ThrowIfNull(player);
-        if (player.ReachedCounterAt is not { } reached)
+        var kicked = player.KickedOutAt is { } kickedAt && !(player.ReachedCounterAt < kickedAt);
+        if ((kicked ? player.KickedOutAt : player.ReachedCounterAt) is not { } ended)
         {
-            throw new ArgumentException("The player has not reached the counter.", nameof(player));
+            throw new ArgumentException("The player has neither reached the counter nor been kicked out.", nameof(player));
         }
 
         var tally = player.Tally;
-        var seconds = reached / TickRate.PerSecond;
+        var seconds = ended / TickRate.PerSecond;
         var text = new StringBuilder();
-        text.Append(CultureInfo.InvariantCulture, $"CLERK: \"{ClerkLines.For(tally.Worst)}\"\n\n");
-        text.Append("SERVED\n");
+        text.Append(kicked
+            ? "\"EXCUSE ME.\" THE PERSON BEHIND PUSHES PAST YOU.\n\nKICKED OUT\n"
+            : string.Create(CultureInfo.InvariantCulture, $"CLERK: \"{ClerkLines.For(tally.Worst)}\"\n\nSERVED\n"));
         text.Append(CultureInfo.InvariantCulture, $"{"TIME IN LINE",-24}{seconds / 60:00}:{seconds % 60:00}\n");
         Row(text, "BUMPS", tally.Bumps);
         Row(text, "GAPS LEFT OPEN", tally.GapsLeftOpen);

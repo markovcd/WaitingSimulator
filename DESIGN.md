@@ -136,6 +136,7 @@ Optional soft shared layer: nearby annoyed NPCs add a small drain. Keep it simpl
 
 ### Kick-out
 At 0 the NPC pushes past (you lose position), calls staff (warning), or turns the crowd against you. Campaign softens this; arcade makes it a hard fail.
+- **Prototype rule:** the NPC pushes past the person ahead of it, who loses their place: a held place is gone, and the line refuses them one until they step out. For the player this ends the level with a "KICKED OUT" result screen.
 
 ### Tuning knobs
 Grace window length, base drain, recovery rate, distraction frequency, cutter frequency, personality mix.

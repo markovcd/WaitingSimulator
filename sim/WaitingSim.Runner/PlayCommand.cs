@@ -4,8 +4,8 @@ using System.Text.Json;
 namespace WaitingSim.Runner;
 
 /// <summary>
-/// <c>play</c>: plays a level with a scripted player bot until the player reaches the counter, and reports how long it
-/// took and the mistakes it made on the way.
+/// <c>play</c>: plays a level with a scripted player bot until the player reaches the counter or is kicked out, and
+/// reports which, how long it took and the mistakes it made on the way.
 /// </summary>
 internal static class PlayCommand
 {
@@ -60,7 +60,8 @@ internal static class PlayCommand
         var player = Play(tuning, level, bot, seconds);
         var botName = bot.ToString().ToLowerInvariant();
         var worst = player.Tally.Worst is { } mistake ? JsonNamingPolicy.CamelCase.ConvertName(mistake.ToString()) : null;
-        double? reachedSeconds = player.ReachedCounterAt is { } tick ? Math.Round((double)tick / TickRate.PerSecond, 2) : null;
+        var kicked = player.ReachedCounterAt is null && player.KickedOutAt is not null;
+        double? endedSeconds = (player.ReachedCounterAt ?? player.KickedOutAt) is { } tick ? Math.Round((double)tick / TickRate.PerSecond, 2) : null;
         if (json)
         {
             var tally = player.Tally;
@@ -70,8 +71,9 @@ internal static class PlayCommand
                     level = levelName,
                     bot = botName,
                     level.Seed,
-                    reachedCounter = reachedSeconds is not null,
-                    seconds = reachedSeconds,
+                    reachedCounter = player.ReachedCounterAt is not null,
+                    kickedOut = kicked,
+                    seconds = endedSeconds,
                     tally = new { tally.Bumps, tally.GapsLeftOpen, tally.PlacesLost, tally.MissedCutIns, tally.CutIns },
                     worst,
                 },
@@ -79,22 +81,22 @@ internal static class PlayCommand
         }
         else
         {
-            output.WriteLine(reachedSeconds is { } s
-                ? string.Create(CultureInfo.InvariantCulture, $"{levelName}: the {botName} bot reached the counter after {s:0.00} s; worst mistake: {worst ?? "none"}.")
+            output.WriteLine(endedSeconds is { } s
+                ? string.Create(CultureInfo.InvariantCulture, $"{levelName}: the {botName} bot {(kicked ? "was kicked out" : "reached the counter")} after {s:0.00} s; worst mistake: {worst ?? "none"}.")
                 : string.Create(CultureInfo.InvariantCulture, $"{levelName}: the {botName} bot did not reach the counter in {seconds} s; worst mistake: {worst ?? "none"}."));
         }
 
         return ExitCode.Success;
     }
 
-    /// <summary>The player as it stands once it reaches the counter, or after <paramref name="seconds"/> if it never does.</summary>
+    /// <summary>The player as it stands once it reaches the counter or is kicked out, or after <paramref name="seconds"/> if neither happens.</summary>
     private static AgentSnapshot Play(Tuning tuning, Level level, PlayerBot bot, int seconds)
     {
         var sim = level.Start(tuning);
         var brain = new PlayerBrain(bot, level.Lane, new Rng(level.Seed, stream: 2));
         var commands = new Dictionary<AgentId, Command>();
         var player = sim.Snapshot().Agents[level.Player.Value];
-        for (var tick = 0; tick < seconds * TickRate.PerSecond && player.ReachedCounterAt is null; tick++)
+        for (var tick = 0; tick < seconds * TickRate.PerSecond && player is { ReachedCounterAt: null, KickedOutAt: null }; tick++)
         {
             commands[level.Player] = brain.Next(player);
             sim.Step(commands);

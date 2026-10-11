@@ -20,11 +20,21 @@ public sealed class ResultScreenTests
     }
 
     [Fact]
+    public void A_kicked_out_player_sees_the_push_past_instead_of_the_clerk()
+    {
+        var text = ResultScreen.Text(Player(default, reachedAt: null) with { KickedOutAt = 30 * TickRate.PerSecond });
+
+        Assert.StartsWith("\"EXCUSE ME.\" THE PERSON BEHIND PUSHES PAST YOU.\n\nKICKED OUT\n", text, StringComparison.Ordinal);
+        Assert.Contains("TIME IN LINE            00:30", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("CLERK", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void There_is_no_result_before_the_counter()
     {
         Assert.Throws<ArgumentException>(() => ResultScreen.Text(Player(default, reachedAt: null)));
     }
 
     private static AgentSnapshot Player(Tally tally, long? reachedAt) =>
-        new(new AgentId(0), Vector2.Zero, Vector2.Zero, true, null, null, null, null, null, null, null, LineStep.Standing, null, false, tally, reachedAt);
+        new(new AgentId(0), Vector2.Zero, Vector2.Zero, true, null, null, null, null, null, null, null, LineStep.Standing, null, false, tally, reachedAt, null);
 }

@@ -17,7 +17,8 @@ internal static class Cli
                     --lines <n>      Lines per trait and bot, 1 to 10000 (default: 20).
                     --json           Report as JSON.
           play    Play a level with a scripted player bot until the player reaches the
-                  counter, and report how long it took and the worst mistake made.
+                  counter or is kicked out, and report which, how long it took and the
+                  worst mistake made.
                     --data <folder>  Where tuning.json, traits.json and levels/ are (default: data).
                     --level <name>   The level file in levels/, without .json (default: post-office).
                     --bot <bot>      attentive, slow or distracted (default: attentive).
