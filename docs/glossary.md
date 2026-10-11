@@ -35,7 +35,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **cutter** | An NPC that slides into an open gap ahead of the player. | | line-cutter, skipper |
 | **patience** | An NPC's 0–100 tolerance of the player. Hidden from the player except on easy. | `Patience` | mood, anger |
 | **stage** | A band of patience with its own visible behavior, from calm through restless, annoyed and confronting to fed up; changes with hysteresis. | `Stage` | level, phase |
-| **cue** | A visible or audible behavior that reveals a stage or an event. | | tell, signal |
+| **cue** | A visible or audible behavior that reveals a stage or an event. | `Cue` | tell, signal |
 | **trait** | An NPC's personality as data: patient, anxious, aggressive, passive-aggressive, oblivious. | `Trait` | personality type, class |
 | **kick-out** | What happens when patience reaches 0: pushed past, staff called, or the crowd turns. | | game over |
 | **distraction** | Anything that competes with watching the line or listening for the call. | | |
@@ -58,4 +58,5 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **golden replay** | A replay kept in the tests whose hashes must not change. | | |
 | **runner** | The command-line program that plays levels headlessly. | `WaitingSim.Runner` | |
 | **tuning** | The data file of knobs the sim reads. | `Tuning` | config, settings (those are the player's) |
+| **debug overlay** | The on-screen readout of sim values for tuning: tick, seed, zones, grace, patience, stages. | `Overlay` | HUD (the HUD is the player's, set by difficulty) |
 | **settings** | The player's preferences: controls, volume, difficulty. | | options, config |

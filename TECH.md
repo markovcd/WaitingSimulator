@@ -119,6 +119,7 @@ This is the most important technical call in the plan.
 
 ### 5.1 Audio (gameplay-critical)
 Room levels depend on hearing your call through noise, so audio is not polish.
+- **Placeholders now:** each cue (`Cues`: a bump, a stage getting worse, patience running out) plays a generated tone from an `AudioStreamPlayer3D` on the agent; the worse the stage, the lower and longer the tone. No audio assets yet.
 - **Prototype:** Godot buses (Voices, Announcements, Ambience, Phone, UI), `AudioStreamPlayer3D` with attenuation, low-pass and reverb bus effects, raycast-based occlusion, and ducking when the phone is raised.
 - **Before room mode, spike FMOD Studio** (free for small-budget indies) through the community Godot integration. Parameter-driven mixes (TV loudness, crowd density, "phone focus") and randomized containers for mumbles and coughs are what FMOD is good at. Adopt it if the spike shows the integration is stable from C#.
 - **Announcements and voices:** AI-generated deadpan voices (ElevenLabs or similar). Variants (clear, mumbled, through a PA, half-masked by noise, other language) are produced by ffmpeg or sox scripts in `/tools/`. Number and name announcements are assembled from short fragments, so the sim can call any number.
@@ -126,6 +127,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 
 ### 5.2 Animation
 - A shared humanoid skeleton for all NPCs and the clerk. A clip library covering idle, shuffle, step, sigh, watch check, foot tap, lean in, tap shoulder, push past and stumble.
+- **Placeholders now:** `Motion` poses each capsule from the stage it shows (sway, a foot-tap bob, a lean into the line from confronting on) and a stumble when the person behind walks into it, timed in ticks so a replay shows the same. Agents face the front of the lane.
 - An `AnimationTree` state machine keyed by `StageChanged` and movement events. Stage hysteresis lives in the sim, so animation never flickers.
 - Procedural layers for readability: head look-at toward the player (especially when the player glances back), torso lean into personal space, and a little noise. Stiffness is on-brand, so no blending polish is needed.
 
@@ -157,7 +159,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 
 - **Repo:** monorepo as in §4.1. Git LFS for `*.blend`, `*.wav`, `*.ogg`, `*.png`, `*.psd`, `*.glb`.
 - **CI (GitHub Actions):** on every push to main and every pull request, `./gate.sh`: in the gate image (`ci/gate.Dockerfile`, the .NET SDK and Godot pinned), build everything, run every test, import the game with headless Godot and fail if that changes any file, then start the game headless (`-- --smoke`) and fail unless it quits by itself. On tags, export with headless Godot and upload builds as artifacts.
-- **Debug tools:** in-game overlay with patience values, zones, grace timer, RNG seed and tick; record-and-replay hotkey; a "step one tick" pause mode. These cost little given the architecture and are essential for tuning the hidden meter (§8 readability risk).
+- **Debug tools:** the debug overlay (F3) shows the tick, the seed, and each agent's zone, spacing, grace left, patience and stage; the smoke run logs the same text. Still to come: a record-and-replay hotkey; a "step one tick" pause mode. These cost little given the architecture and are essential for tuning the hidden meter (§8 readability risk).
 - **AI-assisted development (Claude Code):**
   - `AGENTS.md` (imported by `CLAUDE.md`) loads the engineering rules in `docs/agents/rules/`, adapted from the agentic-coding-practices repo. `simulation.md` and `godot.md` hold this project's architecture rules: no engine calls in `WaitingSim`, commands in, events out, ticks not seconds, no Godot 3 APIs.
   - Claude Code writes code, tests, scenes, shaders, data and tooling, and verifies with `dotnet build`, `dotnet test` and `godot --headless`. The human playtests, judges feel and visuals, and curates assets.

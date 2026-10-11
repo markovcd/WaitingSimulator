@@ -34,6 +34,9 @@ internal sealed class Driver
     /// <summary>How far the frame has come from <see cref="Previous"/> toward <see cref="Current"/>, from 0 up to 1.</summary>
     public float Blend => (float)owed;
 
+    /// <summary>The moment this frame shows, in ticks: <see cref="Previous"/>'s tick and the blend toward the next.</summary>
+    public float ShownTick => Previous.Tick + Blend;
+
     /// <summary>
     /// Steps as many ticks as <paramref name="seconds"/> of frame time owe, with the player on <paramref name="command"/>,
     /// and returns what happened in them. A frame time that is not a positive number steps nothing.

@@ -17,6 +17,7 @@ internal static class Controls
     public static readonly StringName LookUp = "look_up";
     public static readonly StringName LookDown = "look_down";
     public static readonly StringName GlanceBack = "glance_back";
+    public static readonly StringName DebugOverlay = "debug_overlay";
 
     /// <summary>Radians the head turns per pixel of mouse movement.</summary>
     public const float MouseRadiansPerPixel = 0.0025f;
@@ -38,6 +39,7 @@ internal static class Controls
         Add(LookRight, Stick(JoyAxis.RightX, 1f));
         Add(LookUp, Stick(JoyAxis.RightY, -1f));
         Add(LookDown, Stick(JoyAxis.RightY, 1f));
+        Add(DebugOverlay, Key(Godot.Key.F3));
         Add(GlanceBack, Key(Godot.Key.Q), new InputEventMouseButton { ButtonIndex = MouseButton.Right }, new InputEventJoypadButton { ButtonIndex = JoyButton.LeftShoulder });
     }
 

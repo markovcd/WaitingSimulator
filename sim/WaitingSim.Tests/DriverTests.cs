@@ -43,6 +43,17 @@ public sealed class DriverTests
     }
 
     [Fact]
+    public void A_frame_shows_the_moment_between_the_last_two_ticks_it_blends()
+    {
+        var (driver, _) = Line();
+        Assert.Equal(0f, driver.ShownTick);
+
+        driver.Advance(SixteenthOfASecond, Command.Idle);
+
+        Assert.Equal(2.75f, driver.ShownTick);
+    }
+
+    [Fact]
     public void A_hitch_steps_at_most_the_frame_limit_and_drops_the_rest()
     {
         var (driver, _) = Line();

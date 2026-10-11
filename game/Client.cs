@@ -5,21 +5,27 @@ namespace WaitingSimulator.Game;
 
 /// <summary>
 /// The client's root node: loads the level, builds placeholder scenery for it, and each frame turns input into the
-/// player's command, steps the sim and shows where it put everyone. Started with <c>-- --smoke</c>, it plays a few
-/// frames and quits, which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
+/// player's command, steps the sim, shows where it put everyone and how they stand, and plays the cues its events call
+/// for. F3 toggles the debug overlay. Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits,
+/// which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
 /// </summary>
 public sealed partial class Client : Node3D
 {
     internal const string LevelName = "post-office";
     private const int SmokeFrames = 10;
 
+    private readonly Dictionary<Tone, AudioStreamWav> sounds = [];
     private bool smoke;
     private int frames;
+    private Tuning? tuning;
     private Level? level;
     private Driver? driver;
     private Head? head;
+    private Motion? motion;
     private Camera3D? camera;
+    private Label? overlay;
     private Node3D?[] bodies = [];
+    private AudioStreamPlayer3D[] voices = [];
 
     /// <inheritdoc/>
     public override void _Ready()
@@ -38,8 +44,10 @@ public sealed partial class Client : Node3D
         }
 
         Controls.Register();
+        tuning = loaded.Tuning;
         level = loaded.Level;
-        driver = new Driver(level.Start(loaded.Tuning), level.Player);
+        driver = new Driver(level.Start(tuning), level.Player);
+        motion = new Motion(driver.Current.Agents.Count);
         var player = driver.Current.Agents[level.Player.Value].Position;
         head = new Head(Floor.YawFacing(level.Lane.TowardFront(player)));
         Build();
@@ -53,7 +61,7 @@ public sealed partial class Client : Node3D
     /// <inheritdoc/>
     public override void _Process(double delta)
     {
-        if (driver is null || head is null || level is null)
+        if (driver is null || head is null || level is null || motion is null || tuning is null)
         {
             return;
         }
@@ -63,13 +71,25 @@ public sealed partial class Client : Node3D
         head.Turn(-look.X * turn, -look.Y * turn);
         head.GlancingBack = Input.IsActionPressed(Controls.GlanceBack);
         var stick = Input.GetVector(Controls.MoveLeft, Controls.MoveRight, Controls.MoveForward, Controls.MoveBack);
-        driver.Advance(delta, Floor.Walk(new(stick.X, stick.Y), head.Yaw));
+        var events = driver.Advance(delta, Floor.Walk(new(stick.X, stick.Y), head.Yaw));
+        foreach (var cue in Cues.From(events, driver.Current))
+        {
+            motion.Show(cue, driver.Current.Tick);
+            var voice = voices[cue.Agent.Value];
+            voice.Stream = sounds[Sounds.For(cue)];
+            voice.Play();
+        }
+
         Place();
+        if (overlay!.Visible)
+        {
+            overlay.Text = Overlay.Text(driver.Current, level, tuning);
+        }
 
         if (smoke && ++frames == SmokeFrames)
         {
-            GD.Print($"Client ready; sim {typeof(Sim).Assembly.GetName().Version}; level {LevelName}, "
-                + $"{driver.Current.Agents.Count} agents, the player is agent {level.Player.Value}; tick {driver.Current.Tick} after {frames} frames.");
+            GD.Print($"Client ready; sim {typeof(Sim).Assembly.GetName().Version}; level {LevelName}, {frames} frames.\n"
+                + Overlay.Text(driver.Current, level, tuning));
             GetTree().Quit();
         }
     }
@@ -80,6 +100,10 @@ public sealed partial class Client : Node3D
         if (@event is InputEventMouseMotion motion && Input.MouseMode == Input.MouseModeEnum.Captured)
         {
             head?.Turn(-motion.ScreenRelative.X * Controls.MouseRadiansPerPixel, -motion.ScreenRelative.Y * Controls.MouseRadiansPerPixel);
+        }
+        else if (@event.IsActionPressed(Controls.DebugOverlay))
+        {
+            overlay!.Visible = !overlay.Visible;
         }
         else if (@event.IsActionPressed("ui_cancel"))
         {
@@ -96,35 +120,55 @@ public sealed partial class Client : Node3D
         var back = level.Lane.Points[^1];
         Scenery.AddRoom(this, Floor.ToWorld((front + back) / 2f));
 
-        bodies = new Node3D?[driver!.Current.Agents.Count];
+        foreach (var tone in Sounds.All())
+        {
+            sounds[tone] = Scenery.Sound(tone);
+        }
+
+        camera = new Camera3D { Name = "Eyes", Current = true };
+        AddChild(camera);
+        var count = driver!.Current.Agents.Count;
+        bodies = new Node3D?[count];
+        voices = new AudioStreamPlayer3D[count];
         foreach (var agent in driver.Current.Agents)
         {
-            if (agent.Id != level.Player)
+            if (agent.Id == level.Player)
             {
-                bodies[agent.Id.Value] = Scenery.Agent($"Agent{agent.Id.Value}");
-                AddChild(bodies[agent.Id.Value]);
+                voices[agent.Id.Value] = Scenery.Voice(camera);
+                continue;
             }
+
+            var body = Scenery.Agent($"Agent{agent.Id.Value}");
+            AddChild(body);
+            bodies[agent.Id.Value] = body;
+            voices[agent.Id.Value] = Scenery.Voice(body);
         }
 
         var clerk = Scenery.Clerk();
         clerk.Position = Floor.ToWorld(level.Clerk);
+        clerk.Rotation = new Vector3(0f, Floor.YawFacing(-level.Lane.TowardFront(level.Clerk)), 0f);
         AddChild(clerk);
-        camera = new Camera3D { Name = "Eyes", Current = true };
-        AddChild(camera);
+        overlay = Scenery.Overlay(this);
     }
 
-    /// <summary>Puts every body and the eyes where the sim has them this frame.</summary>
+    /// <summary>Puts every body and the eyes where the sim has them this frame, each body facing the front and posed.</summary>
     private void Place()
     {
-        foreach (var agent in driver!.Current.Agents)
+        var now = driver!.ShownTick;
+        foreach (var agent in driver.Current.Agents)
         {
             if (bodies[agent.Id.Value] is { } body)
             {
-                body.Position = Floor.ToWorld(driver.Position(agent.Id));
+                var position = driver.Position(agent.Id);
+                var pose = motion!.PoseOf(agent, now);
+                body.Position = Floor.ToWorld(position, pose.Bob);
+                body.Rotation = new Vector3(-pose.Lean, Floor.YawFacing(level!.Lane.TowardFront(position)), pose.Sway);
             }
         }
 
-        camera!.Position = Floor.ToWorld(driver.Position(level!.Player), Scenery.EyeHeight);
-        camera.Rotation = new Vector3(head!.Pitch, head.ViewYaw, 0f);
+        // The player's eyes only stumble; a swaying camera would read as the game, not the person.
+        var player = driver.Current.Agents[level!.Player.Value];
+        camera!.Position = Floor.ToWorld(driver.Position(player.Id), Scenery.EyeHeight);
+        camera.Rotation = new Vector3(head!.Pitch - motion!.PoseOf(player, now).Lean, head.ViewYaw, 0f);
     }
 }
