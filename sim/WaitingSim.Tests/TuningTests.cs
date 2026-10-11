@@ -7,7 +7,13 @@ public sealed class TuningTests
           "version": 1,
           "graceWindowTicks": 90,
           "zones": { "bumpBelowMeters": 0.4, "tightBelowMeters": 0.9, "looseBelowMeters": 1.5 },
-          "walking": { "speedMetersPerSecond": 1.2, "accelerationMetersPerSecondSquared": 3.0 }
+          "walking": { "speedMetersPerSecond": 1.2, "accelerationMetersPerSecondSquared": 3.0 },
+          "patience": {
+            "stages": { "restlessBelow": 70, "annoyedBelow": 50, "confrontingBelow": 30, "fedUpBelow": 15, "recoverMargin": 5 },
+            "gapDrainPerSecond": 4.0,
+            "tightRecoveryPerSecond": 0.5,
+            "bumpHit": 5
+          }
         }
         """;
 
@@ -25,7 +31,9 @@ public sealed class TuningTests
     {
         var tuning = Tuning.Parse(Valid).Value;
 
-        Assert.Equal(new Tuning(90, new ZoneLimits(0.4f, 0.9f, 1.5f), 1.2f, 3.0f), tuning);
+        Assert.Equal(
+            new Tuning(90, new ZoneLimits(0.4f, 0.9f, 1.5f), 1.2f, 3.0f, new PatienceTuning(new StageLimits(70, 50, 30, 15, 5), 4.0f, 0.5f, 5f)),
+            tuning);
     }
 
     [Theory]
@@ -35,6 +43,8 @@ public sealed class TuningTests
     [InlineData("\"tightBelowMeters\": 0.9", "\"tightBelowMeters\": 2.0", "zones: bumpBelowMeters, tightBelowMeters and looseBelowMeters must increase in that order")]
     [InlineData("\"speedMetersPerSecond\": 1.2", "\"speedMetersPerSecond\": 0", "walking.speedMetersPerSecond: missing, or not a positive number")]
     [InlineData("\"version\": 1", "\"version\": 0", "version: 0 is not a tuning format version")]
+    [InlineData("\"annoyedBelow\": 50", "\"annoyedBelow\": 80", "patience.stages: fedUpBelow, confrontingBelow, annoyedBelow and restlessBelow must increase in that order, below 100")]
+    [InlineData("\"bumpHit\": 5", "\"bumpHit\": -5", "patience.bumpHit: missing, or not a positive number")]
     public void A_bad_field_is_reported_by_name(string field, string replacement, string problem)
     {
         var parsed = Tuning.Parse(Valid.Replace(field, replacement, StringComparison.Ordinal));

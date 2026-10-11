@@ -4,15 +4,20 @@ namespace WaitingSim.Tests;
 
 public sealed class SimTests
 {
-    private const int GraceWindowTicks = 90;
+    internal const int GraceWindowTicks = 90;
 
     // Walking at 1.5 m/s reached in a single tick: the person ahead moves 0.025 m per tick.
-    private static readonly Tuning Snappy = new(GraceWindowTicks, new ZoneLimits(0.4f, 0.9f, 1.5f), WalkSpeed: 1.5f, WalkAcceleration: 90f);
+    internal static readonly Tuning Snappy = new(
+        GraceWindowTicks,
+        new ZoneLimits(0.4f, 0.9f, 1.5f),
+        WalkSpeed: 1.5f,
+        WalkAcceleration: 90f,
+        new PatienceTuning(new StageLimits(70, 50, 30, 15, RecoverMargin: 5), GapDrainPerSecond: 6, TightRecoveryPerSecond: 3, BumpHit: 5));
 
     // Front of the line at the origin, the line running back along +x.
-    private static readonly Lane Straight = new([new(0, 0), new(20, 0)], halfWidth: 0.5f);
+    internal static readonly Lane Straight = new([new(0, 0), new(20, 0)], halfWidth: 0.5f);
 
-    private static readonly Vector2 TowardFront = new(-1, 0);
+    internal static readonly Vector2 TowardFront = new(-1, 0);
 
     [Fact]
     public void Walking_speeds_up_by_the_acceleration_each_tick()
@@ -180,7 +185,7 @@ public sealed class SimTests
         return (events, states);
     }
 
-    private static List<SimEvent> Run(Sim sim, int ticks, Func<Snapshot, Dictionary<AgentId, Command>> commands)
+    internal static List<SimEvent> Run(Sim sim, int ticks, Func<Snapshot, Dictionary<AgentId, Command>> commands)
     {
         var events = new List<SimEvent>();
         for (var i = 0; i < ticks; i++)
@@ -191,8 +196,8 @@ public sealed class SimTests
         return events;
     }
 
-    private static Dictionary<AgentId, Command> Commands(params (AgentId Agent, Vector2 Move)[] moves) =>
+    internal static Dictionary<AgentId, Command> Commands(params (AgentId Agent, Vector2 Move)[] moves) =>
         moves.ToDictionary(move => move.Agent, move => new Command(move.Move));
 
-    private static AgentSnapshot Agent(Sim sim, AgentId id) => sim.Snapshot().Agents[id.Value];
+    internal static AgentSnapshot Agent(Sim sim, AgentId id) => sim.Snapshot().Agents[id.Value];
 }

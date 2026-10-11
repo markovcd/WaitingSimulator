@@ -9,5 +9,17 @@
   "walking": {
     "speedMetersPerSecond": 1.2,
     "accelerationMetersPerSecondSquared": 3.0
+  },
+  "patience": {
+    "stages": {
+      "restlessBelow": 70,
+      "annoyedBelow": 50,
+      "confrontingBelow": 30,
+      "fedUpBelow": 15,
+      "recoverMargin": 5
+    },
+    "gapDrainPerSecond": 4.0,
+    "tightRecoveryPerSecond": 0.5,
+    "bumpHit": 5
   }
 }

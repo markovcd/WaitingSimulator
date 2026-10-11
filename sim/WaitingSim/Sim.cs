@@ -24,8 +24,11 @@ public sealed class Sim
     /// <summary>How many ticks have been stepped.</summary>
     public long Tick { get; private set; }
 
-    /// <summary>Places a new agent at <paramref name="position"/>, standing still. Level setup: it reports no events.</summary>
-    public AgentId Spawn(Vector2 position)
+    /// <summary>
+    /// Places a new agent at <paramref name="position"/>, standing still, with full patience if it has a
+    /// <paramref name="trait"/>. Level setup: it reports no events.
+    /// </summary>
+    public AgentId Spawn(Vector2 position, Trait? trait = null)
     {
         if (!float.IsFinite(position.X) || !float.IsFinite(position.Y))
         {
@@ -33,7 +36,7 @@ public sealed class Sim
         }
 
         var id = new AgentId(agents.Count);
-        agents.Add(new Agent(id, position));
+        agents.Add(new Agent(id, position, trait));
         Classify();
         foreach (var agent in agents)
         {
@@ -45,7 +48,7 @@ public sealed class Sim
 
     /// <summary>
     /// Advances one tick. Each agent acts on its command in <paramref name="commands"/>, or stands still without one.
-    /// Returns what happened, in agent id order.
+    /// Returns what happened: movement through the lane and zones first, then patience, each in agent id order.
     /// </summary>
     public IReadOnlyList<SimEvent> Step(IReadOnlyDictionary<AgentId, Command> commands)
     {
@@ -68,6 +71,7 @@ public sealed class Sim
         Classify();
 
         var events = new List<SimEvent>();
+        var bumped = new bool[agents.Count];
         for (var i = 0; i < agents.Count; i++)
         {
             var agent = agents[i];
@@ -80,9 +84,18 @@ public sealed class Sim
             if (agent.Zone != oldZone)
             {
                 events.Add(new ZoneChanged(Tick, agent.Id, oldZone, agent.Zone));
+                if (agent is { Zone: Zone.Bump, Ahead: { } ahead })
+                {
+                    bumped[ahead.Value] = true;
+                }
             }
 
             TrackGap(agent, events);
+        }
+
+        foreach (var agent in agents)
+        {
+            WearPatience(agent, bumped[agent.Id.Value], events);
         }
 
         return events;
@@ -90,6 +103,46 @@ public sealed class Sim
 
     /// <summary>The state as of the last tick.</summary>
     public Snapshot Snapshot() => new(Tick, [.. agents.Select(agent => agent.Snapshot())]);
+
+    /// <summary>
+    /// Drains the agent's patience while the person ahead holds a gap open past its grace window, recovers it while
+    /// they stay tight on theirs, and takes a hit when the person behind walked into it.
+    /// </summary>
+    private void WearPatience(Agent agent, bool bumped, List<SimEvent> events)
+    {
+        if (agent.Trait is not { } trait)
+        {
+            return;
+        }
+
+        var rates = tuning.Patience;
+        var ahead = agent.Ahead is { } id ? agents[id.Value] : null;
+        var change = ahead switch
+        {
+            { Zone: Zone.Gap, GraceExpired: true } => -rates.GapDrainPerSecond * trait.DrainScale / TickRate.PerSecond,
+            { Zone: Zone.Tight } => rates.TightRecoveryPerSecond * trait.RecoveryScale / TickRate.PerSecond,
+            _ => 0f,
+        };
+        if (bumped)
+        {
+            change -= rates.BumpHit * trait.BumpScale;
+        }
+
+        var before = agent.Patience;
+        var shownBefore = trait.Shown(agent.Stage);
+        agent.Patience = Math.Clamp(before + change, 0f, PatienceTuning.Full);
+        agent.Stage = rates.Stages.After(agent.Stage, agent.Patience);
+        var shown = trait.Shown(agent.Stage);
+        if (shown != shownBefore)
+        {
+            events.Add(new StageChanged(Tick, agent.Id, shownBefore, shown));
+        }
+
+        if (agent.Patience == 0f && before > 0f)
+        {
+            events.Add(new PatienceRanOut(Tick, agent.Id));
+        }
+    }
 
     /// <summary>Eases the agent's velocity toward its wanted one by at most a tick's acceleration, then moves it.</summary>
     private void Walk(Agent agent, Command command)

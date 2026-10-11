@@ -88,7 +88,7 @@ The front moves in bursts, and the movement travels back with a variable delay. 
 The heart of the game. See the stage table below for the readable behavior layer.
 
 ### Agents
-Every NPC that depends on the player has a `PatienceAgent` with a value from 0 to 100 and a trait.
+Every NPC that depends on the player has patience, a value from 0 to 100, and a trait.
 - Line mode: mainly the person directly behind you. People further back are affected indirectly.
 - Room mode: neighbors, driven by noise, space and etiquette instead of speed.
 - One shared component; only triggers differ.
@@ -235,7 +235,7 @@ Differentiator: the gap-and-patience loop, the person behind you as a character,
 
 The smallest slice that tells you whether the game is fun:
 - One line level, first-person, WASD plus look and glance-back.
-- One person ahead, one person behind with a `PatienceAgent` and the stage cues (animation and audio).
+- One person ahead, one person behind with patience and the stage cues (animation and audio).
 - Line movement in irregular bursts, the gap and grace window, the spacing zones, bump physics.
 - One cutter event and the kick-out rule (out of the line).
 - Reach the counter, one clerk line, result screen.

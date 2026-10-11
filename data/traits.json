@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "traits": [
+    {
+      "id": "patient",
+      "drainScale": 0.5,
+      "recoveryScale": 2.0,
+      "bumpScale": 0.5,
+      "shownStages": ["calm", "restless", "annoyed", "confronting", "fedUp"]
+    },
+    {
+      "id": "anxious",
+      "drainScale": 1.5,
+      "recoveryScale": 1.0,
+      "bumpScale": 1.5,
+      "shownStages": ["calm", "restless", "annoyed", "confronting", "fedUp"]
+    },
+    {
+      "id": "aggressive",
+      "drainScale": 1.5,
+      "recoveryScale": 0.5,
+      "bumpScale": 2.0,
+      "shownStages": ["calm", "confronting", "fedUp"]
+    },
+    {
+      "id": "passive-aggressive",
+      "drainScale": 1.0,
+      "recoveryScale": 0.5,
+      "bumpScale": 1.0,
+      "shownStages": ["calm", "fedUp"]
+    },
+    {
+      "id": "oblivious",
+      "drainScale": 0.25,
+      "recoveryScale": 1.0,
+      "bumpScale": 0.25,
+      "shownStages": ["calm", "annoyed", "fedUp"]
+    }
+  ]
+}

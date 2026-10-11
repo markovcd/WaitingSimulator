@@ -33,10 +33,10 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **bump** | Walking into the person ahead. | | collision (in prose) |
 | **ripple** | Line movement traveling back from the front with a delay. | | wave |
 | **cutter** | An NPC that slides into an open gap ahead of the player. | | line-cutter, skipper |
-| **patience** | An NPC's 0–100 tolerance of the player. Hidden from the player except on easy. | | mood, anger |
-| **stage** | A band of patience with its own visible behavior; changes with hysteresis. | | level, phase |
+| **patience** | An NPC's 0–100 tolerance of the player. Hidden from the player except on easy. | `Patience` | mood, anger |
+| **stage** | A band of patience with its own visible behavior, from calm through restless, annoyed and confronting to fed up; changes with hysteresis. | `Stage` | level, phase |
 | **cue** | A visible or audible behavior that reveals a stage or an event. | | tell, signal |
-| **trait** | An NPC's personality as data: patient, anxious, aggressive, passive-aggressive, oblivious. | | personality type, class |
+| **trait** | An NPC's personality as data: patient, anxious, aggressive, passive-aggressive, oblivious. | `Trait` | personality type, class |
 | **kick-out** | What happens when patience reaches 0: pushed past, staff called, or the crowd turns. | | game over |
 | **distraction** | Anything that competes with watching the line or listening for the call. | | |
 | **clerk** | The person at the counter who ends a level with one line. | | NPC at the desk |

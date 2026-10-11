@@ -91,7 +91,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 
 ### 4.3 Commands in, events out
 - Each tick the client samples input into a `Command`. NPC brains produce the same type, which satisfies §13.3-4 directly. It carries the move vector today; look yaw, glance-back, phone and interact join it as the rules that read them land.
-- The sim emits typed events: `ZoneChanged` (a change into the gap zone is a gap opening), `GraceExpired`, `Bumped`, `StageChanged(agent, stage)`, `CutterEntered`, `LeftLane`, `ReenteredLane`, `CalledNumber`, `KickedOut`, `ReachedCounter`.
+- The sim emits typed events: `ZoneChanged` (a change into the gap zone is a gap opening), `GraceExpired`, `Bumped`, `StageChanged` (the stage an agent shows), `PatienceRanOut`, `CutterEntered`, `LeftLane`, `ReenteredLane`, `CalledNumber`, `KickedOut`, `ReachedCounter`.
 - Presentation maps events to animation, audio and camera. The sim never knows a sound exists.
 
 ### 4.4 Movement and the "strict rules, loose feel" split
@@ -108,7 +108,7 @@ This is the most important technical call in the plan.
 - **Golden replay tests:** commit recorded command streams plus expected final state hashes. CI fails if a code change silently alters outcomes.
 
 ### 4.6 Patience and agents
-- `PatienceAgent` is plain data (value, trait id, current stage, hysteresis thresholds) plus a pure update function. Traits are JSON records, which keeps the "fixed vs. random per run" question (§8) a data change.
+- An agent spawned with a `Trait` has patience: a value, and the stage it is really in. Each tick it drains while the person ahead holds a gap open past the grace window, recovers while they stay tight on theirs, and takes a one-off hit when the person behind walks into it. Rates and stage limits (with the hysteresis margin) are in `data/tuning.json`; a trait scales the rates and names the stages it shows, so a hidden stage looks like the last shown one before it. Traits are records in `data/traits.json`, which keeps the "fixed vs. random per run" question (§8) a data change.
 - NPC behavior: start with a small explicit state machine per agent (idle, shuffle, step forward, react, push past). Behavior trees are overkill at this scale.
 
 ### 4.7 Headless runner as a design tool
@@ -186,7 +186,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 The live list is [TODO.md](TODO.md).
 
 1. Create the `sim/` solution: `WaitingSim`, tests and runner. Implement tick loop, PRNG, `Command`, lane projection, spacing zones and the grace timer with unit tests.
-2. Add `PatienceAgent` with stages and hysteresis, plus JSON traits. Write the runner's first bot sweep.
+2. Add patience with stages and hysteresis, plus JSON traits. Write the runner's first bot sweep.
 3. Create the Godot project: first-person camera, input actions, the sim driver with interpolation, and capsule placeholders for the person ahead, the person behind and the clerk.
 4. Wire events to placeholder audio and animation, and add the debug overlay.
 5. Play the §18 slice. Only then commit to art, FMOD or engine-specific tooling.

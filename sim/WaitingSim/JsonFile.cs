@@ -103,6 +103,40 @@ internal static class JsonFile
         return 0f;
     }
 
+    /// <summary>The non-empty string at <paramref name="path"/>, or an empty one with a problem.</summary>
+    public static string Text(JsonElement? parent, string path, List<string> problems)
+    {
+        if (parent is not { } element)
+        {
+            return "";
+        }
+
+        if (element.TryGetProperty(Name(path), out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text)
+        {
+            return text;
+        }
+
+        problems.Add($"{path}: missing, or not a non-empty string");
+        return "";
+    }
+
+    /// <summary>The items of the array at <paramref name="path"/>, or none with a problem.</summary>
+    public static IReadOnlyList<JsonElement> Items(JsonElement? parent, string path, List<string> problems)
+    {
+        if (parent is not { } element)
+        {
+            return [];
+        }
+
+        if (element.TryGetProperty(Name(path), out var value) && value.ValueKind == JsonValueKind.Array)
+        {
+            return [.. value.EnumerateArray()];
+        }
+
+        problems.Add($"{path}: missing, or not an array");
+        return [];
+    }
+
     public static string Invariant(FormattableString text) => text.ToString(CultureInfo.InvariantCulture);
 
     private static Parsed<T> Refused<T>(string problem)

@@ -11,6 +11,9 @@ namespace WaitingSim;
 /// <param name="Spacing">Meters along the lane to the person ahead, when there is one.</param>
 /// <param name="Zone">The zone that spacing falls in.</param>
 /// <param name="GapOpenedAt">The tick its gap opened, while it is in <see cref="WaitingSim.Zone.Gap"/>.</param>
+/// <param name="Trait">Its trait's id; null for an agent without patience, like the player.</param>
+/// <param name="Patience">Its patience, from full down to 0.</param>
+/// <param name="Stage">The stage it shows.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -19,4 +22,7 @@ public sealed record AgentSnapshot(
     AgentId? Ahead,
     float? Spacing,
     Zone? Zone,
-    long? GapOpenedAt);
+    long? GapOpenedAt,
+    string? Trait,
+    float? Patience,
+    Stage? Stage);
