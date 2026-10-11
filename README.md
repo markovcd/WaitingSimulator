@@ -11,7 +11,7 @@ A first-person game about the mundane tension of waiting. In line levels you ste
 
 ## Build and test
 
-Requirements: the .NET SDK version in [global.json](global.json). Godot 4 (.NET build) will be needed once the client exists.
+Requirements: the .NET SDK version in [global.json](global.json), and [Git LFS](https://git-lfs.com) (run `git lfs install` once; binary assets are stored in LFS per [.gitattributes](.gitattributes)). Godot 4 (.NET build) will be needed once the client exists.
 
 - Gate (build and every test): `dotnet test --solution WaitingSimulator.slnx`
 - One test class: `dotnet test --project sim/WaitingSim.Tests --filter-class "*CliTests"`
