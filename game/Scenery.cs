@@ -14,6 +14,8 @@ internal static class Scenery
     private const float FillHeight = 0.004f;
     private const float TapeHeight = 0.006f;
     private const float TapeWidth = 0.05f;
+    private const float MarkerHeight = 0.008f;
+    private const float MarkerDepth = 0.12f;
 
     private static readonly Color Background = new(0.62f, 0.64f, 0.66f);
     private static readonly Color FloorColor = new(0.55f, 0.53f, 0.5f);
@@ -93,6 +95,32 @@ internal static class Scenery
         }
 
         return fill;
+    }
+
+    /// <summary>The bar painted across the lane at a held place, hidden until there is one.</summary>
+    public static MeshInstance3D HeldMarker(Node parent, LaneMarking marking)
+    {
+        var marker = new MeshInstance3D
+        {
+            Name = "HeldPlace",
+            Mesh = new BoxMesh { Size = new Vector3(marking.HalfWidth * 2f, 0.002f, MarkerDepth) },
+            MaterialOverride = Flat(ToColor(LaneMarking.HeldPaint)),
+            Visible = false,
+        };
+        parent.AddChild(marker);
+        return marker;
+    }
+
+    /// <summary>Shows <paramref name="held"/> on <paramref name="marker"/>, its width shrinking with the hold left, or hides it.</summary>
+    public static void Show(MeshInstance3D marker, HeldMarker? held)
+    {
+        marker.Visible = held is not null;
+        if (held is { } place)
+        {
+            marker.Position = Floor.ToWorld(place.Point, MarkerHeight);
+            marker.Rotation = new Vector3(0f, Floor.YawFacing(place.TowardFront), 0f);
+            marker.Scale = new Vector3(MathF.Max(place.Left, 0.05f), 1f, 1f);
+        }
     }
 
     /// <summary><paramref name="paint"/> as a Godot color.</summary>

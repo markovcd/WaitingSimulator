@@ -50,6 +50,30 @@ public sealed class LaneMarkingTests
         Assert.Equal(fills.Count, fills.Distinct().Count());
     }
 
+    [Fact]
+    public void The_held_place_is_marked_where_it_is_and_shrinks_as_the_hold_runs_out()
+    {
+        var lane = new Lane([new(0, 0), new(0, 14)], halfWidth: 0.5f);
+        var holding = Player(inLane: false) with { SpotHeldUntil = 400, HeldAlong = 6.4f };
+
+        var fresh = LaneMarking.Held(holding, lane, tick: 100, spotHoldTicks: 300)!.Value;
+        var half = LaneMarking.Held(holding, lane, tick: 250, spotHoldTicks: 300)!.Value;
+
+        Assert.Equal(new Vector2(0, 6.4f), fresh.Point);
+        Assert.Equal(new Vector2(0, -1), fresh.TowardFront);
+        Assert.Equal(1f, fresh.Left, 0.0001f);
+        Assert.Equal(0.5f, half.Left, 0.0001f);
+    }
+
+    [Fact]
+    public void No_place_is_marked_while_the_player_is_in_the_line_or_has_none_held()
+    {
+        var lane = new Lane([new(0, 0), new(0, 14)], halfWidth: 0.5f);
+
+        Assert.Null(LaneMarking.Held(Player(inLane: true), lane, tick: 100, spotHoldTicks: 300));
+        Assert.Null(LaneMarking.Held(Player(inLane: false), lane, tick: 100, spotHoldTicks: 300));
+    }
+
     private static AgentSnapshot Player(bool inLane) =>
         new(new AgentId(0), Vector2.Zero, Vector2.Zero, inLane, null, null, null, null, null, null, null, LineStep.Standing, null, false, default, null, null);
 

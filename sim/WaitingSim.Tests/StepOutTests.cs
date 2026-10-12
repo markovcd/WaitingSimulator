@@ -52,6 +52,21 @@ public sealed class StepOutTests
     }
 
     [Fact]
+    public void The_snapshot_says_where_the_held_place_is_until_the_hold_ends()
+    {
+        var sim = new Sim(SteppingOut, Straight, seed: 1);
+        sim.Spawn(new(5, 0));
+        var player = sim.Spawn(new(5.8f, 0));
+        sim.Spawn(new(6.6f, 0));
+
+        StepOut(sim, player);
+        Assert.Equal(5.8f, Agent(sim, player).HeldAlong!.Value, 0.05f);
+
+        Run(sim, HoldTicks, _ => Commands((player, Vector2.Zero)));
+        Assert.Null(Agent(sim, player).HeldAlong);
+    }
+
+    [Fact]
     public void Stepping_back_in_ahead_of_the_same_person_returns_to_the_place()
     {
         var sim = new Sim(SteppingOut, Straight, seed: 1);

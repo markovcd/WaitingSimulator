@@ -51,6 +51,7 @@ public sealed partial class Client : Node3D
     private FigureNode?[] bodies = [];
     private FigureNode? clerk;
     private StandardMaterial3D? laneFill;
+    private MeshInstance3D? heldMarker;
     private AudioStreamPlayer3D[] voices = [];
 
     /// <inheritdoc/>
@@ -216,7 +217,9 @@ public sealed partial class Client : Node3D
         var front = level!.Lane.Points[0];
         var back = level.Lane.Points[^1];
         Scenery.AddRoom(this, Floor.ToWorld((front + back) / 2f));
-        laneFill = Scenery.Lane(this, LaneMarking.Of(level.Lane));
+        var marking = LaneMarking.Of(level.Lane);
+        laneFill = Scenery.Lane(this, marking);
+        heldMarker = Scenery.HeldMarker(this, marking);
 
         foreach (var tone in Sounds.All())
         {
@@ -271,7 +274,9 @@ public sealed partial class Client : Node3D
         }
 
         clerk!.Show(Face.Bored, Face.Blinking(-1, now));
-        laneFill!.AlbedoColor = Scenery.ToColor(LaneMarking.Fill(LaneMarking.StateOf(driver.Current.Agents[level!.Player.Value])));
+        var you = driver.Current.Agents[level!.Player.Value];
+        laneFill!.AlbedoColor = Scenery.ToColor(LaneMarking.Fill(LaneMarking.StateOf(you)));
+        Scenery.Show(heldMarker!, LaneMarking.Held(you, level.Lane, driver.Current.Tick, tuning!.StepOut?.SpotHoldTicks ?? 0));
 
         // The player's eyes only stumble; a swaying camera would read as the game, not the person.
         var player = driver.Current.Agents[level!.Player.Value];

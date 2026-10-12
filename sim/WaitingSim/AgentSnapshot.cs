@@ -20,6 +20,7 @@ namespace WaitingSim;
 /// <param name="Tally">The mistakes it has made.</param>
 /// <param name="ReachedCounterAt">The tick it first reached the counter, once it has.</param>
 /// <param name="KickedOutAt">The tick it was first kicked out of the line, once it has been.</param>
+/// <param name="HeldAlong">While its place is held, how far along the lane from the front the place is, in meters.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -37,4 +38,5 @@ public sealed record AgentSnapshot(
     bool Refused,
     Tally Tally,
     long? ReachedCounterAt,
-    long? KickedOutAt);
+    long? KickedOutAt,
+    float? HeldAlong = null);
