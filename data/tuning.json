@@ -8,7 +8,7 @@
   },
   "walking": {
     "speedMetersPerSecond": 1.2,
-    "accelerationMetersPerSecondSquared": 3.0
+    "accelerationMetersPerSecondSquared": 8.0
   },
   "bodies": {
     "radiusMeters": 0.18,
