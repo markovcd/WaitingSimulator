@@ -9,6 +9,7 @@
 - People behind you lose patience at gaps you leave open, show it in stages, and push past you when it runs out.
 - Stepping out of the line holds your place for a while; stepping back in anywhere else cuts in, and everyone you pass loses patience.
 - Cutters slide into gaps left open too long.
+- The lane is marked on the floor, and its color shows whether you are in the line, holding your place or out of it.
 - How to play shows at the start of a level.
 - Easy, normal and hard difficulties, from a HUD of numbers to none, cycled with F2.
 - People in line are crude humanoids instead of capsules, each a little different, with faces that get angrier as they lose patience.

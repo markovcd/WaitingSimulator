@@ -22,6 +22,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **arcade** | The mode where any level is played alone, scored, with no carry-over. | | |
 | **line** | The queue of agents a line level is about. | | queue (in prose) |
 | **lane** | The volume the line occupies; being in it is what makes you part of the line. | `Lane` | |
+| **lane marking** | The lane painted on the floor, tinted by where the player stands against the line. | `LaneMarking` | line area, queue zone |
 | **room** | A waiting room where you listen and watch for your call. | | |
 | **call** | The moment your number or name is announced in a room. | | |
 | **agent** | Anything that stands in a line or sits in a room and acts each tick: the player or an NPC. | `AgentId` | actor, entity (Godot words) |

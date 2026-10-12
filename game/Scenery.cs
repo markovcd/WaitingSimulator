@@ -3,12 +3,17 @@ using Godot;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The placeholder world, built in code: light, a floor, a crude humanoid <see cref="Figure"/> for each agent and the
+/// The placeholder world, built in code: light, a floor with the lane marked on it, a crude humanoid <see cref="Figure"/> for each agent and the
 /// clerk, the voices cues play through and the debug overlay.
 /// </summary>
 internal static class Scenery
 {
     private const float FloorSize = 30f;
+
+    /// <summary>How high the lane's fill and tape sit off the floor, so neither flickers into it.</summary>
+    private const float FillHeight = 0.004f;
+    private const float TapeHeight = 0.006f;
+    private const float TapeWidth = 0.05f;
 
     private static readonly Color Background = new(0.62f, 0.64f, 0.66f);
     private static readonly Color FloorColor = new(0.55f, 0.53f, 0.5f);
@@ -42,6 +47,56 @@ internal static class Scenery
             Position = center with { Y = 0f },
         });
     }
+
+    /// <summary>
+    /// Paints <paramref name="marking"/> on the floor: a fill over every strip and cap, and tape along the strips' edges.
+    /// Returns the fill's material, which the caller tints to show where the player stands.
+    /// </summary>
+    public static StandardMaterial3D Lane(Node parent, LaneMarking marking)
+    {
+        var fill = Flat(ToColor(LaneMarking.Fill(LaneState.InLine)));
+        var tape = Flat(ToColor(LaneMarking.Tape));
+        var lane = new Node3D { Name = "Lane" };
+        parent.AddChild(lane);
+        foreach (var strip in marking.Strips)
+        {
+            var yaw = Floor.YawFacing(strip.To - strip.From);
+            var across = System.Numerics.Vector2.Normalize(new(strip.From.Y - strip.To.Y, strip.To.X - strip.From.X));
+            lane.AddChild(new MeshInstance3D
+            {
+                Mesh = new PlaneMesh { Size = new Vector2(marking.HalfWidth * 2f, strip.Length) },
+                MaterialOverride = fill,
+                Position = Floor.ToWorld(strip.Center, FillHeight),
+                Rotation = new Vector3(0f, yaw, 0f),
+            });
+            foreach (var side in new[] { -1f, 1f })
+            {
+                lane.AddChild(new MeshInstance3D
+                {
+                    Mesh = new BoxMesh { Size = new Vector3(TapeWidth, 0.002f, strip.Length) },
+                    MaterialOverride = tape,
+                    Position = Floor.ToWorld(strip.Center + (across * side * (marking.HalfWidth - (TapeWidth / 2f))), TapeHeight),
+                    Rotation = new Vector3(0f, yaw, 0f),
+                });
+            }
+        }
+
+        // The caps' tops sit just under the strips', so the two never fight where they overlap.
+        foreach (var cap in marking.Caps)
+        {
+            lane.AddChild(new MeshInstance3D
+            {
+                Mesh = new CylinderMesh { TopRadius = marking.HalfWidth, BottomRadius = marking.HalfWidth, Height = FillHeight * 0.75f },
+                MaterialOverride = fill,
+                Position = Floor.ToWorld(cap, FillHeight * 0.375f),
+            });
+        }
+
+        return fill;
+    }
+
+    /// <summary><paramref name="paint"/> as a Godot color.</summary>
+    public static Color ToColor(Paint paint) => new(paint.R, paint.G, paint.B);
 
     /// <summary>A figure standing on the floor, sized and colored by <paramref name="look"/>.</summary>
     public static FigureNode Figure(string name, Look look)
@@ -176,7 +231,7 @@ internal static class Scenery
             Swatch.Shoes => Game.Figure.Shoes,
             _ => Game.Figure.Features,
         };
-        return new Color(paint.R, paint.G, paint.B);
+        return ToColor(paint);
     }
 
     private static Vector3 ToGodot(System.Numerics.Vector3 vector) => new(vector.X, vector.Y, vector.Z);
