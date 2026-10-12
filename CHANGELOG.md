@@ -10,4 +10,5 @@
 - Stepping out of the line holds your place for a while; stepping back in anywhere else cuts in.
 - Cutters slide into gaps left open too long.
 - How to play shows at the start of a level.
+- Easy, normal and hard difficulties, from a HUD of numbers to none, cycled with F2.
 - F3 shows a debug overlay.

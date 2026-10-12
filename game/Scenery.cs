@@ -96,6 +96,17 @@ internal static class Scenery
         return label;
     }
 
+    /// <summary>The HUD: a label at the top of the view, empty when the difficulty shows nothing.</summary>
+    public static Label Hud(Node parent) => TopLabel(parent, "Hud", 12f);
+
+    /// <summary>A short notice, such as the difficulty just picked: a label under the HUD, hidden until shown.</summary>
+    public static Label Notice(Node parent)
+    {
+        var label = TopLabel(parent, "Notice", 64f);
+        label.Visible = false;
+        return label;
+    }
+
     /// <summary>The result screen, hidden until the player reaches the counter: a label in the middle of the view.</summary>
     public static Label Result(Node parent)
     {
@@ -127,6 +138,17 @@ internal static class Scenery
             OffsetBottom = -24f,
         };
         label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        label.AddThemeColorOverride("font_color", Colors.Black);
+        layer.AddChild(label);
+        parent.AddChild(layer);
+        return label;
+    }
+
+    private static Label TopLabel(Node parent, string name, float top)
+    {
+        var layer = new CanvasLayer { Name = name };
+        var label = new Label { Name = "Text", HorizontalAlignment = HorizontalAlignment.Center, OffsetTop = top };
+        label.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         label.AddThemeColorOverride("font_color", Colors.Black);
         layer.AddChild(label);
         parent.AddChild(layer);

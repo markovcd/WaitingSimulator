@@ -65,4 +65,6 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **runner** | The command-line program that plays levels headlessly. | `WaitingSim.Runner` | |
 | **tuning** | The data file of knobs the sim reads. | `Tuning` | config, settings (those are the player's) |
 | **debug overlay** | The on-screen readout of sim values for tuning: tick, seed, zones, grace, patience, stages. | `Overlay` | HUD (the HUD is the player's, set by difficulty) |
+| **HUD** | The player's on-screen readout of the line, whose widgets the difficulty picks. | `Hud` | overlay (that is the debug overlay) |
+| **difficulty** | How much the HUD tells the player: easy, normal or hard. The sim plays the same on every one. | `Difficulty` | mode, level (a level is a place) |
 | **settings** | The player's preferences: controls, volume, difficulty. | | options, config |

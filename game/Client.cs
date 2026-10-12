@@ -7,7 +7,8 @@ namespace WaitingSimulator.Game;
 /// The client's root node: loads the level, builds placeholder scenery for it, and each frame turns input into the
 /// player's command, steps the sim, shows where it put everyone and how they stand, and plays the cues its events call
 /// for. How to play shows at the start until the player walks off. Once the player reaches the counter or is kicked
-/// out, input stops and the result screen shows until they line up again. F3 toggles the debug overlay. Esc frees the
+/// out, input stops and the result screen shows until they line up again. The HUD shows what the difficulty allows; F2
+/// cycles the difficulty, and <c>-- --difficulty easy</c> starts on one. F3 toggles the debug overlay. Esc frees the
 /// mouse and a click in the window takes it back. Started with <c>-- --smoke</c>, it plays a few frames, logs the
 /// overlay and quits, which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
 /// </summary>
@@ -15,6 +16,12 @@ public sealed partial class Client : Node3D
 {
     internal const string LevelName = "post-office";
     private const int SmokeFrames = 10;
+
+    /// <summary>How long a notice stays up, in seconds.</summary>
+    private const double NoticeSeconds = 2.0;
+
+    // The difficulty outlives the scene, so lining up again keeps the one the player picked.
+    private static Difficulty? difficulty;
 
     private readonly Dictionary<Tone, AudioStreamWav> sounds = [];
     private bool smoke;
@@ -28,6 +35,9 @@ public sealed partial class Client : Node3D
     private Label? overlay;
     private Label? result;
     private Label? howToPlay;
+    private Label? hud;
+    private Label? notice;
+    private double noticeLeft;
     private Node3D?[] bodies = [];
     private AudioStreamPlayer3D[] voices = [];
 
@@ -45,6 +55,13 @@ public sealed partial class Client : Node3D
 
             GetTree().Quit(1);
             return;
+        }
+
+        var problems = new List<string>();
+        difficulty ??= Difficulties.From(OS.GetCmdlineUserArgs(), problems);
+        foreach (var problem in problems)
+        {
+            GD.PrintErr(problem);
         }
 
         Controls.Register();
@@ -93,6 +110,9 @@ public sealed partial class Client : Node3D
 
         Place();
         howToPlay!.Visible = !Ended() && HowToPlay.Shown(driver.Current, level);
+        hud!.Text = Ended() ? "" : Hud.Text(driver.Current, level.Player, tuning, Difficulty);
+        noticeLeft -= delta;
+        notice!.Visible = noticeLeft > 0;
         if (overlay!.Visible)
         {
             overlay.Text = Overlay.Text(driver.Current, level, tuning);
@@ -101,7 +121,8 @@ public sealed partial class Client : Node3D
         if (smoke && ++frames == SmokeFrames)
         {
             GD.Print($"Client ready; sim {typeof(Sim).Assembly.GetName().Version}; level {LevelName}, {frames} frames.\n"
-                + Overlay.Text(driver.Current, level, tuning));
+                + Overlay.Text(driver.Current, level, tuning)
+                + $"\nHUD ({Difficulties.Name(Difficulty)}): {hud.Text}");
             GetTree().Quit();
         }
     }
@@ -117,6 +138,11 @@ public sealed partial class Client : Node3D
         {
             GetTree().ReloadCurrentScene();
         }
+        else if (@event.IsActionPressed(Controls.CycleDifficulty))
+        {
+            difficulty = Difficulties.Next(Difficulty);
+            Notify($"DIFFICULTY: {Difficulties.Name(Difficulty).ToUpperInvariant()}");
+        }
         else if (@event.IsActionPressed(Controls.DebugOverlay))
         {
             overlay!.Visible = !overlay.Visible;
@@ -129,6 +155,15 @@ public sealed partial class Client : Node3D
         {
             Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
         }
+    }
+
+    private static Difficulty Difficulty => difficulty ?? Difficulty.Normal;
+
+    /// <summary>Shows <paramref name="text"/> under the HUD for <see cref="NoticeSeconds"/>.</summary>
+    private void Notify(string text)
+    {
+        notice!.Text = text;
+        noticeLeft = NoticeSeconds;
     }
 
     /// <summary>Whether the level has ended: the player reached the counter or was kicked out of the line.</summary>
@@ -175,6 +210,8 @@ public sealed partial class Client : Node3D
         overlay = Scenery.Overlay(this);
         result = Scenery.Result(this);
         howToPlay = Scenery.HowToPlay(this);
+        hud = Scenery.Hud(this);
+        notice = Scenery.Notice(this);
     }
 
     /// <summary>Puts every body and the eyes where the sim has them this frame, each body facing the front and posed.</summary>
