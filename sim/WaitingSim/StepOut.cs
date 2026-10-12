@@ -2,8 +2,9 @@ namespace WaitingSim;
 
 /// <summary>
 /// What stepping out of the lane and back in does to an agent's place in the line. Stepping out holds the place for a
-/// while; stepping back in ahead of whoever stood behind returns to it. Stepping in anywhere else but the back cuts in:
-/// the person behind takes a hit, and with no room to stand the line refuses the agent a place. Everyone it passed,
+/// while; stepping back in ahead of whoever stood behind returns to it. Stepping in anywhere else but the back cuts in,
+/// made only into a gap left open past its grace window with room to stand clear of a bump: the person behind takes a
+/// hit either way, and a missed cut in leaves the agent refused a place. Everyone it passed,
 /// who stood ahead of its place and is behind it now, takes a hit too, and the person behind one more per person
 /// passed; without a held place, its place is the back of the line.
 /// </summary>
@@ -47,22 +48,18 @@ internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line
         var outcomes = new List<SimEvent>();
         if (behind is not null)
         {
-            var room = behind.LineAlong - along >= zones.BumpBelow
+            var made = behind is { Zone: Zone.Gap, GraceExpired: true }
+                && behind.LineAlong - along >= zones.BumpBelow
                 && (ahead is null || along - ahead.LineAlong >= zones.BumpBelow);
-            agent.Refused = !room;
-            var passed = room ? Passed(agent, along) : [];
+            agent.Refused = !made;
+            var passed = made ? Passed(agent, along) : [];
             foreach (var other in passed.Where(other => other != behind))
             {
                 cutHits[other.Id.Value] += stepOut.PassedHit;
             }
 
-            cutHits[behind.Id.Value] += !room ? stepOut.MissHit : (passed.Count * stepOut.PassedHit) + behind switch
-            {
-                { Zone: Zone.Gap, GraceExpired: true } => stepOut.PastGraceHit,
-                { Zone: Zone.Gap } => stepOut.GapHit,
-                _ => stepOut.LooseHit,
-            };
-            outcomes.Add(room ? new CutIn(tick, agent.Id, behind.Id) : new CutInMissed(tick, agent.Id, behind.Id));
+            cutHits[behind.Id.Value] += made ? stepOut.PastGraceHit + (passed.Count * stepOut.PassedHit) : stepOut.MissHit;
+            outcomes.Add(made ? new CutIn(tick, agent.Id, behind.Id) : new CutInMissed(tick, agent.Id, behind.Id));
         }
 
         if (holding)

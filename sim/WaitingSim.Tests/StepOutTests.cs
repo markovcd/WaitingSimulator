@@ -116,24 +116,39 @@ public sealed class StepOutTests
         Assert.True(Agent(sim, behind).Patience < PatienceTuning.Full);
     }
 
-    [Theory]
-    [InlineData(2.4f, 0, GapHit)]
-    [InlineData(2.4f, 100, PastGraceHit)]
-    [InlineData(1.2f, 0, LooseHit)]
-    public void Cutting_in_costs_the_person_behind_by_how_open_they_left_their_gap(float gap, int waitTicks, float hit)
+    [Fact]
+    public void Cutting_into_a_gap_left_open_past_its_grace_window_costs_the_person_behind_the_least()
     {
         var sim = new Sim(SteppingOut, Straight, seed: 1);
         var ahead = sim.Spawn(new(2, 0));
-        var target = sim.Spawn(new(2 + gap, 0), Still);
-        var player = sim.Spawn(new(2 + (gap / 2), 1));
-        Run(sim, waitTicks, _ => Commands());
+        var target = sim.Spawn(new(4.4f, 0), Still);
+        var player = sim.Spawn(new(3.2f, 1));
+        Run(sim, 100, _ => Commands());
 
         var events = StepIn(sim, player);
 
         Assert.Equal(new CutIn(events.OfType<ReenteredLane>().Single().Tick, player, target), events.OfType<CutIn>().Single());
         Assert.Equal(player, Agent(sim, target).Ahead);
         Assert.Equal(ahead, Agent(sim, player).Ahead);
-        Assert.Equal(PatienceTuning.Full - hit, Agent(sim, target).Patience!.Value, 0.0001f);
+        Assert.Equal(PatienceTuning.Full - PastGraceHit, Agent(sim, target).Patience!.Value, 0.0001f);
+    }
+
+    [Theory]
+    [InlineData(2.4f)]
+    [InlineData(1.2f)]
+    public void Cutting_in_where_no_gap_has_stayed_open_past_its_grace_window_is_refused(float spacing)
+    {
+        var sim = new Sim(SteppingOut, Straight, seed: 1);
+        sim.Spawn(new(2, 0));
+        var target = sim.Spawn(new(2 + spacing, 0), Still);
+        var player = sim.Spawn(new(2 + (spacing / 2), 1));
+
+        var events = StepIn(sim, player);
+
+        Assert.Single(events.OfType<CutInMissed>(), e => e.Agent == player && e.Behind == target);
+        Assert.DoesNotContain(events, e => e is CutIn);
+        Assert.True(Agent(sim, player).Refused);
+        Assert.Equal(PatienceTuning.Full - MissHit, Agent(sim, target).Patience!.Value, 0.0001f);
     }
 
     [Fact]
@@ -203,58 +218,79 @@ public sealed class StepOutTests
     }
 
     [Fact]
-    public void Walking_beside_the_line_and_cutting_in_at_the_front_gets_the_player_pushed_past()
+    public void Walking_beside_the_line_and_cutting_in_at_the_front_is_refused()
     {
-        var (sim, line, player) = LineOfFour(Passing);
+        var (sim, line, player) = Line(Passing, gapAfter: -1);
         StepOut(sim, player);
         WalkUntil(sim, player, TowardFront, self => self.Position.X <= 0.05f);
 
         var events = StepIn(sim, player);
 
-        Assert.Contains(events, e => e is KickedOut kicked && kicked.Agent == player && kicked.By == line[0]);
+        Assert.Contains(events, e => e is CutInMissed missed && missed.Agent == player && missed.Behind == line[0]);
         Assert.DoesNotContain(events, e => e is ReachedCounter);
-        Assert.All(line[1..], passed => Assert.Equal(PatienceTuning.Full - PassedHit, Agent(sim, passed).Patience!.Value, 0.0001f));
+        Assert.True(Agent(sim, player).Refused);
     }
 
     [Fact]
-    public void Cutting_in_one_place_ahead_costs_the_person_passed_a_hit_they_survive()
+    public void Cutting_into_a_gap_past_grace_far_up_the_line_gets_the_player_pushed_past()
     {
-        var (sim, line, player) = LineOfFour(Passing);
+        var (sim, line, player) = Line(Passing, gapAfter: 0);
         StepOut(sim, player);
-        WalkUntil(sim, player, TowardFront, self => self.Position.X <= 3f);
+        Run(sim, GraceWindowTicks, _ => Commands());
+        WalkUntil(sim, player, TowardFront, self => self.Position.X <= 2f);
 
         var events = StepIn(sim, player);
 
-        Assert.Contains(events, e => e is CutIn cut && cut.Agent == player && cut.Behind == line[3]);
+        Assert.Contains(events, e => e is CutIn cut && cut.Agent == player && cut.Behind == line[1]);
+        Assert.Contains(events, e => e is KickedOut kicked && kicked.Agent == player && kicked.By == line[1]);
+        Assert.All(line[2..], passed => Assert.Equal(PatienceTuning.Full - PassedHit, Agent(sim, passed).Patience!.Value, 0.0001f));
+    }
+
+    [Fact]
+    public void Cutting_into_a_gap_past_grace_one_place_ahead_costs_the_person_passed_a_hit_they_survive()
+    {
+        var (sim, line, player) = Line(Passing, gapAfter: 3);
+        StepOut(sim, player);
+        Run(sim, GraceWindowTicks, _ => Commands());
+        WalkUntil(sim, player, TowardFront, self => self.Position.X <= 5f);
+
+        var events = StepIn(sim, player);
+
+        Assert.Contains(events, e => e is CutIn cut && cut.Agent == player && cut.Behind == line[4]);
         Assert.DoesNotContain(events, e => e is KickedOut);
-        Assert.Equal(PatienceTuning.Full - LooseHit - PassedHit, Agent(sim, line[3]).Patience!.Value, 0.0001f);
-        Assert.Equal(PatienceTuning.Full, Agent(sim, line[2]).Patience!.Value, 0.0001f);
+        Assert.Equal(PatienceTuning.Full - PastGraceHit - PassedHit, Agent(sim, line[4]).Patience!.Value, 0.0001f);
+        Assert.Equal(PatienceTuning.Full, Agent(sim, line[3]).Patience!.Value, 0.0001f);
     }
 
     [Fact]
     public void Cutting_in_behind_the_held_place_passes_no_one()
     {
-        var sim = new Sim(Passing, Straight, seed: 1);
+        var sim = new Sim(Passing with { StepOut = Passing.StepOut! with { SpotHoldTicks = 600 } }, Straight, seed: 1);
         sim.Spawn(new(5, 0), Still);
         var player = sim.Spawn(new(6, 0));
         var behind = sim.Spawn(new(7, 0), Still);
-        var further = sim.Spawn(new(8, 0), Still);
+        var further = sim.Spawn(new(9, 0), Still);
         StepOut(sim, player);
-        WalkUntil(sim, player, -TowardFront, self => self.Position.X >= 7.5f);
+        Run(sim, GraceWindowTicks, _ => Commands());
+        WalkUntil(sim, player, -TowardFront, self => self.Position.X >= 8f);
 
         var events = StepIn(sim, player);
 
         Assert.Contains(events, e => e is CutIn cut && cut.Behind == further);
-        Assert.Equal(PatienceTuning.Full - LooseHit, Agent(sim, further).Patience!.Value, 0.0001f);
+        Assert.Equal(PatienceTuning.Full - PastGraceHit, Agent(sim, further).Patience!.Value, 0.0001f);
         Assert.Equal(PatienceTuning.Full, Agent(sim, behind).Patience!.Value, 0.0001f);
     }
 
-    /// <summary>Four people a meter apart from the counter back, and the player a meter behind them.</summary>
-    private static (Sim Sim, AgentId[] Line, AgentId Player) LineOfFour(Tuning tuning)
+    /// <summary>
+    /// Five people a meter apart from the counter back, with a three-meter gap behind <paramref name="gapAfter"/> (none
+    /// for -1), and the player a meter behind them.
+    /// </summary>
+    private static (Sim Sim, AgentId[] Line, AgentId Player) Line(Tuning tuning, int gapAfter)
     {
         var sim = new Sim(tuning, Straight, seed: 1);
-        AgentId[] line = [.. Enumerable.Range(0, 4).Select(i => sim.Spawn(new(0.5f + i, 0), Still))];
-        return (sim, line, sim.Spawn(new(4.5f, 0)));
+        AgentId[] line = [.. Enumerable.Range(0, 5).Select(i => sim.Spawn(new(0.5f + i + (gapAfter >= 0 && i > gapAfter ? 2f : 0f), 0), Still))];
+        var last = 0.5f + 4f + (gapAfter >= 0 ? 2f : 0f);
+        return (sim, line, sim.Spawn(new(last + 1f, 0)));
     }
 
     /// <summary>Walks <paramref name="agent"/> aside until it is out of the lane, then stops it.</summary>

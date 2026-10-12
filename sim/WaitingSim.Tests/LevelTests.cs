@@ -111,7 +111,7 @@ public sealed class LevelTests
     }
 
     [Fact]
-    public void In_the_post_office_walking_up_beside_the_line_and_cutting_in_at_the_front_gets_the_player_pushed_past()
+    public void In_the_post_office_walking_up_beside_the_line_and_cutting_in_at_the_front_is_refused()
     {
         var level = Level.Parse(File.ReadAllText(Path.Combine(Levels, "post-office.json")), Traits).Value!;
         var sim = level.Start(Tuning);
@@ -133,8 +133,8 @@ public sealed class LevelTests
             return SimTests.Commands((player, move));
         });
 
-        Assert.Contains(events, e => e is CutIn cut && cut.Agent == player);
-        Assert.Contains(events, e => e is KickedOut kicked && kicked.Agent == player);
+        Assert.Contains(events, e => e is CutInMissed missed && missed.Agent == player);
+        Assert.DoesNotContain(events, e => e is CutIn cut && cut.Agent == player);
         Assert.DoesNotContain(events, e => e is ReachedCounter reached && reached.Agent == player);
     }
 
