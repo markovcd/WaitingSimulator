@@ -19,6 +19,9 @@
     "cutterShare": 0.15,
     "maxCutters": 2
   },
+  "distractions": {
+    "droppedTicket": { "intervalTicks": { "min": 1200, "max": 2400 }, "pickupMeters": 0.4 }
+  },
   "ripple": {
     "serviceTicks": { "min": 120, "max": 360 },
     "reactionTicks": { "min": 15, "max": 60 },

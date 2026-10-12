@@ -61,7 +61,8 @@ internal static class PlayCommand
         var botName = bot.ToString().ToLowerInvariant();
         var worst = player.Tally.Worst is { } mistake ? JsonNamingPolicy.CamelCase.ConvertName(mistake.ToString()) : null;
         var kicked = player.ReachedCounterAt is null && player.KickedOutAt is not null;
-        double? endedSeconds = (player.ReachedCounterAt ?? player.KickedOutAt) is { } tick ? Math.Round((double)tick / TickRate.PerSecond, 2) : null;
+        var turnedAway = player.TurnedAwayAt is not null;
+        double? endedSeconds = (player.ReachedCounterAt ?? player.KickedOutAt ?? player.TurnedAwayAt) is { } tick ? Math.Round((double)tick / TickRate.PerSecond, 2) : null;
         if (json)
         {
             var tally = player.Tally;
@@ -73,8 +74,9 @@ internal static class PlayCommand
                     level.Seed,
                     reachedCounter = player.ReachedCounterAt is not null,
                     kickedOut = kicked,
+                    turnedAway,
                     seconds = endedSeconds,
-                    tally = new { tally.Bumps, tally.GapsLeftOpen, tally.PlacesLost, tally.CuttersLetIn, tally.MissedCutIns, tally.CutIns },
+                    tally = new { tally.Bumps, tally.GapsLeftOpen, tally.PlacesLost, tally.CuttersLetIn, tally.MissedCutIns, tally.CutIns, tally.NoTickets },
                     worst,
                 },
                 JsonOptions));
@@ -82,21 +84,21 @@ internal static class PlayCommand
         else
         {
             output.WriteLine(endedSeconds is { } s
-                ? string.Create(CultureInfo.InvariantCulture, $"{levelName}: the {botName} bot {(kicked ? "was kicked out" : "reached the counter")} after {s:0.00} s; worst mistake: {worst ?? "none"}.")
+                ? string.Create(CultureInfo.InvariantCulture, $"{levelName}: the {botName} bot {(kicked ? "was kicked out" : turnedAway ? "was turned away without its ticket" : "reached the counter")} after {s:0.00} s; worst mistake: {worst ?? "none"}.")
                 : string.Create(CultureInfo.InvariantCulture, $"{levelName}: the {botName} bot did not reach the counter in {seconds} s; worst mistake: {worst ?? "none"}."));
         }
 
         return ExitCode.Success;
     }
 
-    /// <summary>The player as it stands once it reaches the counter or is kicked out, or after <paramref name="seconds"/> if neither happens.</summary>
+    /// <summary>The player as it stands once it reaches the counter, is turned away there or is kicked out, or after <paramref name="seconds"/> if neither happens.</summary>
     private static AgentSnapshot Play(Tuning tuning, Level level, PlayerBot bot, int seconds)
     {
         var sim = level.Start(tuning);
         var brain = new PlayerBrain(bot, level.Lane, new Rng(level.Seed, stream: 2));
         var commands = new Dictionary<AgentId, Command>();
         var player = sim.Snapshot().Agents[level.Player.Value];
-        for (var tick = 0; tick < seconds * TickRate.PerSecond && player is { ReachedCounterAt: null, KickedOutAt: null }; tick++)
+        for (var tick = 0; tick < seconds * TickRate.PerSecond && player is { ReachedCounterAt: null, KickedOutAt: null, TurnedAwayAt: null }; tick++)
         {
             commands[level.Player] = brain.Next(player);
             sim.Step(commands);

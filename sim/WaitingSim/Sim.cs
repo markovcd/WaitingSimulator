@@ -25,6 +25,7 @@ public sealed class Sim
     private readonly Cutters? cutters;
     private Arrivals? arrivals;
     private Vector2? exit;
+    private Tickets? tickets;
     private readonly Bodies? bodies;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
@@ -58,6 +59,18 @@ public sealed class Sim
 
         arrivals = new Arrivals(arrivalTuning, tuning.Zones, lane, line, entrance, traits);
         arrivals.Schedule(Tick, rng);
+    }
+
+    /// <summary>Hands <paramref name="holder"/> a ticket that slips now and then, if the tuning drops tickets. Level setup.</summary>
+    public void HandTicket(AgentId holder)
+    {
+        if (tuning.Distractions?.DroppedTicket is not { } ticket)
+        {
+            return;
+        }
+
+        tickets = new Tickets(ticket, lane, line[holder]);
+        tickets.Schedule(Tick, rng);
     }
 
     /// <summary>Has agents done with the line walk out to <paramref name="exit"/> and be gone. Level setup.</summary>
@@ -174,12 +187,23 @@ public sealed class Sim
         }
 
         patience.KickOuts(Tick, events);
+        tickets?.Update(Tick, rng, events);
 
         // After the kick-outs: an agent pushed past on the way to the counter is not served.
         foreach (var agent in agents)
         {
             if (agent is { ReachedCounterAt: null, InLane: true, Refused: false, Ahead: null } && agent.Lane.Along < tuning.Zones.BumpBelow)
             {
+                if (agent.TicketAt is not null)
+                {
+                    // Turned away like a kick-out: refused a place, and walked off if the line moves it.
+                    agent.TurnedAwayAt = Tick;
+                    agent.Refused = true;
+                    agent.Step = LineStep.Leaving;
+                    events.Add(new TurnedAway(Tick, agent.Id));
+                    continue;
+                }
+
                 agent.ReachedCounterAt = Tick;
                 events.Add(new ReachedCounter(Tick, agent.Id));
             }
@@ -229,7 +253,12 @@ public sealed class Sim
         var (state, increment) = rng.Position;
         var hash = new StateHash().Add(Tick).Add(state).Add(increment).Add((long)line.Agents.Count);
 
-        // A sim without arrivals has no next one due, and leaves it out.
+        // A sim without a ticket or arrivals has none to drop or due, and leaves them out.
+        if (tickets is not null)
+        {
+            hash.Add(tickets.NextDropAt).Add(tickets.Holder.TicketAt?.X ?? float.NaN).Add(tickets.Holder.TicketAt?.Y ?? float.NaN);
+        }
+
         if (arrivals is not null)
         {
             hash.Add(arrivals.NextAt).Add((long)arrivals.Cutters.Count);

@@ -1,8 +1,10 @@
+using System.Numerics;
+
 namespace WaitingSim.Runner;
 
 /// <summary>
 /// Turns what a scripted player sees into its command each tick: close up on the person ahead, or at the front, step
-/// up to the counter.
+/// up to the counter. Every bot but the distracted one fetches a dropped ticket and steps back into the lane.
 /// </summary>
 internal sealed class PlayerBrain(PlayerBot bot, Lane lane, Rng rng)
 {
@@ -32,6 +34,17 @@ internal sealed class PlayerBrain(PlayerBot bot, Lane lane, Rng rng)
                 phoneTicksLeft = (3 * TickRate.PerSecond) + rng.NextBelow(5 * TickRate.PerSecond);
                 return Command.Idle;
             }
+        }
+
+        if (bot != PlayerBot.Distracted && self.TicketAt is { } ticket)
+        {
+            return new(Vector2.Normalize(ticket - self.Position));
+        }
+
+        if (!self.InLane && self.ReachedCounterAt is null)
+        {
+            var back = lane.PointAt(lane.Measure(self.Position).Along) - self.Position;
+            return back == Vector2.Zero ? Command.Idle : new(Vector2.Normalize(back));
         }
 
         var walking = bot == PlayerBot.Slow ? ticksSinceGap > SlowReactionTicks : behind;

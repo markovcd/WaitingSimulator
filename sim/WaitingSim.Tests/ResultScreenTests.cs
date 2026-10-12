@@ -30,6 +30,15 @@ public sealed class ResultScreenTests
     }
 
     [Fact]
+    public void A_player_turned_away_without_a_ticket_sees_the_clerk_send_them_off()
+    {
+        var text = ResultScreen.Text(Player(new Tally(0, 0, 0, 0, 0, 0, NoTickets: 1), reachedAt: null) with { TurnedAwayAt = 40 * TickRate.PerSecond });
+
+        Assert.StartsWith($"CLERK: \"{ClerkLines.For(Mistake.NoTicket)}\"\n\nNO TICKET\n", text, StringComparison.Ordinal);
+        Assert.Contains("TIME IN LINE            00:40", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void There_is_no_result_before_the_counter()
     {
         Assert.Throws<ArgumentException>(() => ResultScreen.Text(Player(default, reachedAt: null)));

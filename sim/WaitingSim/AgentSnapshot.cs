@@ -21,6 +21,8 @@ namespace WaitingSim;
 /// <param name="ReachedCounterAt">The tick it first reached the counter, once it has.</param>
 /// <param name="KickedOutAt">The tick it was first kicked out of the line, once it has been.</param>
 /// <param name="HeldAlong">While its place is held, how far along the lane from the front the place is, in meters.</param>
+/// <param name="TicketAt">Where its dropped ticket lies on the floor, while it does.</param>
+/// <param name="TurnedAwayAt">The tick the clerk turned it away for reaching the counter without its ticket, once it has.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -39,4 +41,6 @@ public sealed record AgentSnapshot(
     Tally Tally,
     long? ReachedCounterAt,
     long? KickedOutAt,
-    float? HeldAlong = null);
+    float? HeldAlong = null,
+    Vector2? TicketAt = null,
+    long? TurnedAwayAt = null);

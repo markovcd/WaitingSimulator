@@ -14,6 +14,7 @@ internal static class ClerkLines
         Mistake.LetCutterIn => "You were holding that spot for someone? Next.",
         Mistake.MissedCutIn => "I saw that. Next.",
         Mistake.CutIn => "The line starts at the back. Next.",
+        Mistake.NoTicket => "No ticket, no service. Next.",
         _ => throw new ArgumentOutOfRangeException(nameof(worst), worst, "A mistake the clerk has no line for."),
     };
 }

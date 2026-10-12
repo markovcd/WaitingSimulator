@@ -71,9 +71,14 @@ internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, bool cut
 
     public long? KickedOutAt { get; set; }
 
+    /// <summary>Where the agent's dropped ticket lies, while it does.</summary>
+    public Vector2? TicketAt { get; set; }
+
+    public long? TurnedAwayAt { get; set; }
+
     public AgentSnapshot Snapshot() => Trait is null
-        ? new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, null, null, null, Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong)
-        : new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, Trait.Id, Patience, Trait.Shown(Stage), Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong);
+        ? new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, null, null, null, Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt)
+        : new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, Trait.Id, Patience, Trait.Shown(Stage), Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt);
 
     private long? SpotHeldUntil => HeldAlong is null ? null : HoldEndsAt;
 }

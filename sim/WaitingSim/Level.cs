@@ -33,6 +33,7 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
             sim.Spawn(agent.Position, agent.Trait is { } id ? Traits.Single(trait => trait.Id == id) : null, agent.Cutter);
         }
 
+        sim.HandTicket(Player);
         if (Exit is { } exit)
         {
             sim.ExitAt(exit);

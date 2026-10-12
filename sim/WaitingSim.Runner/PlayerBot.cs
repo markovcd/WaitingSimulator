@@ -9,6 +9,6 @@ internal enum PlayerBot
     /// <summary>Closes every gap, a second and a half late.</summary>
     Slow,
 
-    /// <summary>Attentive, except while looking at the phone for a few seconds at random.</summary>
+    /// <summary>Attentive, except while looking at the phone for a few seconds at random, and blind to a dropped ticket.</summary>
     Distracted,
 }

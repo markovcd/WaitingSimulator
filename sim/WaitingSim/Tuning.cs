@@ -13,6 +13,7 @@ namespace WaitingSim;
 /// <param name="StepOut">How the line treats an agent that steps out and back in; without it, stepping out leaves the line at once and stepping in joins it anywhere.</param>
 /// <param name="Bodies">How agents keep out of each other; without it, agents walk through each other.</param>
 /// <param name="Arrivals">How often newcomers arrive at a level's entrance; without it, nobody arrives.</param>
+/// <param name="Distractions">What competes with watching the line; without it, nothing does.</param>
 public sealed record Tuning(
     int GraceWindowTicks,
     ZoneLimits Zones,
@@ -23,7 +24,8 @@ public sealed record Tuning(
     StepOutTuning? StepOut = null,
     CutterTuning? Cutter = null,
     BodyTuning? Bodies = null,
-    ArrivalTuning? Arrivals = null)
+    ArrivalTuning? Arrivals = null,
+    DistractionTuning? Distractions = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -66,7 +68,33 @@ public sealed record Tuning(
             ReadStepOut(root, problems),
             ReadCutter(root, problems),
             ReadBodies(root, limits, problems),
-            ReadArrivals(root, problems));
+            ReadArrivals(root, problems),
+            ReadDistractions(root, problems));
+    }
+
+    /// <summary>Reads the <c>distractions</c> object, which a tuning file may leave out, as it may each distraction in it.</summary>
+    private static DistractionTuning? ReadDistractions(JsonElement root, List<string> problems)
+    {
+        if (!root.TryGetProperty("distractions", out _))
+        {
+            return null;
+        }
+
+        var distractions = JsonFile.Section(root, "distractions", problems);
+        DroppedTicketTuning? ticket = null;
+        if (distractions is { } section && section.TryGetProperty("droppedTicket", out _))
+        {
+            var dropped = JsonFile.Section(distractions, "distractions.droppedTicket", problems);
+            var interval = ReadTicks(dropped, "distractions.droppedTicket.intervalTicks", problems);
+            if (interval.Min < 1 && problems.Count == 0)
+            {
+                problems.Add("distractions.droppedTicket.intervalTicks: min must be at least 1");
+            }
+
+            ticket = new(interval, JsonFile.Positive(dropped, "distractions.droppedTicket.pickupMeters", problems));
+        }
+
+        return new(ticket);
     }
 
     /// <summary>Reads the <c>arrivals</c> object, which a tuning file may leave out.</summary>

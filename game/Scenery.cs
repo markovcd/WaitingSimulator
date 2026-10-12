@@ -123,6 +123,24 @@ internal static class Scenery
         }
     }
 
+    /// <summary>How high a dropped ticket's center sits off the floor, in meters.</summary>
+    public const float TicketHeight = 0.006f;
+
+    /// <summary>The player's ticket lying on the floor, hidden until it drops: a small white slip.</summary>
+    public static MeshInstance3D Ticket(Node parent)
+    {
+        var ticket = new MeshInstance3D
+        {
+            Name = "Ticket",
+            Mesh = new BoxMesh { Size = new Vector3(0.12f, 0.004f, 0.07f) },
+            MaterialOverride = Flat(new Color(0.95f, 0.94f, 0.88f)),
+            Rotation = new Vector3(0f, 0.4f, 0f),
+            Visible = false,
+        };
+        parent.AddChild(ticket);
+        return ticket;
+    }
+
     /// <summary><paramref name="paint"/> as a Godot color.</summary>
     public static Color ToColor(Paint paint) => new(paint.R, paint.G, paint.B);
 

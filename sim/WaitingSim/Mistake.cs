@@ -20,4 +20,7 @@ public enum Mistake
 
     /// <summary>Cut in ahead of someone.</summary>
     CutIn,
+
+    /// <summary>Reached the counter without its ticket.</summary>
+    NoTicket,
 }

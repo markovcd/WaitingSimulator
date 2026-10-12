@@ -11,4 +11,7 @@ internal enum CueKind
 
     /// <summary>The agent's patience ran out.</summary>
     RanOut,
+
+    /// <summary>The agent's ticket slipped to the floor: a paper flutter.</summary>
+    TicketDropped,
 }

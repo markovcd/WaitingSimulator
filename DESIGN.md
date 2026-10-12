@@ -196,9 +196,13 @@ Difficulty is how much the game tells you. The simulation is identical across al
 
 Leaderboards split per difficulty. The no-HUD version must be fully readable on its own; playtest it first. If it only works with the HUD, the cues need work.
 
-## 12. Distractions (not yet designed)
+## 12. Distractions
 
-Candidates: phone buzz, slipping bag strap, dropped item, a call from your boss, a kid tugging your sleeve, a stranger starting small talk. Each should compete with watching the line, so the player constantly trades boredom relief against vigilance. Frequency, trade-offs and boredom/fatigue interaction are still open.
+Each distraction competes with watching the line, so the player constantly trades boredom relief against vigilance. Each is optional tuning data, timed by the sim's seeded RNG.
+
+- **Dropped ticket:** every 20 to 40 s the player's ticket slips and lands on the floor just outside the lane beside them, with a paper flutter. Picking it up means walking within reach of it, which means stepping out of the lane: the spot hold and the line moving on apply as usual. Only one lies on the floor at a time, and it only slips while the player stands in the line. Reaching the counter without it, the clerk sends the player away: "NO TICKET", a failed level like a kick-out. Easy shows "TICKET DROPPED", normal "TICKET".
+
+Still open: other candidates (phone buzz, slipping bag strap, a call from your boss, a kid tugging your sleeve), and how distractions interact with boredom and fatigue.
 
 ## 13. Architecture Ground Rules
 
@@ -230,7 +234,7 @@ Differentiator: the gap-and-patience loop, the person behind you as a character,
 
 ## 16. Open Questions
 
-- Distractions: types, frequency, trade-offs.
+- Distractions beyond those in §12, and their interaction with boredom and fatigue.
 - Room mode moment-to-moment play: how calls are delivered and how listening is made skill-based.
 - Personality: fixed per level or random per run (cheap to defer).
 - Phone: hold vs toggle (start with hold).

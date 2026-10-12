@@ -46,6 +46,17 @@ public sealed class HudTests
     }
 
     [Fact]
+    public void A_dropped_ticket_shows_on_easy_and_normal_and_not_on_hard()
+    {
+        var snapshot = Line(gapOpenedAt: null, tick: 130);
+        var dropped = snapshot with { Agents = [.. snapshot.Agents.Select(agent => agent.Id == Player ? agent with { TicketAt = new(1, 1) } : agent)] };
+
+        Assert.EndsWith("TICKET DROPPED", Hud.Text(dropped, Player, Tuning, Difficulty.Easy), StringComparison.Ordinal);
+        Assert.Equal("TICKET", Hud.Text(dropped, Player, Tuning, Difficulty.Normal));
+        Assert.Equal("", Hud.Text(dropped, Player, Tuning, Difficulty.Hard));
+    }
+
+    [Fact]
     public void Easy_with_no_one_behind_and_no_gap_shows_nothing()
     {
         var snapshot = Line(gapOpenedAt: null, tick: 130);

@@ -5,8 +5,9 @@ using WaitingSim;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The player's HUD text, which the difficulty decides: nothing on hard, a word when a gap opens in front of the player on
-/// normal, and on easy the patience of the person behind and the grace left on a gap. It reads the snapshot only.
+/// The player's HUD text, which the difficulty decides: nothing on hard, a word when a gap opens in front of the player or
+/// their ticket drops on normal, and on easy the patience of the person behind, the grace left on a gap and a dropped
+/// ticket. It reads the snapshot only.
 /// </summary>
 internal static class Hud
 {
@@ -16,10 +17,11 @@ internal static class Hud
         ArgumentNullException.ThrowIfNull(tuning);
         var you = snapshot.Agents[player.Value];
         var gapOpenedAt = you.Zone == Zone.Gap ? you.GapOpenedAt : null;
+        var dropped = you.TicketAt is not null;
         switch (difficulty)
         {
             case Difficulty.Normal:
-                return gapOpenedAt is null ? "" : "GAP";
+                return string.Join('\n', new[] { gapOpenedAt is null ? null : "GAP", dropped ? "TICKET" : null }.OfType<string>());
             case Difficulty.Easy:
                 var text = new StringBuilder();
                 if (snapshot.Agents.FirstOrDefault(agent => agent.Ahead == player) is { Patience: { } patience })
@@ -35,7 +37,12 @@ internal static class Hud
                         : "GAP: GRACE RAN OUT");
                 }
 
-                return text.ToString().TrimEnd('\n');
+                if (dropped)
+                {
+                    text.Append("\nTICKET DROPPED");
+                }
+
+                return text.ToString().Trim('\n');
             default:
                 return "";
         }
