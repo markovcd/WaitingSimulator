@@ -114,5 +114,24 @@ internal static class Scenery
         return label;
     }
 
+    /// <summary>How to play, shown at the start of a level: a label along the bottom of the view.</summary>
+    public static Label HowToPlay(Node parent)
+    {
+        var layer = new CanvasLayer { Name = "HowToPlay" };
+        var label = new Label
+        {
+            Name = "Text",
+            Text = Game.HowToPlay.Text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            OffsetBottom = -24f,
+        };
+        label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        label.AddThemeColorOverride("font_color", Colors.Black);
+        layer.AddChild(label);
+        parent.AddChild(layer);
+        return label;
+    }
+
     private static StandardMaterial3D Flat(Color color) => new() { AlbedoColor = color };
 }
