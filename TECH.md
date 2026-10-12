@@ -87,7 +87,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 ### 4.2 Tick and time
 - 60 Hz fixed step. All durations are stored in ticks (grace window 1.5 s = 90 ticks), so timing rules are exact integers.
 - The client's `Driver` runs the accumulator from `_Process`: it steps the sim 0-6 times per frame (a longer hitch drops the rest, slowing the game rather than stalling it) and blends visuals between the previous and current snapshot. Do not tie the sim to `_PhysicsProcess` or engine physics settings.
-- The client builds its scene in code from a level file (`data/levels/`): the lane, the agents in spawn order (any marked `"cutter": true`), which one the player drives, the clerk's spot and the level's seed. Agents are capsule placeholders until art lands.
+- The client builds its scene in code from a level file (`data/levels/`): the lane, the agents in spawn order (any marked `"cutter": true`), which one the player drives, the clerk's spot and the level's seed. Agents and the clerk are crude humanoid figures built in code from primitive meshes until art lands: `Figure` owns their parts, proportions and colors, and picks each agent's height (±5%) and clothes from its id, so a replay looks the same.
 - Pause, slow-motion debugging and fast-forward are all just "step N times".
 
 ### 4.3 Commands in, events out
@@ -132,7 +132,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 
 ### 5.2 Animation
 - A shared humanoid skeleton for all NPCs and the clerk. A clip library covering idle, shuffle, step, sigh, watch check, foot tap, lean in, tap shoulder, push past and stumble.
-- **Placeholders now:** `Motion` poses each capsule from the stage it shows (sway, a foot-tap bob, a lean into the line from confronting on) and a stumble when the person behind walks into it, timed in ticks so a replay shows the same. Agents face the front of the lane.
+- **Placeholders now:** `Motion` poses each figure from the stage it shows (sway, a foot-tap bob, a lean into the line from confronting on) and a stumble when the person behind walks into it, timed in ticks so a replay shows the same. Agents face the front of the lane, and their arms and legs swing with the speed the sim gives them.
 - An `AnimationTree` state machine keyed by `StageChanged` and movement events. Stage hysteresis lives in the sim, so animation never flickers.
 - Procedural layers for readability: head look-at toward the player (especially when the player glances back), torso lean into personal space, and a little noise. Stiffness is on-brand, so no blending polish is needed.
 

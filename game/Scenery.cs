@@ -3,22 +3,15 @@ using Godot;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The placeholder world, built in code: light, a floor, a capsule for each agent and the clerk, the voices cues play
-/// through and the debug overlay.
+/// The placeholder world, built in code: light, a floor, a crude humanoid <see cref="Figure"/> for each agent and the
+/// clerk, the voices cues play through and the debug overlay.
 /// </summary>
 internal static class Scenery
 {
-    /// <summary>How high the player's eyes are above the floor, in meters.</summary>
-    public const float EyeHeight = 1.6f;
-
-    private const float CapsuleRadius = 0.25f;
-    private const float CapsuleHeight = 1.7f;
     private const float FloorSize = 30f;
 
     private static readonly Color Background = new(0.62f, 0.64f, 0.66f);
     private static readonly Color FloorColor = new(0.55f, 0.53f, 0.5f);
-    private static readonly Color AgentColor = new(0.42f, 0.47f, 0.55f);
-    private static readonly Color ClerkColor = new(0.55f, 0.44f, 0.38f);
 
     /// <summary>Adds the light, the sky and a floor centered on <paramref name="center"/> to <paramref name="parent"/>.</summary>
     public static void AddRoom(Node parent, Vector3 center)
@@ -50,28 +43,36 @@ internal static class Scenery
         });
     }
 
-    /// <summary>A capsule standing on the floor, for an agent.</summary>
-    public static Node3D Agent(string name) => Capsule(name, AgentColor);
-
-    /// <summary>A capsule standing on the floor, for the clerk.</summary>
-    public static Node3D Clerk() => Capsule("Clerk", ClerkColor);
-
-    private static Node3D Capsule(string name, Color color)
+    /// <summary>A figure standing on the floor, sized and colored by <paramref name="look"/>.</summary>
+    public static FigureNode Figure(string name, Look look)
     {
-        var body = new Node3D { Name = name };
-        body.AddChild(new MeshInstance3D
+        var root = new Node3D { Name = name, Scale = Vector3.One * look.HeightScale };
+        var limbs = new Dictionary<Limb, Node3D> { [Limb.Body] = root };
+        foreach (var limb in Enum.GetValues<Limb>().Where(limb => limb != Limb.Body))
         {
-            Mesh = new CapsuleMesh { Radius = CapsuleRadius, Height = CapsuleHeight },
-            MaterialOverride = Flat(color),
-            Position = new Vector3(0f, CapsuleHeight / 2f, 0f),
-        });
-        return body;
+            var pivot = new Node3D { Name = limb.ToString(), Position = ToGodot(Game.Figure.Pivot(limb)) };
+            root.AddChild(pivot);
+            limbs[limb] = pivot;
+        }
+
+        foreach (var part in Game.Figure.Parts)
+        {
+            limbs[part.Limb].AddChild(new MeshInstance3D
+            {
+                Name = part.Name,
+                Mesh = Mesh(part),
+                MaterialOverride = Flat(Color(part.Swatch, look)),
+                Position = ToGodot(part.Center),
+            });
+        }
+
+        return new FigureNode(root, limbs[Limb.LeftArm], limbs[Limb.RightArm], limbs[Limb.LeftLeg], limbs[Limb.RightLeg]);
     }
 
     /// <summary>A voice at <paramref name="parent"/>'s spot, for its cues.</summary>
     public static AudioStreamPlayer3D Voice(Node3D parent)
     {
-        var voice = new AudioStreamPlayer3D { Name = "Voice", Position = new Vector3(0f, EyeHeight, 0f) };
+        var voice = new AudioStreamPlayer3D { Name = "Voice", Position = new Vector3(0f, Game.Figure.EyeHeight, 0f) };
         parent.AddChild(voice);
         return voice;
     }
@@ -154,6 +155,27 @@ internal static class Scenery
         parent.AddChild(layer);
         return label;
     }
+
+    private static Mesh Mesh(FigurePart part) => part.Shape switch
+    {
+        PartShape.Box => new BoxMesh { Size = ToGodot(part.Size) },
+        PartShape.Capsule => new CapsuleMesh { Radius = part.Size.X / 2f, Height = part.Size.Y },
+        _ => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X },
+    };
+
+    private static Color Color(Swatch swatch, Look look)
+    {
+        var paint = swatch switch
+        {
+            Swatch.Skin => look.Skin,
+            Swatch.Shirt => look.Shirt,
+            Swatch.Trousers => look.Trousers,
+            _ => Game.Figure.Shoes,
+        };
+        return new Color(paint.R, paint.G, paint.B);
+    }
+
+    private static Vector3 ToGodot(System.Numerics.Vector3 vector) => new(vector.X, vector.Y, vector.Z);
 
     private static StandardMaterial3D Flat(Color color) => new() { AlbedoColor = color };
 }

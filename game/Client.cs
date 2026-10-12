@@ -4,19 +4,22 @@ using WaitingSim;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The client's root node: loads the level, builds placeholder scenery for it, and each frame turns input into the
-/// player's command, steps the sim, shows where it put everyone and how they stand, and plays the cues its events call
-/// for. How to play shows at the start until the player walks off. Once the player reaches the counter or is kicked
-/// out, input stops and the result screen shows until they line up again. The HUD shows what the difficulty allows; F2
-/// cycles the difficulty, and <c>-- --difficulty easy</c> starts on one. F5 re-reads the data files and restarts the
-/// level on them. F3 toggles the debug overlay. Esc frees the
-/// mouse and a click in the window takes it back. Started with <c>-- --smoke</c>, it plays a few frames, logs the
-/// overlay and quits, which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
+/// The client's root node: loads the level, builds placeholder scenery and a figure per agent for it, and each frame
+/// turns input into the player's command, steps the sim, shows where it put everyone and how they stand, and plays the
+/// cues its events call for. How to play shows at the start until the player walks off. Once the player reaches the
+/// counter or is kicked out, input stops and the result screen shows until they line up again. The HUD shows what the
+/// difficulty allows; F2 cycles the difficulty, and <c>-- --difficulty easy</c> starts on one. F5 re-reads the data
+/// files and restarts the level on them. F3 toggles the debug overlay. Esc frees the mouse and a click in the window
+/// takes it back. Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits, which is how the
+/// gate checks the game starts under Godot; a data problem quits with exit code 1.
 /// </summary>
 public sealed partial class Client : Node3D
 {
     internal const string LevelName = "post-office";
     private const int SmokeFrames = 10;
+
+    /// <summary>Ticks between neighbors' strides, so a line stepping up does not walk in step.</summary>
+    private const float StrideOffsetTicks = 13f;
 
     /// <summary>How long a notice stays up, in seconds.</summary>
     private const double NoticeSeconds = 2.0;
@@ -45,7 +48,7 @@ public sealed partial class Client : Node3D
     private Label? hud;
     private Label? notice;
     private double noticeLeft;
-    private Node3D?[] bodies = [];
+    private FigureNode?[] bodies = [];
     private AudioStreamPlayer3D[] voices = [];
 
     /// <inheritdoc/>
@@ -220,7 +223,7 @@ public sealed partial class Client : Node3D
         camera = new Camera3D { Name = "Eyes", Current = true };
         AddChild(camera);
         var count = driver!.Current.Agents.Count;
-        bodies = new Node3D?[count];
+        bodies = new FigureNode?[count];
         voices = new AudioStreamPlayer3D[count];
         foreach (var agent in driver.Current.Agents)
         {
@@ -230,13 +233,13 @@ public sealed partial class Client : Node3D
                 continue;
             }
 
-            var body = Scenery.Agent($"Agent{agent.Id.Value}");
-            AddChild(body);
+            var body = Scenery.Figure($"Agent{agent.Id.Value}", Figure.For(agent.Id));
+            AddChild(body.Root);
             bodies[agent.Id.Value] = body;
-            voices[agent.Id.Value] = Scenery.Voice(body);
+            voices[agent.Id.Value] = Scenery.Voice(body.Root);
         }
 
-        var clerk = Scenery.Clerk();
+        var clerk = Scenery.Figure("Clerk", Figure.Clerk).Root;
         clerk.Position = Floor.ToWorld(level.Clerk);
         clerk.Rotation = new Vector3(0f, Floor.YawFacing(-level.Lane.TowardFront(level.Clerk)), 0f);
         AddChild(clerk);
@@ -257,14 +260,15 @@ public sealed partial class Client : Node3D
             {
                 var position = driver.Position(agent.Id);
                 var pose = motion!.PoseOf(agent, now);
-                body.Position = Floor.ToWorld(position, pose.Bob);
-                body.Rotation = new Vector3(-pose.Lean, Floor.YawFacing(level!.Lane.TowardFront(position)), pose.Sway);
+                body.Root.Position = Floor.ToWorld(position, pose.Bob);
+                body.Root.Rotation = new Vector3(-pose.Lean, Floor.YawFacing(level!.Lane.TowardFront(position)), pose.Sway);
+                body.Swing(Figure.Swing(agent.Velocity.Length(), tuning!.WalkSpeed, now + (agent.Id.Value * StrideOffsetTicks)));
             }
         }
 
         // The player's eyes only stumble; a swaying camera would read as the game, not the person.
         var player = driver.Current.Agents[level!.Player.Value];
-        camera!.Position = Floor.ToWorld(driver.Position(player.Id), Scenery.EyeHeight);
+        camera!.Position = Floor.ToWorld(driver.Position(player.Id), Figure.EyeHeight);
         camera.Rotation = new Vector3(head!.Pitch - motion!.PoseOf(player, now).Lean, head.ViewYaw, 0f);
     }
 }
