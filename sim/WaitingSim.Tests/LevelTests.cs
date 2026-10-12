@@ -66,6 +66,22 @@ public sealed class LevelTests
     }
 
     [Fact]
+    public void Served_people_walk_out_of_a_level_s_exit_and_stay_beside_a_level_without_one()
+    {
+        var withExit = Level.Parse(Valid.Replace("\"clerk\": [0, -1.0]", "\"clerk\": [0, -1.0],\n  \"exit\": [3, -1]", StringComparison.Ordinal), Traits).Value!;
+        var without = Level.Parse(Valid, Traits).Value!;
+
+        var gone = withExit.Start(Tuning);
+        var stays = without.Start(Tuning);
+        SimTests.Run(gone, 20 * TickRate.PerSecond, _ => SimTests.Commands());
+        SimTests.Run(stays, 20 * TickRate.PerSecond, _ => SimTests.Commands());
+
+        Assert.Equal(new Vector2(3, -1), withExit.Exit);
+        Assert.Equal(LineStep.Gone, gone.Snapshot().Agents[0].Step);
+        Assert.Equal(LineStep.Done, stays.Snapshot().Agents[0].Step);
+    }
+
+    [Fact]
     public void A_level_plays_the_same_from_its_seed_every_time()
     {
         var level = Level.Parse(Valid, Traits).Value!;
@@ -82,6 +98,7 @@ public sealed class LevelTests
     [InlineData("\"halfWidth\": 0.5", "\"halfWidth\": 0", "lane.halfWidth: missing, or not a positive number")]
     [InlineData("\"seed\": 7", "\"seed\": -7", "seed: missing, or not a whole number from 0 up")]
     [InlineData("\"clerk\": [0, -1.0]", "\"clerk\": [0, -1.0], \"entrance\": [2]", "entrance: missing, or not a point [x, y] of two finite numbers")]
+    [InlineData("\"clerk\": [0, -1.0]", "\"clerk\": [0, -1.0], \"exit\": \"door\"", "exit: missing, or not a point [x, y] of two finite numbers")]
     public void A_bad_level_field_is_reported_by_name(string field, string replacement, string problem)
     {
         var parsed = Level.Parse(Valid.Replace(field, replacement, StringComparison.Ordinal), Traits);

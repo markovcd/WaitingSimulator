@@ -5,7 +5,7 @@ namespace WaitingSim;
 /// <summary>
 /// Keeps agents out of each other: each takes up a circle on the floor. An agent that walks into another is pushed back
 /// out of it and bounces off, and the one walked into stays where it is; two walking into each other alike share the push.
-/// An agent done with the line has left it and takes up no room.
+/// An agent done with the line, or gone out of the exit, takes up no room.
 /// </summary>
 internal sealed class Bodies(BodyTuning tuning, Line line)
 {
@@ -21,7 +21,7 @@ internal sealed class Bodies(BodyTuning tuning, Line line)
                 var (first, second) = (agents[i], agents[j]);
                 var offset = second.Position - first.Position;
                 var distance = offset.Length();
-                if (distance >= reach || first.Step == LineStep.Done || second.Step == LineStep.Done)
+                if (distance >= reach || first.Step is LineStep.Done or LineStep.Gone || second.Step is LineStep.Done or LineStep.Gone)
                 {
                     continue;
                 }

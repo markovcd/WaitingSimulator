@@ -11,6 +11,9 @@ public sealed class Sim
     // Each agent draws from a stream of its own, numbered from here so none is the sim's.
     private const ulong AgentStreams = 1UL << 32;
 
+    /// <summary>How near the exit an agent walking out has to come to be gone, in meters.</summary>
+    private const float ExitReachMeters = 0.3f;
+
     private readonly Tuning tuning;
     private readonly Lane lane;
     private readonly ulong seed;
@@ -21,6 +24,7 @@ public sealed class Sim
     private readonly StepOut? stepOut;
     private readonly Cutters? cutters;
     private Arrivals? arrivals;
+    private Vector2? exit;
     private readonly Bodies? bodies;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
@@ -55,6 +59,9 @@ public sealed class Sim
         arrivals = new Arrivals(arrivalTuning, tuning.Zones, lane, line, entrance, traits);
         arrivals.Schedule(Tick, rng);
     }
+
+    /// <summary>Has agents done with the line walk out to <paramref name="exit"/> and be gone. Level setup.</summary>
+    public void ExitAt(Vector2 exit) => this.exit = exit;
 
     /// <summary>How many ticks have been stepped.</summary>
     public long Tick { get; private set; }
@@ -256,6 +263,11 @@ public sealed class Sim
     /// <summary>The command for an agent nobody commands: a waiting cutter's, the ripple's, or standing still without either.</summary>
     private Command FollowLine(Agent agent)
     {
+        if (exit is { } door && agent.Step is LineStep.Done or LineStep.Exiting or LineStep.Gone)
+        {
+            return Leave(agent, door);
+        }
+
         if (arrivals is not null && arrivals.Prowls(agent))
         {
             return arrivals.Prowl(agent, Tick, cutters);
@@ -272,6 +284,20 @@ public sealed class Sim
         }
 
         return ripple?.Next(agent, Tick) ?? Command.Idle;
+    }
+
+    /// <summary>The command for an agent done with the line: out to <paramref name="door"/>, and gone once it is there.</summary>
+    private static Command Leave(Agent agent, Vector2 door)
+    {
+        var toward = door - agent.Position;
+        if (agent.Step == LineStep.Gone || toward.Length() <= ExitReachMeters)
+        {
+            agent.Step = LineStep.Gone;
+            return Command.Idle;
+        }
+
+        agent.Step = LineStep.Exiting;
+        return new(Vector2.Normalize(toward));
     }
 
     /// <summary>Eases the agent's velocity toward its wanted one by at most a tick's acceleration, then moves it.</summary>

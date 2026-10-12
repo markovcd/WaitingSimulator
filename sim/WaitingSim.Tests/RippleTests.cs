@@ -60,6 +60,35 @@ public sealed class RippleTests
     }
 
     [Fact]
+    public void A_served_agent_walks_out_to_the_exit_and_is_gone()
+    {
+        var sim = new Sim(Rippling, Straight, seed: 1);
+        var front = sim.Spawn(new(0, 0));
+        var exit = new Vector2(-1, -4);
+        sim.ExitAt(exit);
+
+        Idle(sim, 12 * TickRate.PerSecond);
+
+        Assert.Equal(LineStep.Gone, Agent(sim, front).Step);
+        Assert.True(Vector2.Distance(exit, Agent(sim, front).Position) < 0.5f, $"Gone at {Agent(sim, front).Position}, not the exit.");
+    }
+
+    [Fact]
+    public void A_gone_agent_takes_up_no_room()
+    {
+        var sim = new Sim(Rippling with { Bodies = new BodyTuning(0.18f, 0.5f) }, Straight, seed: 1);
+        var front = sim.Spawn(new(0, 0));
+        sim.ExitAt(new(-1, -4));
+        Idle(sim, 12 * TickRate.PerSecond);
+        var walker = sim.Spawn(new(-1, -2));
+
+        Run(sim, 3 * TickRate.PerSecond, _ => Commands((walker, new Vector2(0, -1))));
+
+        Assert.True(Agent(sim, walker).Position.Y < -4.5f, "The walker was stopped at the exit.");
+        Assert.Equal(LineStep.Gone, Agent(sim, front).Step);
+    }
+
+    [Fact]
     public void Each_agent_steps_up_its_reaction_delay_after_it_notices()
     {
         var sim = new Sim(Rippling, Straight, seed: 1);

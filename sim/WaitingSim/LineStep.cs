@@ -29,4 +29,10 @@ public enum LineStep
 
     /// <summary>A newcomer come to cut in, walking up beside the line looking for a gap left open too long.</summary>
     Prowling,
+
+    /// <summary>Done with the line and walking out to the level's exit.</summary>
+    Exiting,
+
+    /// <summary>Out of the exit: no longer in the room, and in nothing's way.</summary>
+    Gone,
 }

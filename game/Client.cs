@@ -269,6 +269,7 @@ public sealed partial class Client : Node3D
         {
             if (bodies[agent.Id.Value] is { } body)
             {
+                body.Root.Visible = agent.Step != LineStep.Gone;
                 var position = driver.Position(agent.Id);
                 var pose = motion!.PoseOf(agent, now);
                 body.Root.Position = Floor.ToWorld(position, pose.Bob);

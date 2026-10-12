@@ -11,7 +11,8 @@ namespace WaitingSim;
 /// <param name="Clerk">Where the clerk stands, past the front of the line.</param>
 /// <param name="Traits">The traits the agents' trait ids name, and newcomers are drawn from.</param>
 /// <param name="Entrance">Where newcomers arrive, if the tuning has arrivals; a level without one has none.</param>
-public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agents, AgentId Player, Vector2 Clerk, IReadOnlyList<Trait> Traits, Vector2? Entrance = null)
+/// <param name="Exit">Where people done with the line walk out; in a level without one, they stop beside the lane.</param>
+public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agents, AgentId Player, Vector2 Clerk, IReadOnlyList<Trait> Traits, Vector2? Entrance = null, Vector2? Exit = null)
 {
     /// <summary>The newest level format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -30,6 +31,11 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
         foreach (var agent in Agents)
         {
             sim.Spawn(agent.Position, agent.Trait is { } id ? Traits.Single(trait => trait.Id == id) : null, agent.Cutter);
+        }
+
+        if (Exit is { } exit)
+        {
+            sim.ExitAt(exit);
         }
 
         if (Entrance is { } entrance)
@@ -57,6 +63,7 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
 
         var clerk = JsonFile.Point(root, "clerk", problems);
         Vector2? entrance = root.TryGetProperty("entrance", out _) ? JsonFile.Point(root, "entrance", problems) : null;
-        return new(seed, lane!, agents, new AgentId(player), clerk, traits, entrance);
+        Vector2? exit = root.TryGetProperty("exit", out _) ? JsonFile.Point(root, "exit", problems) : null;
+        return new(seed, lane!, agents, new AgentId(player), clerk, traits, entrance, exit);
     }
 }
