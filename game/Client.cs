@@ -49,6 +49,7 @@ public sealed partial class Client : Node3D
     private Label? notice;
     private double noticeLeft;
     private FigureNode?[] bodies = [];
+    private FigureNode? clerk;
     private AudioStreamPlayer3D[] voices = [];
 
     /// <inheritdoc/>
@@ -239,10 +240,10 @@ public sealed partial class Client : Node3D
             voices[agent.Id.Value] = Scenery.Voice(body.Root);
         }
 
-        var clerk = Scenery.Figure("Clerk", Figure.Clerk).Root;
-        clerk.Position = Floor.ToWorld(level.Clerk);
-        clerk.Rotation = new Vector3(0f, Floor.YawFacing(-level.Lane.TowardFront(level.Clerk)), 0f);
-        AddChild(clerk);
+        clerk = Scenery.Figure("Clerk", Figure.Clerk);
+        clerk.Root.Position = Floor.ToWorld(level.Clerk);
+        clerk.Root.Rotation = new Vector3(0f, Floor.YawFacing(-level.Lane.TowardFront(level.Clerk)), 0f);
+        AddChild(clerk.Root);
         overlay = Scenery.Overlay(this);
         result = Scenery.Result(this);
         howToPlay = Scenery.HowToPlay(this);
@@ -263,8 +264,11 @@ public sealed partial class Client : Node3D
                 body.Root.Position = Floor.ToWorld(position, pose.Bob);
                 body.Root.Rotation = new Vector3(-pose.Lean, Floor.YawFacing(level!.Lane.TowardFront(position)), pose.Sway);
                 body.Swing(Figure.Swing(agent.Velocity.Length(), tuning!.WalkSpeed, now + (agent.Id.Value * StrideOffsetTicks)));
+                body.Show(Face.For(agent.Stage), Face.Blinking(agent.Id.Value, now));
             }
         }
+
+        clerk!.Show(Face.Bored, Face.Blinking(-1, now));
 
         // The player's eyes only stumble; a swaying camera would read as the game, not the person.
         var player = driver.Current.Agents[level!.Player.Value];

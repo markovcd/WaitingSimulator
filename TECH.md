@@ -132,7 +132,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 
 ### 5.2 Animation
 - A shared humanoid skeleton for all NPCs and the clerk. A clip library covering idle, shuffle, step, sigh, watch check, foot tap, lean in, tap shoulder, push past and stumble.
-- **Placeholders now:** `Motion` poses each figure from the stage it shows (sway, a foot-tap bob, a lean into the line from confronting on) and a stumble when the person behind walks into it, timed in ticks so a replay shows the same. Agents face the front of the lane, and their arms and legs swing with the speed the sim gives them.
+- **Placeholders now:** `Motion` poses each figure from the stage it shows (sway, a foot-tap bob, a lean into the line from confronting on) and a stumble when the person behind walks into it, timed in ticks so a replay shows the same. Agents face the front of the lane, and their arms and legs swing with the speed the sim gives them. Each face (eyes, brows, a two-part mouth) shows the stage the agent shows, from `Face`'s table, each stage angrier than the one before, and blinks every few seconds; the clerk looks bored.
 - An `AnimationTree` state machine keyed by `StageChanged` and movement events. Stage hysteresis lives in the sim, so animation never flickers.
 - Procedural layers for readability: head look-at toward the player (especially when the player glances back), torso lean into personal space, and a little noise. Stiffness is on-brand, so no blending polish is needed.
 

@@ -6,7 +6,7 @@ namespace WaitingSimulator.Game;
 /// <summary>
 /// The crude humanoid every agent and the clerk is drawn as: its parts and where they hang, the colors it comes in, how
 /// each agent's look is picked from its id so a replay looks the same, and how far its limbs swing while it walks.
-/// Facing -z, it fits front to back inside the sim's body.
+/// Facing -z, with its face on the front of its head, it fits front to back inside the sim's body.
 /// </summary>
 internal static class Figure
 {
@@ -39,8 +39,21 @@ internal static class Figure
 
     private static readonly Paint[] TrouserColors = [new(0.25f, 0.26f, 0.28f), new(0.22f, 0.25f, 0.35f), new(0.36f, 0.3f, 0.25f), new(0.55f, 0.5f, 0.4f)];
 
+    public const string LeftEye = "LeftEye";
+    public const string RightEye = "RightEye";
+    public const string LeftBrow = "LeftBrow";
+    public const string RightBrow = "RightBrow";
+    public const string LeftMouth = "LeftMouth";
+    public const string RightMouth = "RightMouth";
+
+    /// <summary>How tall each half of a shut mouth is, in meters.</summary>
+    public const float MouthHeight = 0.008f;
+
     /// <summary>The color of every figure's shoes.</summary>
     public static Paint Shoes { get; } = new(0.15f, 0.14f, 0.13f);
+
+    /// <summary>The color of every figure's eyes, brows and mouth.</summary>
+    public static Paint Features { get; } = new(0.12f, 0.1f, 0.1f);
 
     /// <summary>The clerk's look: usual size, in a brown shirt.</summary>
     public static Look Clerk { get; } = new(1f, SkinColors[0], new(0.55f, 0.44f, 0.38f), TrouserColors[0]);
@@ -52,6 +65,12 @@ internal static class Figure
         new("Neck", PartShape.Capsule, new(0.08f, 0.1f, 0.08f), new(0f, 1.5f, 0f), Limb.Body, Swatch.Skin),
         new("Head", PartShape.Sphere, new(0.22f, 0.22f, 0.22f), new(0f, 1.6f, 0f), Limb.Body, Swatch.Skin),
         new("Nose", PartShape.Box, new(0.04f, 0.05f, 0.05f), new(0f, 1.59f, -0.11f), Limb.Body, Swatch.Skin),
+        new(LeftEye, PartShape.Box, new(0.025f, 0.02f, 0.02f), new(-0.038f, 1.625f, -0.1f), Limb.Body, Swatch.Features),
+        new(RightEye, PartShape.Box, new(0.025f, 0.02f, 0.02f), new(0.038f, 1.625f, -0.1f), Limb.Body, Swatch.Features),
+        new(LeftBrow, PartShape.Box, new(0.045f, 0.01f, 0.02f), new(-0.04f, 1.655f, -0.095f), Limb.Body, Swatch.Features),
+        new(RightBrow, PartShape.Box, new(0.045f, 0.01f, 0.02f), new(0.04f, 1.655f, -0.095f), Limb.Body, Swatch.Features),
+        new(LeftMouth, PartShape.Box, new(0.03f, MouthHeight, 0.02f), new(-0.015f, 1.555f, -0.098f), Limb.Body, Swatch.Features),
+        new(RightMouth, PartShape.Box, new(0.03f, MouthHeight, 0.02f), new(0.015f, 1.555f, -0.098f), Limb.Body, Swatch.Features),
         .. Arm(Limb.LeftArm),
         .. Arm(Limb.RightArm),
         .. Leg(Limb.LeftLeg),

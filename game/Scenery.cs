@@ -55,18 +55,21 @@ internal static class Scenery
             limbs[limb] = pivot;
         }
 
+        var parts = new Dictionary<string, Node3D>();
         foreach (var part in Game.Figure.Parts)
         {
-            limbs[part.Limb].AddChild(new MeshInstance3D
+            var mesh = new MeshInstance3D
             {
                 Name = part.Name,
                 Mesh = Mesh(part),
                 MaterialOverride = Flat(Color(part.Swatch, look)),
                 Position = ToGodot(part.Center),
-            });
+            };
+            limbs[part.Limb].AddChild(mesh);
+            parts[part.Name] = mesh;
         }
 
-        return new FigureNode(root, limbs[Limb.LeftArm], limbs[Limb.RightArm], limbs[Limb.LeftLeg], limbs[Limb.RightLeg]);
+        return new FigureNode(root, limbs, parts);
     }
 
     /// <summary>A voice at <paramref name="parent"/>'s spot, for its cues.</summary>
@@ -170,7 +173,8 @@ internal static class Scenery
             Swatch.Skin => look.Skin,
             Swatch.Shirt => look.Shirt,
             Swatch.Trousers => look.Trousers,
-            _ => Game.Figure.Shoes,
+            Swatch.Shoes => Game.Figure.Shoes,
+            _ => Game.Figure.Features,
         };
         return new Color(paint.R, paint.G, paint.B);
     }

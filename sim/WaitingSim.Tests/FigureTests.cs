@@ -31,6 +31,19 @@ public sealed class FigureTests
     }
 
     [Fact]
+    public void The_face_is_on_the_front_of_the_head_where_the_nose_points()
+    {
+        string[] face = [Figure.LeftEye, Figure.RightEye, Figure.LeftBrow, Figure.RightBrow, Figure.LeftMouth, Figure.RightMouth, "Nose"];
+        var head = Figure.Parts.Single(part => part.Name == "Head");
+
+        Assert.All(Figure.Parts.Where(part => face.Contains(part.Name)), part =>
+        {
+            Assert.True(Low(part).Z < Low(head).Z + 0.02f, $"{part.Name} is not on the front of the head.");
+            Assert.InRange(part.Center.Y, Low(head).Y, High(head).Y);
+        });
+    }
+
+    [Fact]
     public void Every_capsule_is_at_least_as_tall_as_it_is_wide()
     {
         Assert.All(Figure.Parts.Where(part => part.Shape == PartShape.Capsule), part => Assert.True(part.Size.Y >= part.Size.X, part.Name));

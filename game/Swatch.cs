@@ -7,4 +7,7 @@ internal enum Swatch
     Shirt,
     Trousers,
     Shoes,
+
+    /// <summary>The eyes, brows and mouth.</summary>
+    Features,
 }

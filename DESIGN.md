@@ -114,13 +114,15 @@ Every NPC that depends on the player has patience, a value from 0 to 100, and a 
 ### Escalation stages
 The meter is hidden. Behavior is the readout.
 
-| Patience | NPC behavior |
-|---|---|
-| 100-70 | Neutral, idle shuffling |
-| 70-50 | Sigh, checks watch |
-| 50-30 | Foot-tapping, muttering |
-| 30-15 | "Excuse me?", leans into your space |
-| 15-0 | Shoulder tap, then pushes past or reports you |
+| Patience | NPC behavior | Face |
+|---|---|---|
+| 100-70 | Neutral, idle shuffling | Slight smile |
+| 70-50 | Sigh, checks watch | Flat mouth, brows just knit |
+| 50-30 | Foot-tapping, muttering | Brows down, frown, narrowed eyes |
+| 30-15 | "Excuse me?", leans into your space | Angry brows, frown, mouth open |
+| 15-0 | Shoulder tap, then pushes past or reports you | Furious: brows hard down, eyes slits, shouting |
+
+A face shows the stage the NPC's trait shows, so a passive-aggressive one keeps a straight face until it snaps.
 
 Use hysteresis: once an NPC reaches a stage it does not instantly drop back when patience recovers slightly, so cues do not flicker.
 
