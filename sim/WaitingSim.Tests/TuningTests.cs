@@ -89,6 +89,26 @@ public sealed class TuningTests
     }
 
     [Fact]
+    public void Arriving_cutters_read_into_the_arrivals_and_without_them_none_come()
+    {
+        var withCutters = Valid.Replace("\"patience\": {", "\"arrivals\": { \"intervalTicks\": { \"min\": 360, \"max\": 720 }, \"cutterShare\": 0.15, \"maxCutters\": 2 },\n  \"patience\": {", StringComparison.Ordinal);
+        var without = Valid.Replace("\"patience\": {", "\"arrivals\": { \"intervalTicks\": { \"min\": 360, \"max\": 720 } },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal(new ArrivalTuning(new(360, 720), 0.15f, 2), Tuning.Parse(withCutters).Value!.Arrivals);
+        Assert.Equal(0f, Tuning.Parse(without).Value!.Arrivals!.CutterShare);
+    }
+
+    [Theory]
+    [InlineData("\"cutterShare\": 0.15", "\"cutterShare\": 1.5", "arrivals.cutterShare: must be from 0 up to 1")]
+    [InlineData("\"maxCutters\": 2", "\"maxCutters\": 0", "arrivals.maxCutters: must be at least 1")]
+    public void A_bad_arriving_cutter_field_is_reported_by_name(string field, string replacement, string problem)
+    {
+        var withCutters = Valid.Replace("\"patience\": {", "\"arrivals\": { \"intervalTicks\": { \"min\": 360, \"max\": 720 }, \"cutterShare\": 0.15, \"maxCutters\": 2 },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal([problem], Tuning.Parse(withCutters.Replace(field, replacement, StringComparison.Ordinal)).Problems);
+    }
+
+    [Fact]
     public void Arrivals_with_no_time_between_them_are_reported()
     {
         var withArrivals = Valid.Replace("\"patience\": {", "\"arrivals\": { \"intervalTicks\": { \"min\": 0, \"max\": 720 } },\n  \"patience\": {", StringComparison.Ordinal);

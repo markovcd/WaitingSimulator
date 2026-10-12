@@ -15,7 +15,9 @@
     "rebound": 0.5
   },
   "arrivals": {
-    "intervalTicks": { "min": 360, "max": 720 }
+    "intervalTicks": { "min": 360, "max": 720 },
+    "cutterShare": 0.15,
+    "maxCutters": 2
   },
   "ripple": {
     "serviceTicks": { "min": 120, "max": 360 },

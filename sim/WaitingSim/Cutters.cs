@@ -11,18 +11,24 @@ internal sealed class Cutters(CutterTuning cutter, int graceWindowTicks, Lane la
     /// <summary>The cutter's command: walk to the middle of the nearest such gap, or stand while there is none.</summary>
     public Command Next(Agent agent, long tick)
     {
-        var target = line.Agents
-            .Where(other => other is { InLine: true, Zone: Zone.Gap, GapOpenedAt: { } opened } && tick - opened >= graceWindowTicks + cutter.AfterGraceTicks)
-            .MinBy(other => (Math.Abs(other.LineAlong - agent.Lane.Along), other.Id.Value));
-        if (target is not { Spacing: { } spacing })
+        if (GapAlong(agent, tick) is not { } along)
         {
             agent.Step = LineStep.Standing;
             return Command.Idle;
         }
 
         agent.Step = LineStep.Cutting;
-        var toward = lane.PointAt(target.LineAlong - (spacing / 2f)) - agent.Position;
+        var toward = lane.PointAt(along) - agent.Position;
         return toward == Vector2.Zero ? Command.Idle : new(Vector2.Normalize(toward));
+    }
+
+    /// <summary>How far along the lane the middle of the gap nearest <paramref name="agent"/> left open long enough is, or null for none.</summary>
+    public float? GapAlong(Agent agent, long tick)
+    {
+        var target = line.Agents
+            .Where(other => other is { InLine: true, Zone: Zone.Gap, GapOpenedAt: { } opened } && tick - opened >= graceWindowTicks + cutter.AfterGraceTicks)
+            .MinBy(other => (Math.Abs(other.LineAlong - agent.Lane.Along), other.Id.Value));
+        return target is { Spacing: { } spacing } ? target.LineAlong - (spacing / 2f) : null;
     }
 
     /// <summary>

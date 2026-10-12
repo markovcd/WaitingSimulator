@@ -177,12 +177,23 @@ public sealed class Sim
                 events.Add(new ReachedCounter(Tick, agent.Id));
             }
         }
+        arrivals?.ForgetJoined();
         if (arrivals is not null && arrivals.Due(Tick))
         {
-            var arrived = Spawn(arrivals.Entrance, arrivals.Pick(rng));
-            line[arrived].Step = LineStep.Arriving;
+            var trait = arrivals.Pick(rng);
+            var cutter = arrivals.PickCutter(rng);
+            var arrived = Spawn(arrivals.Entrance, trait, cutter);
+            if (cutter)
+            {
+                arrivals.CameToCut(line[arrived]);
+            }
+            else
+            {
+                line[arrived].Step = LineStep.Arriving;
+            }
+
             arrivals.Schedule(Tick, rng);
-            events.Add(new Arrived(Tick, arrived));
+            events.Add(new Arrived(Tick, arrived, cutter));
         }
 
         foreach (var happened in events)
@@ -214,7 +225,11 @@ public sealed class Sim
         // A sim without arrivals has no next one due, and leaves it out.
         if (arrivals is not null)
         {
-            hash.Add(arrivals.NextAt);
+            hash.Add(arrivals.NextAt).Add((long)arrivals.Cutters.Count);
+            foreach (var cutter in arrivals.Cutters)
+            {
+                hash.Add((long)cutter.Value);
+            }
         }
 
         foreach (var agent in line.Agents)
@@ -241,6 +256,11 @@ public sealed class Sim
     /// <summary>The command for an agent nobody commands: a waiting cutter's, the ripple's, or standing still without either.</summary>
     private Command FollowLine(Agent agent)
     {
+        if (arrivals is not null && arrivals.Prowls(agent))
+        {
+            return arrivals.Prowl(agent, Tick, cutters);
+        }
+
         if (agent.Step == LineStep.Arriving && arrivals is not null)
         {
             return arrivals.Next(agent);

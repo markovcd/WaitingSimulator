@@ -95,6 +95,70 @@ public sealed class ArrivalTests
         return sim;
     }
 
+    [Fact]
+    public void Every_newcomer_is_a_cutter_at_a_share_of_one_until_the_cap_and_none_at_zero()
+    {
+        var all = Arrivals(seed: 1, Arriving with { Arrivals = new ArrivalTuning(new(60, 60), CutterShare: 1f, MaxCutters: 1) });
+        var none = Arrivals(seed: 1, Arriving with { Arrivals = new ArrivalTuning(new(60, 60), CutterShare: 0f, MaxCutters: 1) });
+
+        Assert.True(all[0].Cutter);
+        Assert.Contains(all, e => !e.Cutter);
+        Assert.DoesNotContain(none, e => e.Cutter);
+    }
+
+    [Fact]
+    public void Arriving_cutters_come_at_their_share_and_follow_the_seed()
+    {
+        var tuning = Arriving with { Arrivals = new ArrivalTuning(new(IntervalTicks, IntervalTicks), CutterShare: 0.5f, MaxCutters: 10) };
+        var cutters = Enumerable.Range(1, 20).Select(seed => Arrivals((ulong)seed, tuning).First().Cutter).ToList();
+
+        Assert.InRange(cutters.Count(cutter => cutter), 4, 16);
+        Assert.Equal(Arrivals(seed: 7, tuning), Arrivals(seed: 7, tuning));
+    }
+
+    [Fact]
+    public void An_arriving_cutter_walks_up_beside_the_line_and_with_no_gap_gives_up_and_joins_the_back()
+    {
+        // One newcomer before the run ends.
+        var sim = Line(seed: 1, Arriving with { Arrivals = new ArrivalTuning(new(1500, 1500), CutterShare: 1f, MaxCutters: 1), Cutter = new CutterTuning(60, 40) });
+        var prowling = new List<AgentSnapshot>();
+
+        var events = Run(sim, 2900, snapshot =>
+        {
+            prowling.AddRange(snapshot.Agents.Where(agent => agent.Step == LineStep.Prowling));
+            return Commands();
+        });
+
+        var cutter = Assert.Single(events.OfType<Arrived>()).Agent;
+        Assert.NotEmpty(prowling);
+        Assert.All(prowling, agent => Assert.False(agent.InLane, $"The cutter stepped into the lane at {agent.Position}."));
+        Assert.True(prowling.Min(agent => agent.Position.X) < 2f, "The cutter never walked up to the front.");
+        Assert.DoesNotContain(events, e => e is CutterEntered);
+        Assert.True(Agent(sim, cutter) is { InLane: true, Refused: false, Step: LineStep.Standing }, "The cutter never joined the back.");
+        Assert.Equal(new AgentId(2), Agent(sim, cutter).Ahead);
+    }
+
+    [Fact]
+    public void An_arriving_cutter_slides_into_a_gap_left_open_too_long()
+    {
+        var tuning = Arriving with
+        {
+            Arrivals = new ArrivalTuning(new(300, 300), CutterShare: 1f, MaxCutters: 1),
+            Cutter = new CutterTuning(60, 40),
+            Ripple = Arriving.Ripple! with { ReactionTicks = new(6000, 6000) },
+        };
+        var sim = new Sim(tuning, Long, seed: 1);
+        sim.Spawn(new(0, 0), Calm);
+        var behindGap = sim.Spawn(new(3, 0), Calm);
+        sim.Spawn(new(3.8f, 0), Calm);
+        sim.ArriveAt(Entrance, [Calm]);
+
+        var events = Run(sim, 1800, _ => Commands());
+
+        var cutter = events.OfType<Arrived>().First().Agent;
+        Assert.Contains(events, e => e is CutterEntered entered && entered.Agent == cutter && entered.Behind == behindGap);
+    }
+
     /// <summary>A line of three standing at the front of <see cref="Long"/>, newcomers coming every interval.</summary>
     private static Sim Line(ulong seed, Tuning? tuning = null)
     {

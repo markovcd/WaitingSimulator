@@ -84,7 +84,19 @@ public sealed record Tuning(
             problems.Add("arrivals.intervalTicks: min must be at least 1");
         }
 
-        return new(interval);
+        var share = arrivals is { } section && section.TryGetProperty("cutterShare", out _) ? JsonFile.Positive(arrivals, "arrivals.cutterShare", problems) : 0f;
+        if (share > 1f && problems.Count == 0)
+        {
+            problems.Add("arrivals.cutterShare: must be from 0 up to 1");
+        }
+
+        var most = arrivals is { } maxSection && maxSection.TryGetProperty("maxCutters", out _) ? JsonFile.Integer(arrivals, "arrivals.maxCutters", problems) : 1;
+        if (most < 1 && problems.Count == 0)
+        {
+            problems.Add("arrivals.maxCutters: must be at least 1");
+        }
+
+        return new(interval, share, most);
     }
 
     /// <summary>Reads the <c>bodies</c> object, which a tuning file may leave out.</summary>

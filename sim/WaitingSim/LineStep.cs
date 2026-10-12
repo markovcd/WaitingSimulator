@@ -26,4 +26,7 @@ public enum LineStep
 
     /// <summary>A newcomer walking from the entrance to the back of the line.</summary>
     Arriving,
+
+    /// <summary>A newcomer come to cut in, walking up beside the line looking for a gap left open too long.</summary>
+    Prowling,
 }

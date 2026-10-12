@@ -40,7 +40,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **cut in** | Stepping into the line ahead of someone, anywhere but your own held place or the back; made only into a gap left open past its grace window. What the player does; an NPC doing it unprompted is a **cutter**. | `CutIn` | skip, jump the queue |
 | **passed** | Someone a cut in gets ahead of who stood ahead of the agent's place. Each takes a hit, and the person cut in front of one more per person passed. | `StepOutTuning.PassedHit` | skipped (skip is ruled out with *cut in*) |
 | **counter** | Where the clerk serves the front of the line: the front end of the lane. | | desk |
-| **cutter** | An NPC that slides into an open gap ahead of the player. | `CutterEntered` | line-cutter, skipper |
+| **cutter** | An NPC that slides into an open gap ahead of the player: placed beside the line by the level, or a newcomer walking up it looking for one. | `CutterEntered` | line-cutter, skipper |
 | **patience** | An NPC's 0–100 tolerance of the player. Hidden from the player except on easy. | `Patience` | mood, anger |
 | **stage** | A band of patience with its own visible behavior, from calm through restless, annoyed and confronting to fed up; changes with hysteresis. | `Stage` | level, phase |
 | **cue** | A visible or audible behavior that reveals a stage or an event. | `Cue` | tell, signal |
