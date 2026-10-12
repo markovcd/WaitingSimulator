@@ -62,4 +62,30 @@ public sealed class KickOutTests
         Assert.Equal(LineStep.Done, Agent(sim, slow).Step);
         Assert.False(Agent(sim, slow).InLane);
     }
+
+    [Fact]
+    public void An_agent_walking_off_that_bumps_into_someone_beside_the_line_stops_there()
+    {
+        var tuning = Snappy with
+        {
+            WalkAcceleration = 3f,
+            Ripple = new RippleTuning(new(6000, 6000), new(30, 30), new(0.7f, 0.7f), 0.2f, 1f),
+            Bodies = new BodyTuning(0.18f, 0.5f),
+        };
+        var sim = new Sim(tuning, Straight, seed: 1);
+        var lead = sim.Spawn(new(5, 0));
+        var slow = sim.Spawn(new(5.7f, 0));
+        var behind = sim.Spawn(new(6.4f, 0), Short);
+        var cutter = sim.Spawn(new(5.7f, -1.0f), cutter: true);
+
+        var events = Run(sim, 600, snapshot =>
+            snapshot.Agents[slow.Value].KickedOutAt is null
+                ? Commands((lead, snapshot.Agents[lead.Value].Position.X > 3 ? TowardFront : Vector2.Zero), (slow, Vector2.Zero), (behind, Vector2.Zero))
+                : Commands((lead, Vector2.Zero), (behind, Vector2.Zero)));
+
+        Assert.Contains(events, e => e is KickedOut kicked && kicked.Agent == slow);
+        Assert.Equal(LineStep.Done, Agent(sim, slow).Step);
+        Assert.False(Agent(sim, slow).InLane);
+        Assert.Equal(new Vector2(5.7f, -1.0f), Agent(sim, cutter).Position);
+    }
 }

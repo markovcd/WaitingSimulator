@@ -4,7 +4,8 @@ namespace WaitingSim;
 
 /// <summary>
 /// How the line moves an agent nobody commands. It notices the person ahead move off and steps up after a reaction
-/// delay; at the front it walks up to the counter, is served, and leaves the lane to the side.
+/// delay; at the front it walks up to the counter, is served, and leaves the lane to the side, stopping early if it
+/// bumps into someone out there.
 /// </summary>
 internal sealed class Ripple(RippleTuning ripple, Lane lane, float walkAcceleration)
 {
@@ -27,7 +28,7 @@ internal sealed class Ripple(RippleTuning ripple, Lane lane, float walkAccelerat
             case LineStep.BeingServed when tick >= agent.StepEndsAt:
                 agent.Step = LineStep.Leaving;
                 break;
-            case LineStep.Leaving when agent.Lane.Off >= lane.HalfWidth + ripple.LeaveMeters:
+            case LineStep.Leaving when agent.Lane.Off >= lane.HalfWidth + ripple.LeaveMeters || Blocked(agent):
                 agent.Step = LineStep.Done;
                 break;
         }
@@ -46,6 +47,10 @@ internal sealed class Ripple(RippleTuning ripple, Lane lane, float walkAccelerat
             _ => Command.Idle,
         };
     }
+
+    /// <summary>Whether a leaving agent, already out of the lane, was knocked back walking off: it stops where it bumped.</summary>
+    private bool Blocked(Agent agent) =>
+        !agent.InLane && Vector2.Dot(agent.Velocity, Aside(lane.TowardFront(agent.Position))) < 0f;
 
     /// <summary>A quarter turn from <paramref name="direction"/>: the way a served agent leaves the lane.</summary>
     private static Vector2 Aside(Vector2 direction) => new(-direction.Y, direction.X);
