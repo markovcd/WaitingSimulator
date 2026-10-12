@@ -14,6 +14,9 @@
     "radiusMeters": 0.18,
     "rebound": 0.5
   },
+  "arrivals": {
+    "intervalTicks": { "min": 360, "max": 720 }
+  },
   "ripple": {
     "serviceTicks": { "min": 120, "max": 360 },
     "reactionTicks": { "min": 15, "max": 60 },

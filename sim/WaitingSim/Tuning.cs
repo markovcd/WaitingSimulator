@@ -12,6 +12,7 @@ namespace WaitingSim;
 /// <param name="Cutter">When a cutter slides into a gap; without it, cutters stand where they are.</param>
 /// <param name="StepOut">How the line treats an agent that steps out and back in; without it, stepping out leaves the line at once and stepping in joins it anywhere.</param>
 /// <param name="Bodies">How agents keep out of each other; without it, agents walk through each other.</param>
+/// <param name="Arrivals">How often newcomers arrive at a level's entrance; without it, nobody arrives.</param>
 public sealed record Tuning(
     int GraceWindowTicks,
     ZoneLimits Zones,
@@ -21,7 +22,8 @@ public sealed record Tuning(
     RippleTuning? Ripple = null,
     StepOutTuning? StepOut = null,
     CutterTuning? Cutter = null,
-    BodyTuning? Bodies = null)
+    BodyTuning? Bodies = null,
+    ArrivalTuning? Arrivals = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -63,7 +65,26 @@ public sealed record Tuning(
             ReadRipple(root, limits, problems),
             ReadStepOut(root, problems),
             ReadCutter(root, problems),
-            ReadBodies(root, limits, problems));
+            ReadBodies(root, limits, problems),
+            ReadArrivals(root, problems));
+    }
+
+    /// <summary>Reads the <c>arrivals</c> object, which a tuning file may leave out.</summary>
+    private static ArrivalTuning? ReadArrivals(JsonElement root, List<string> problems)
+    {
+        if (!root.TryGetProperty("arrivals", out _))
+        {
+            return null;
+        }
+
+        var arrivals = JsonFile.Section(root, "arrivals", problems);
+        var interval = ReadTicks(arrivals, "arrivals.intervalTicks", problems);
+        if (interval.Min < 1 && problems.Count == 0)
+        {
+            problems.Add("arrivals.intervalTicks: min must be at least 1");
+        }
+
+        return new(interval);
     }
 
     /// <summary>Reads the <c>bodies</c> object, which a tuning file may leave out.</summary>

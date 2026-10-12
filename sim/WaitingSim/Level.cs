@@ -9,8 +9,9 @@ namespace WaitingSim;
 /// <param name="Agents">The agents, spawned in this order, so an agent's id is its index.</param>
 /// <param name="Player">The agent the player drives. It has no trait: the player has no patience.</param>
 /// <param name="Clerk">Where the clerk stands, past the front of the line.</param>
-/// <param name="Traits">The traits the agents' trait ids name.</param>
-public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agents, AgentId Player, Vector2 Clerk, IReadOnlyList<Trait> Traits)
+/// <param name="Traits">The traits the agents' trait ids name, and newcomers are drawn from.</param>
+/// <param name="Entrance">Where newcomers arrive, if the tuning has arrivals; a level without one has none.</param>
+public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agents, AgentId Player, Vector2 Clerk, IReadOnlyList<Trait> Traits, Vector2? Entrance = null)
 {
     /// <summary>The newest level format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -29,6 +30,11 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
         foreach (var agent in Agents)
         {
             sim.Spawn(agent.Position, agent.Trait is { } id ? Traits.Single(trait => trait.Id == id) : null, agent.Cutter);
+        }
+
+        if (Entrance is { } entrance)
+        {
+            sim.ArriveAt(entrance, Traits);
         }
 
         return sim;
@@ -50,6 +56,7 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
         }
 
         var clerk = JsonFile.Point(root, "clerk", problems);
-        return new(seed, lane!, agents, new AgentId(player), clerk, traits);
+        Vector2? entrance = root.TryGetProperty("entrance", out _) ? JsonFile.Point(root, "entrance", problems) : null;
+        return new(seed, lane!, agents, new AgentId(player), clerk, traits, entrance);
     }
 }

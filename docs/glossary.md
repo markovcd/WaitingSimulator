@@ -21,6 +21,8 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **campaign** | The mode where a day of errands runs in order and state carries over. | | story mode |
 | **arcade** | The mode where any level is played alone, scored, with no carry-over. | | |
 | **line** | The queue of agents a line level is about. | | queue (in prose) |
+| **newcomer** | An agent that arrives at the entrance mid-level and joins the back of the line. | `Arrived`, `LineStep.Arriving` | latecomer, spawn |
+| **entrance** | Where a level's newcomers arrive. | `Level.Entrance` | door, spawn point |
 | **lane** | The volume the line occupies; being in it is what makes you part of the line. | `Lane` | |
 | **lane marking** | The lane painted on the floor, tinted by where the player stands against the line. | `LaneMarking` | line area, queue zone |
 | **room** | A waiting room where you listen and watch for your call. | | |

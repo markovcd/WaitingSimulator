@@ -80,6 +80,23 @@ public sealed class TuningTests
     }
 
     [Fact]
+    public void Arrivals_read_into_their_values_and_a_tuning_file_may_leave_them_out()
+    {
+        var withArrivals = Valid.Replace("\"patience\": {", "\"arrivals\": { \"intervalTicks\": { \"min\": 360, \"max\": 720 } },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal(new ArrivalTuning(new(360, 720)), Tuning.Parse(withArrivals).Value!.Arrivals);
+        Assert.Null(Tuning.Parse(Valid).Value!.Arrivals);
+    }
+
+    [Fact]
+    public void Arrivals_with_no_time_between_them_are_reported()
+    {
+        var withArrivals = Valid.Replace("\"patience\": {", "\"arrivals\": { \"intervalTicks\": { \"min\": 0, \"max\": 720 } },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal(["arrivals.intervalTicks: min must be at least 1"], Tuning.Parse(withArrivals).Problems);
+    }
+
+    [Fact]
     public void A_tuning_file_reads_into_its_values()
     {
         var tuning = Tuning.Parse(Valid).Value;

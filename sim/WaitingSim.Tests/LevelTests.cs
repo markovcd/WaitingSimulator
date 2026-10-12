@@ -54,6 +54,18 @@ public sealed class LevelTests
     }
 
     [Fact]
+    public void Newcomers_arrive_at_a_level_s_entrance_and_none_at_a_level_without_one()
+    {
+        var tuning = Tuning with { Arrivals = new ArrivalTuning(new(60, 60)) };
+        var withEntrance = Level.Parse(Valid.Replace("\"clerk\": [0, -1.0]", "\"clerk\": [0, -1.0],\n  \"entrance\": [2, 11]", StringComparison.Ordinal), Traits).Value!;
+        var without = Level.Parse(Valid, Traits).Value!;
+
+        Assert.Equal(new Vector2(2, 11), withEntrance.Entrance);
+        Assert.Contains(SimTests.Run(withEntrance.Start(tuning), 61, _ => SimTests.Commands()), e => e is Arrived);
+        Assert.DoesNotContain(SimTests.Run(without.Start(tuning), 61, _ => SimTests.Commands()), e => e is Arrived);
+    }
+
+    [Fact]
     public void A_level_plays_the_same_from_its_seed_every_time()
     {
         var level = Level.Parse(Valid, Traits).Value!;
@@ -69,6 +81,7 @@ public sealed class LevelTests
     [InlineData("\"clerk\": [0, -1.0]", "\"clerk\": [0]", "clerk: missing, or not a point [x, y] of two finite numbers")]
     [InlineData("\"halfWidth\": 0.5", "\"halfWidth\": 0", "lane.halfWidth: missing, or not a positive number")]
     [InlineData("\"seed\": 7", "\"seed\": -7", "seed: missing, or not a whole number from 0 up")]
+    [InlineData("\"clerk\": [0, -1.0]", "\"clerk\": [0, -1.0], \"entrance\": [2]", "entrance: missing, or not a point [x, y] of two finite numbers")]
     public void A_bad_level_field_is_reported_by_name(string field, string replacement, string problem)
     {
         var parsed = Level.Parse(Valid.Replace(field, replacement, StringComparison.Ordinal), Traits);
@@ -136,6 +149,28 @@ public sealed class LevelTests
         Assert.Contains(events, e => e is CutInMissed missed && missed.Agent == player);
         Assert.DoesNotContain(events, e => e is CutIn cut && cut.Agent == player);
         Assert.DoesNotContain(events, e => e is ReachedCounter reached && reached.Agent == player);
+    }
+
+    [Fact]
+    public void In_the_post_office_every_newcomer_joins_the_line_and_is_served_in_turn()
+    {
+        var level = Level.Parse(File.ReadAllText(Path.Combine(Levels, "post-office.json")), Traits).Value!;
+        var sim = level.Start(Tuning);
+        var joined = new HashSet<AgentId>();
+
+        // Nobody commands the player, so the line moves everyone, the player too.
+        var events = SimTests.Run(sim, 120 * TickRate.PerSecond, snapshot =>
+        {
+            joined.UnionWith(snapshot.Agents.Where(agent => agent is { InLane: true, Refused: false }).Select(agent => agent.Id));
+            return SimTests.Commands();
+        });
+
+        var arrived = events.OfType<Arrived>().Select(e => e.Agent).ToList();
+        Assert.InRange(arrived.Count, 5, 20);
+        Assert.DoesNotContain(events, e => e is CutIn or CutInMissed or KickedOut);
+        Assert.All(arrived.SkipLast(1), agent => Assert.Contains(agent, joined));
+        var served = events.OfType<ReachedCounter>().Select(e => e.Agent).Where(arrived.Contains).ToList();
+        Assert.Equal(arrived.Take(served.Count), served);
     }
 
     private static string Shipped(string name) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", name));

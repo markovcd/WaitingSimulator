@@ -28,6 +28,23 @@ public sealed class DriverTests
     }
 
     [Fact]
+    public void A_newcomer_shows_where_it_arrived_before_it_has_a_tick_to_blend_from()
+    {
+        var sim = new Sim(Tuning with { Arrivals = new ArrivalTuning(new(1, 1)) }, new Lane([new(0, 0), new(0, 10)], 0.5f), seed: 1);
+        var player = sim.Spawn(new(0, 1));
+        sim.ArriveAt(new(2, 11), [new Trait("calm", 1, 1, 1, new HashSet<Stage> { Stage.Calm })]);
+        var driver = new Driver(sim, player);
+
+        driver.Advance(HundredTwentyEighthOfASecond * 3, Command.Idle);
+        driver.Advance(HundredTwentyEighthOfASecond, Command.Idle);
+
+        var newcomer = new AgentId(1);
+        Assert.Equal(2, driver.Current.Agents.Count);
+        Assert.Single(driver.Previous.Agents);
+        Assert.Equal(driver.Current.Agents[newcomer.Value].Position, driver.Position(newcomer));
+    }
+
+    [Fact]
     public void Frames_shorter_than_a_tick_carry_the_rest_and_blend_toward_the_next_tick()
     {
         var (driver, _) = Line();

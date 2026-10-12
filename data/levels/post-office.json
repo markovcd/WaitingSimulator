@@ -2,7 +2,7 @@
   "version": 1,
   "seed": 1,
   "lane": {
-    "points": [[0, 0], [0, 14]],
+    "points": [[0, 0], [0, 20]],
     "halfWidth": 0.5
   },
   "agents": [
@@ -20,5 +20,6 @@
     { "position": [1.4, 6.8], "trait": "aggressive", "cutter": true }
   ],
   "player": 8,
-  "clerk": [0, -1.0]
+  "clerk": [0, -1.0],
+  "entrance": [2.5, 21.0]
 }

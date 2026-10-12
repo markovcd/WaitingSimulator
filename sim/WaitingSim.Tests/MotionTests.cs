@@ -22,7 +22,7 @@ public sealed class MotionTests
     [Fact]
     public void A_stumble_lurches_forward_and_is_over_once_its_time_is_up()
     {
-        var motion = new Motion(1);
+        var motion = new Motion();
         var agent = Agent(0, Stage.Calm);
         motion.Show(new Cue(agent.Id, CueKind.Bumped, Stage.Calm), tick: 100);
 
@@ -37,7 +37,7 @@ public sealed class MotionTests
     [Fact]
     public void Neighbors_in_the_same_stage_do_not_sway_in_step()
     {
-        var motion = new Motion(2);
+        var motion = new Motion();
 
         var first = motion.PoseOf(Agent(0, Stage.Restless), 30f);
         var second = motion.PoseOf(Agent(1, Stage.Restless), 30f);
@@ -48,7 +48,7 @@ public sealed class MotionTests
     [Fact]
     public void Only_a_foot_tapping_stage_bobs()
     {
-        var motion = new Motion(1);
+        var motion = new Motion();
         var ticks = Enumerable.Range(0, 120).Select(tick => (float)tick).ToList();
 
         Assert.All(ticks, tick => Assert.Equal(0f, motion.PoseOf(Agent(0, Stage.Restless), tick).Bob));

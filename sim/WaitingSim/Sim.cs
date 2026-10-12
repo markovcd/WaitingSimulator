@@ -12,6 +12,7 @@ public sealed class Sim
     private const ulong AgentStreams = 1UL << 32;
 
     private readonly Tuning tuning;
+    private readonly Lane lane;
     private readonly ulong seed;
     private readonly Rng rng;
     private readonly Line line;
@@ -19,6 +20,7 @@ public sealed class Sim
     private readonly Ripple? ripple;
     private readonly StepOut? stepOut;
     private readonly Cutters? cutters;
+    private Arrivals? arrivals;
     private readonly Bodies? bodies;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
@@ -27,6 +29,7 @@ public sealed class Sim
         ArgumentNullException.ThrowIfNull(tuning);
         ArgumentNullException.ThrowIfNull(lane);
         this.tuning = tuning;
+        this.lane = lane;
         this.seed = seed;
         rng = new Rng(seed);
         line = new Line(lane, tuning.Zones);
@@ -35,6 +38,22 @@ public sealed class Sim
         stepOut = tuning.StepOut is { } stepOutTuning ? new StepOut(stepOutTuning, tuning.Zones, line) : null;
         cutters = tuning.Cutter is { } cutterTuning ? new Cutters(cutterTuning, tuning.GraceWindowTicks, lane, line) : null;
         bodies = tuning.Bodies is { } bodyTuning ? new Bodies(bodyTuning, line) : null;
+    }
+
+    /// <summary>
+    /// Has newcomers with <paramref name="traits"/> arrive at <paramref name="entrance"/>, if the tuning has arrivals.
+    /// Level setup: it draws when the first is due and reports no events.
+    /// </summary>
+    public void ArriveAt(Vector2 entrance, IReadOnlyList<Trait> traits)
+    {
+        ArgumentNullException.ThrowIfNull(traits);
+        if (tuning.Arrivals is not { } arrivalTuning || traits.Count == 0)
+        {
+            return;
+        }
+
+        arrivals = new Arrivals(arrivalTuning, tuning.Zones, lane, line, entrance, traits);
+        arrivals.Schedule(Tick, rng);
     }
 
     /// <summary>How many ticks have been stepped.</summary>
@@ -158,6 +177,14 @@ public sealed class Sim
                 events.Add(new ReachedCounter(Tick, agent.Id));
             }
         }
+        if (arrivals is not null && arrivals.Due(Tick))
+        {
+            var arrived = Spawn(arrivals.Entrance, arrivals.Pick(rng));
+            line[arrived].Step = LineStep.Arriving;
+            arrivals.Schedule(Tick, rng);
+            events.Add(new Arrived(Tick, arrived));
+        }
+
         foreach (var happened in events)
         {
             var agent = line[happened.Agent];
@@ -183,6 +210,13 @@ public sealed class Sim
     {
         var (state, increment) = rng.Position;
         var hash = new StateHash().Add(Tick).Add(state).Add(increment).Add((long)line.Agents.Count);
+
+        // A sim without arrivals has no next one due, and leaves it out.
+        if (arrivals is not null)
+        {
+            hash.Add(arrivals.NextAt);
+        }
+
         foreach (var agent in line.Agents)
         {
             hash.Add(agent.Position.X).Add(agent.Position.Y)
@@ -207,6 +241,11 @@ public sealed class Sim
     /// <summary>The command for an agent nobody commands: a waiting cutter's, the ripple's, or standing still without either.</summary>
     private Command FollowLine(Agent agent)
     {
+        if (agent.Step == LineStep.Arriving && arrivals is not null)
+        {
+            return arrivals.Next(agent);
+        }
+
         if (agent is { Cutter: true, InLane: false, Step: LineStep.Standing or LineStep.Cutting } && cutters is not null)
         {
             return cutters.Next(agent, Tick);

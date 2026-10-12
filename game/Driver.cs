@@ -62,7 +62,13 @@ internal sealed class Driver
         return events;
     }
 
-    /// <summary>Where <paramref name="agent"/> shows this frame: between its last two positions by <see cref="Blend"/>.</summary>
-    public Vector2 Position(AgentId agent) =>
-        Vector2.Lerp(Previous.Agents[agent.Value].Position, Current.Agents[agent.Value].Position, Blend);
+    /// <summary>
+    /// Where <paramref name="agent"/> shows this frame: between its last two positions by <see cref="Blend"/>, or where it
+    /// is for a newcomer that has only one.
+    /// </summary>
+    public Vector2 Position(AgentId agent)
+    {
+        var current = Current.Agents[agent.Value].Position;
+        return agent.Value < Previous.Agents.Count ? Vector2.Lerp(Previous.Agents[agent.Value].Position, current, Blend) : current;
+    }
 }

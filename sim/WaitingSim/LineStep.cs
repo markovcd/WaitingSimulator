@@ -23,4 +23,7 @@ public enum LineStep
 
     /// <summary>A cutter walking to a gap left open too long, to slide into it.</summary>
     Cutting,
+
+    /// <summary>A newcomer walking from the entrance to the back of the line.</summary>
+    Arriving,
 }

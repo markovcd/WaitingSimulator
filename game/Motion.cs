@@ -6,7 +6,7 @@ namespace WaitingSimulator.Game;
 /// Each agent's pose from the stage it shows and how long ago the person behind walked into it. Time is in ticks, so a
 /// replay shows the same; an agent without patience moves like a calm one.
 /// </summary>
-internal sealed class Motion(int agents)
+internal sealed class Motion
 {
     /// <summary>How long a stumble lasts.</summary>
     public const float StumbleTicks = 0.6f * TickRate.PerSecond;
@@ -16,7 +16,7 @@ internal sealed class Motion(int agents)
     /// <summary>Radians between neighbors' sways, so a line does not sway in step.</summary>
     private const float PhasePerAgent = 1.7f;
 
-    private readonly long?[] bumpedAt = new long?[agents];
+    private readonly Dictionary<AgentId, long> bumpedAt = [];
 
     /// <summary>The motion of each stage. Stiff on purpose; stage hysteresis in the sim keeps it from flickering.</summary>
     public static StageMotion Of(Stage? stage) => stage switch
@@ -33,7 +33,7 @@ internal sealed class Motion(int agents)
     {
         if (cue.Kind == CueKind.Bumped)
         {
-            bumpedAt[cue.Agent.Value] = tick;
+            bumpedAt[cue.Agent] = tick;
         }
     }
 
@@ -45,7 +45,7 @@ internal sealed class Motion(int agents)
         var seconds = now / TickRate.PerSecond;
         var phase = agent.Id.Value * PhasePerAgent;
         var lean = motion.Lean;
-        if (bumpedAt[agent.Id.Value] is { } bumped && now - bumped is var since && since >= 0f && since < StumbleTicks)
+        if (bumpedAt.TryGetValue(agent.Id, out var bumped) && now - bumped is var since && since >= 0f && since < StumbleTicks)
         {
             var progress = since / StumbleTicks;
             lean += StumbleLean * MathF.Sin(MathF.PI * progress) * (1f - progress);

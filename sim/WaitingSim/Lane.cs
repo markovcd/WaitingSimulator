@@ -36,6 +36,9 @@ public sealed class Lane
     /// <summary>The lane's line, front first.</summary>
     public IReadOnlyList<Vector2> Points { get; }
 
+    /// <summary>How long the lane's line is, front to back, in meters.</summary>
+    public float Length => startsAlong[^1];
+
     /// <summary>How far from the line an agent can stand and still be in the lane, in meters.</summary>
     public float HalfWidth { get; }
 

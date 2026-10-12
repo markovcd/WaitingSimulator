@@ -48,11 +48,11 @@ public sealed partial class Client : Node3D
     private Label? hud;
     private Label? notice;
     private double noticeLeft;
-    private FigureNode?[] bodies = [];
+    private readonly List<FigureNode?> bodies = [];
     private FigureNode? clerk;
     private StandardMaterial3D? laneFill;
     private MeshInstance3D? heldMarker;
-    private AudioStreamPlayer3D[] voices = [];
+    private readonly List<AudioStreamPlayer3D> voices = [];
 
     /// <inheritdoc/>
     public override void _Ready()
@@ -81,7 +81,7 @@ public sealed partial class Client : Node3D
         tuning = loaded.Tuning;
         level = loaded.Level;
         driver = new Driver(level.Start(tuning), level.Player);
-        motion = new Motion(driver.Current.Agents.Count);
+        motion = new Motion();
         var player = driver.Current.Agents[level.Player.Value].Position;
         head = new Head(Floor.YawFacing(level.Lane.TowardFront(player)));
         Build();
@@ -113,6 +113,7 @@ public sealed partial class Client : Node3D
         var stick = Input.GetVector(Controls.MoveLeft, Controls.MoveRight, Controls.MoveForward, Controls.MoveBack);
         var ended = Ended();
         var events = driver.Advance(delta, ended ? Command.Idle : Floor.Walk(new(stick.X, stick.Y), head.Yaw));
+        AddNewcomers();
         if (!ended && Ended())
         {
             result!.Text = ResultScreen.Text(driver.Current.Agents[level.Player.Value]);
@@ -228,22 +229,7 @@ public sealed partial class Client : Node3D
 
         camera = new Camera3D { Name = "Eyes", Current = true };
         AddChild(camera);
-        var count = driver!.Current.Agents.Count;
-        bodies = new FigureNode?[count];
-        voices = new AudioStreamPlayer3D[count];
-        foreach (var agent in driver.Current.Agents)
-        {
-            if (agent.Id == level.Player)
-            {
-                voices[agent.Id.Value] = Scenery.Voice(camera);
-                continue;
-            }
-
-            var body = Scenery.Figure($"Agent{agent.Id.Value}", Figure.For(agent.Id));
-            AddChild(body.Root);
-            bodies[agent.Id.Value] = body;
-            voices[agent.Id.Value] = Scenery.Voice(body.Root);
-        }
+        AddNewcomers();
 
         clerk = Scenery.Figure("Clerk", Figure.Clerk);
         clerk.Root.Position = Floor.ToWorld(level.Clerk);
@@ -254,6 +240,25 @@ public sealed partial class Client : Node3D
         howToPlay = Scenery.HowToPlay(this);
         hud = Scenery.Hud(this);
         notice = Scenery.Notice(this);
+    }
+
+    /// <summary>Builds a figure and a voice for every agent the sim has that the scene does not yet; the player gets the eyes' voice.</summary>
+    private void AddNewcomers()
+    {
+        foreach (var agent in driver!.Current.Agents.Skip(bodies.Count))
+        {
+            if (agent.Id == level!.Player)
+            {
+                bodies.Add(null);
+                voices.Add(Scenery.Voice(camera!));
+                continue;
+            }
+
+            var body = Scenery.Figure($"Agent{agent.Id.Value}", Figure.For(agent.Id));
+            AddChild(body.Root);
+            bodies.Add(body);
+            voices.Add(Scenery.Voice(body.Root));
+        }
     }
 
     /// <summary>Puts every body and the eyes where the sim has them this frame, each body facing the front and posed.</summary>
