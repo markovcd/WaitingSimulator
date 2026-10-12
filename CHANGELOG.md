@@ -12,3 +12,4 @@
 - How to play shows at the start of a level.
 - Easy, normal and hard difficulties, from a HUD of numbers to none, cycled with F2.
 - F3 shows a debug overlay.
+- F5 reloads the tuning and restarts the level on it.

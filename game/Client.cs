@@ -8,7 +8,8 @@ namespace WaitingSimulator.Game;
 /// player's command, steps the sim, shows where it put everyone and how they stand, and plays the cues its events call
 /// for. How to play shows at the start until the player walks off. Once the player reaches the counter or is kicked
 /// out, input stops and the result screen shows until they line up again. The HUD shows what the difficulty allows; F2
-/// cycles the difficulty, and <c>-- --difficulty easy</c> starts on one. F3 toggles the debug overlay. Esc frees the
+/// cycles the difficulty, and <c>-- --difficulty easy</c> starts on one. F5 re-reads the data files and restarts the
+/// level on them. F3 toggles the debug overlay. Esc frees the
 /// mouse and a click in the window takes it back. Started with <c>-- --smoke</c>, it plays a few frames, logs the
 /// overlay and quits, which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
 /// </summary>
@@ -20,8 +21,14 @@ public sealed partial class Client : Node3D
     /// <summary>How long a notice stays up, in seconds.</summary>
     private const double NoticeSeconds = 2.0;
 
+    /// <summary>How long the problems that kept a reload stay up, in seconds: long enough to read a field name.</summary>
+    private const double ProblemSeconds = 8.0;
+
     // The difficulty outlives the scene, so lining up again keeps the one the player picked.
     private static Difficulty? difficulty;
+
+    // Data a reload read, and its notice, handed to the scene it restarts.
+    private static (GameData Data, string Notice)? reloaded;
 
     private readonly Dictionary<Tone, AudioStreamWav> sounds = [];
     private bool smoke;
@@ -45,7 +52,7 @@ public sealed partial class Client : Node3D
     public override void _Ready()
     {
         smoke = OS.GetCmdlineUserArgs().Contains("--smoke");
-        var data = GameData.Load(DataFolder(), LevelName);
+        var data = reloaded is { Data: var fresh } ? new Parsed<GameData>(fresh, []) : GameData.Load(DataFolder(), LevelName);
         if (data.Value is not { } loaded)
         {
             foreach (var problem in data.Problems)
@@ -72,6 +79,12 @@ public sealed partial class Client : Node3D
         var player = driver.Current.Agents[level.Player.Value].Position;
         head = new Head(Floor.YawFacing(level.Lane.TowardFront(player)));
         Build();
+        if (reloaded is { Notice: var said })
+        {
+            Notify(said);
+            reloaded = null;
+        }
+
         Place();
         if (!smoke)
         {
@@ -138,6 +151,10 @@ public sealed partial class Client : Node3D
         {
             GetTree().ReloadCurrentScene();
         }
+        else if (@event.IsActionPressed(Controls.ReloadTuning))
+        {
+            Reload();
+        }
         else if (@event.IsActionPressed(Controls.CycleDifficulty))
         {
             difficulty = Difficulties.Next(Difficulty);
@@ -159,11 +176,27 @@ public sealed partial class Client : Node3D
 
     private static Difficulty Difficulty => difficulty ?? Difficulty.Normal;
 
-    /// <summary>Shows <paramref name="text"/> under the HUD for <see cref="NoticeSeconds"/>.</summary>
-    private void Notify(string text)
+    /// <summary>Shows <paramref name="text"/> under the HUD for <paramref name="seconds"/>.</summary>
+    private void Notify(string text, double seconds = NoticeSeconds)
     {
         notice!.Text = text;
-        noticeLeft = NoticeSeconds;
+        noticeLeft = seconds;
+    }
+
+    /// <summary>Re-reads the data files and restarts the level on them; a file with problems keeps the level as it is.</summary>
+    private void Reload()
+    {
+        var (data, text) = TuningReload.Try(DataFolder(), LevelName);
+        if (data is null)
+        {
+            GD.PrintErr(text);
+            Notify(text, ProblemSeconds);
+            return;
+        }
+
+        GD.Print(text);
+        reloaded = (data, text);
+        GetTree().ReloadCurrentScene();
     }
 
     /// <summary>Whether the level has ended: the player reached the counter or was kicked out of the line.</summary>
