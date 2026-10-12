@@ -7,9 +7,9 @@ namespace WaitingSimulator.Game;
 /// The client's root node: loads the level, builds placeholder scenery for it, and each frame turns input into the
 /// player's command, steps the sim, shows where it put everyone and how they stand, and plays the cues its events call
 /// for. Once the player reaches the counter or is kicked out, input stops and the result screen shows until they line
-/// up again. F3
-/// toggles the debug overlay. Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits,
-/// which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
+/// up again. F3 toggles the debug overlay. Esc frees the mouse and a click in the window takes it back. Started with
+/// <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits, which is how the gate checks the game starts
+/// under Godot; a data problem quits with exit code 1.
 /// </summary>
 public sealed partial class Client : Node3D
 {
@@ -118,6 +118,10 @@ public sealed partial class Client : Node3D
         else if (@event.IsActionPressed(Controls.DebugOverlay))
         {
             overlay!.Visible = !overlay.Visible;
+        }
+        else if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } && !smoke)
+        {
+            Input.MouseMode = Input.MouseModeEnum.Captured;
         }
         else if (@event.IsActionPressed("ui_cancel"))
         {
