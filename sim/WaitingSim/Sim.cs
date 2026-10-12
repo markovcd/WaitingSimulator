@@ -72,7 +72,8 @@ public sealed class Sim
 
     /// <summary>
     /// Advances one tick. Each agent acts on its command in <paramref name="commands"/>; without one, the line moves it.
-    /// Returns what happened: movement through the lane and zones first, then patience, each in agent id order, then kick-outs.
+    /// Returns what happened: movement through the lane and zones first, then patience, each in agent id order, then
+    /// kick-outs, then reaching the counter.
     /// </summary>
     public IReadOnlyList<SimEvent> Step(IReadOnlyDictionary<AgentId, Command> commands)
     {
@@ -139,11 +140,6 @@ public sealed class Sim
             }
 
             TrackGap(agent, events);
-            if (agent is { ReachedCounterAt: null, InLane: true, Refused: false, Ahead: null } && agent.Lane.Along < tuning.Zones.BumpBelow)
-            {
-                agent.ReachedCounterAt = Tick;
-                events.Add(new ReachedCounter(Tick, agent.Id));
-            }
         }
 
         foreach (var agent in agents)
@@ -152,6 +148,16 @@ public sealed class Sim
         }
 
         patience.KickOuts(Tick, events);
+
+        // After the kick-outs: an agent pushed past on the way to the counter is not served.
+        foreach (var agent in agents)
+        {
+            if (agent is { ReachedCounterAt: null, InLane: true, Refused: false, Ahead: null } && agent.Lane.Along < tuning.Zones.BumpBelow)
+            {
+                agent.ReachedCounterAt = Tick;
+                events.Add(new ReachedCounter(Tick, agent.Id));
+            }
+        }
         foreach (var happened in events)
         {
             var agent = line[happened.Agent];

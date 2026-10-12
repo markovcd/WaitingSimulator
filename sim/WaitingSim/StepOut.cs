@@ -3,7 +3,9 @@ namespace WaitingSim;
 /// <summary>
 /// What stepping out of the lane and back in does to an agent's place in the line. Stepping out holds the place for a
 /// while; stepping back in ahead of whoever stood behind returns to it. Stepping in anywhere else but the back cuts in:
-/// the person behind takes a hit, and with no room to stand the line refuses the agent a place.
+/// the person behind takes a hit, and with no room to stand the line refuses the agent a place. Everyone it passed,
+/// who stood ahead of its place and is behind it now, takes a hit too, and the person behind one more per person
+/// passed; without a held place, its place is the back of the line.
 /// </summary>
 internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line)
 {
@@ -48,7 +50,13 @@ internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line
             var room = behind.LineAlong - along >= zones.BumpBelow
                 && (ahead is null || along - ahead.LineAlong >= zones.BumpBelow);
             agent.Refused = !room;
-            cutHits[behind.Id.Value] += !room ? stepOut.MissHit : behind switch
+            var passed = room ? Passed(agent, along) : [];
+            foreach (var other in passed.Where(other => other != behind))
+            {
+                cutHits[other.Id.Value] += stepOut.PassedHit;
+            }
+
+            cutHits[behind.Id.Value] += !room ? stepOut.MissHit : (passed.Count * stepOut.PassedHit) + behind switch
             {
                 { Zone: Zone.Gap, GraceExpired: true } => stepOut.PastGraceHit,
                 { Zone: Zone.Gap } => stepOut.GapHit,
@@ -64,6 +72,10 @@ internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line
 
         return outcomes;
     }
+
+    /// <summary>Who in the line an agent cutting in at <paramref name="along"/> gets ahead of that stood ahead of its place.</summary>
+    private List<Agent> Passed(Agent agent, float along) =>
+        [.. line.Agents.Where(other => other != agent && other.InLine && other.LineAlong > along && other.LineAlong < (agent.HeldAlong ?? float.PositiveInfinity))];
 
     private static SpotLost LoseSpot(Agent agent, long tick)
     {

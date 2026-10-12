@@ -128,12 +128,15 @@ public sealed record Tuning(
         var gap = JsonFile.Positive(cutIn, "stepOut.cutIn.gapHit", problems);
         var loose = JsonFile.Positive(cutIn, "stepOut.cutIn.looseHit", problems);
         var miss = JsonFile.Positive(cutIn, "stepOut.cutIn.missHit", problems);
+        var passed = cutIn is { } cutInSection && cutInSection.TryGetProperty("passedHit", out _)
+            ? JsonFile.Positive(cutIn, "stepOut.cutIn.passedHit", problems)
+            : 0f;
         if (!(pastGrace <= gap && gap <= loose) && problems.Count == 0)
         {
             problems.Add("stepOut.cutIn: pastGraceHit, gapHit and looseHit must not decrease in that order");
         }
 
-        return new(holdTicks, pastGrace, gap, loose, miss);
+        return new(holdTicks, pastGrace, gap, loose, miss, passed);
     }
 
     /// <summary>Reads the <c>ripple</c> object, which a tuning file may leave out.</summary>

@@ -29,7 +29,7 @@ public sealed class OverlayTests
         var player = rows[1 + Game.Level.Player.Value];
         Assert.StartsWith($"#{Game.Level.Player.Value} player ", player, StringComparison.Ordinal);
         Assert.DoesNotContain("step", player, StringComparison.Ordinal);
-        var withTrait = rows[1 + snapshot.Agents.First(agent => agent.Trait is not null).Id.Value];
+        var withTrait = rows[1 + snapshot.Agents.First(agent => agent is { Trait: not null, Ahead: not null }).Id.Value];
         Assert.Contains("zone tight  spacing 0.80 m", withTrait, StringComparison.Ordinal);
         Assert.Contains("step standing", withTrait, StringComparison.Ordinal);
         Assert.EndsWith("patience 100.0  stage calm", withTrait, StringComparison.Ordinal);

@@ -156,12 +156,22 @@ public sealed class TuningTests
         Assert.Equal(new StepOutTuning(300, 10, 20, 35, 15), stepOut);
     }
 
+    [Fact]
+    public void A_passed_hit_reads_into_the_step_out_and_without_one_passing_people_costs_nothing_extra()
+    {
+        var withPassed = WithStepOut.Replace("\"missHit\": 15", "\"missHit\": 15, \"passedHit\": 12", StringComparison.Ordinal);
+
+        Assert.Equal(12f, Tuning.Parse(withPassed).Value!.StepOut!.PassedHit);
+        Assert.Equal(0f, Tuning.Parse(WithStepOut).Value!.StepOut!.PassedHit);
+    }
+
     [Theory]
     [InlineData("\"spotHoldTicks\": 300", "\"spotHoldTicks\": -1", "stepOut.spotHoldTicks: must be from 0 up to 216000")]
     [InlineData("\"spotHoldTicks\": 300", "\"spotHoldTicks\": 1.5", "stepOut.spotHoldTicks: missing, or not a whole number")]
     [InlineData("\"gapHit\": 20", "\"gapHit\": 40", "stepOut.cutIn: pastGraceHit, gapHit and looseHit must not decrease in that order")]
     [InlineData("\"missHit\": 15", "\"missHit\": 0", "stepOut.cutIn.missHit: missing, or not a positive number")]
     [InlineData("\"cutIn\"", "\"cutOut\"", "stepOut.cutIn: missing, or not an object")]
+    [InlineData("\"missHit\": 15", "\"missHit\": 15, \"passedHit\": 0", "stepOut.cutIn.passedHit: missing, or not a positive number")]
     public void A_bad_step_out_field_is_reported_by_name(string field, string replacement, string problem)
     {
         var parsed = Tuning.Parse(WithStepOut.Replace(field, replacement, StringComparison.Ordinal));

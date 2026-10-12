@@ -6,18 +6,18 @@
     "halfWidth": 0.5
   },
   "agents": [
-    { "position": [0, 0.0] },
-    { "position": [0, 0.8] },
-    { "position": [0, 1.6] },
-    { "position": [0, 2.4] },
-    { "position": [0, 3.2] },
-    { "position": [0, 4.0] },
-    { "position": [0, 4.8] },
-    { "position": [0, 5.6] },
+    { "position": [0, 0.0], "trait": "patient" },
+    { "position": [0, 0.8], "trait": "oblivious" },
+    { "position": [0, 1.6], "trait": "aggressive" },
+    { "position": [0, 2.4], "trait": "patient" },
+    { "position": [0, 3.2], "trait": "passive-aggressive" },
+    { "position": [0, 4.0], "trait": "oblivious" },
+    { "position": [0, 4.8], "trait": "anxious" },
+    { "position": [0, 5.6], "trait": "patient" },
     { "position": [0, 6.4] },
     { "position": [0, 7.2], "trait": "anxious" },
     { "position": [0, 8.0], "trait": "patient" },
-    { "position": [1.4, 6.8], "cutter": true }
+    { "position": [1.4, 6.8], "trait": "aggressive", "cutter": true }
   ],
   "player": 8,
   "clerk": [0, -1.0]

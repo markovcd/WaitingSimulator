@@ -110,5 +110,33 @@ public sealed class LevelTests
         Assert.Equal(["version: 2 is from a newer game; this one reads up to 1"], parsed.Problems);
     }
 
+    [Fact]
+    public void In_the_post_office_walking_up_beside_the_line_and_cutting_in_at_the_front_gets_the_player_pushed_past()
+    {
+        var level = Level.Parse(File.ReadAllText(Path.Combine(Levels, "post-office.json")), Traits).Value!;
+        var sim = level.Start(Tuning);
+        var player = level.Player;
+
+        // Out of the lane on the side away from the cutter, up to the counter, then in once nobody stands in the way.
+        var events = SimTests.Run(sim, 60 * TickRate.PerSecond, snapshot =>
+        {
+            var me = snapshot.Agents[player.Value];
+            var move = me switch
+            {
+                { KickedOutAt: not null } or { ReachedCounterAt: not null } => Vector2.Zero,
+                { Position.Y: > 0.15f, Position.X: > -0.9f } => new Vector2(-1, 0),
+                { Position.Y: > 0.15f } => new Vector2(0, -1),
+                { InLane: false } when snapshot.Agents.Any(other => other.Id != player && other.InLane && other.Position.Y < 0.6f) => Vector2.Zero,
+                { Position.X: < 0f } => new Vector2(1, 0),
+                _ => Vector2.Zero,
+            };
+            return SimTests.Commands((player, move));
+        });
+
+        Assert.Contains(events, e => e is CutIn cut && cut.Agent == player);
+        Assert.Contains(events, e => e is KickedOut kicked && kicked.Agent == player);
+        Assert.DoesNotContain(events, e => e is ReachedCounter reached && reached.Agent == player);
+    }
+
     private static string Shipped(string name) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", name));
 }
