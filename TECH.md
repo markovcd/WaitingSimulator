@@ -149,7 +149,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 
 ### 5.4 UI
 - Godot Control nodes. Deadpan HUD text ("POSITION: 14") reads sim snapshots only.
-- Difficulty (§11) is purely a presentation flag that changes which HUD widgets are shown. The sim is identical across difficulties, which matches the design. `Hud` turns a snapshot and the difficulty into the HUD's text; the client starts on the difficulty `-- --difficulty easy|normal|hard` names (normal without one), F2 cycles it, and the smoke run logs the HUD text after the overlay.
+- Difficulty (§11) is purely a presentation flag that changes which HUD widgets are shown. The sim is identical across difficulties, which matches the design. `Hud` turns a snapshot and the difficulty into the HUD's text; the client starts on the difficulty `-- --difficulty easy|normal|hard` names, or without one the last the player picked, F2 cycles it, and the smoke run logs the HUD text after the overlay. What the player picked is kept in `user://settings.json` (`Settings`, format version 1: `{ "version": 1, "difficulty": "hard" }`), written each time F2 cycles; a missing, damaged or newer file plays on normal with the problem logged, and a newer one is never saved over.
 
 ### 5.5 Input
 - InputMap actions, registered in code by `Controls` with their default keys, mouse buttons and gamepad inputs: `move_forward`, `move_back`, `move_left`, `move_right`, the four `look_` directions of the right stick (the mouse turns the head directly), and `glance_back` (hold). `interact` and `phone` join when their rules land. Hold vs. toggle for the phone is a setting in the input layer, not the sim.

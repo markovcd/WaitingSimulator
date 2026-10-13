@@ -8,7 +8,8 @@ namespace WaitingSimulator.Game;
 /// turns input into the player's command, steps the sim, shows where it put everyone and how they stand, and plays the
 /// cues its events call for. How to play shows at the start until the player walks off. Once the player reaches the
 /// counter or is kicked out, input stops and the result screen shows until they line up again. The HUD shows what the
-/// difficulty allows; F2 cycles the difficulty, and <c>-- --difficulty easy</c> starts on one. F5 re-reads the data
+/// difficulty allows; F2 cycles the difficulty and remembers it for the next launch, and <c>-- --difficulty easy</c>
+/// starts on one. F5 re-reads the data
 /// files and restarts the level on them. F3 toggles the debug overlay. Esc frees the mouse and a click in the window
 /// takes it back. Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits, which is how the
 /// gate checks the game starts under Godot; a data problem quits with exit code 1.
@@ -29,6 +30,9 @@ public sealed partial class Client : Node3D
 
     // The difficulty outlives the scene, so lining up again keeps the one the player picked.
     private static Difficulty? difficulty;
+
+    /// <summary>Where the settings that outlive a launch are kept, in the user's folder Godot gives the game.</summary>
+    private const string SettingsPath = "user://settings.json";
 
     // Data a reload read, and its notice, handed to the scene it restarts.
     private static (GameData Data, string Notice)? reloaded;
@@ -73,7 +77,17 @@ public sealed partial class Client : Node3D
         }
 
         var problems = new List<string>();
-        difficulty ??= Difficulties.From(OS.GetCmdlineUserArgs(), problems);
+        if (difficulty is null)
+        {
+            var (settings, problem) = Settings.Load(ProjectSettings.GlobalizePath(SettingsPath));
+            if (problem is not null)
+            {
+                problems.Add(problem);
+            }
+
+            difficulty = Difficulties.From(OS.GetCmdlineUserArgs(), settings.Difficulty, problems);
+        }
+
         foreach (var problem in problems)
         {
             GD.PrintErr(problem);
@@ -168,6 +182,10 @@ public sealed partial class Client : Node3D
         {
             difficulty = Difficulties.Next(Difficulty);
             Notify($"DIFFICULTY: {Difficulties.Name(Difficulty).ToUpperInvariant()}");
+            foreach (var problem in Settings.Save(ProjectSettings.GlobalizePath(SettingsPath), new Settings(Difficulty)))
+            {
+                GD.PrintErr(problem);
+            }
         }
         else if (@event.IsActionPressed(Controls.DebugOverlay))
         {

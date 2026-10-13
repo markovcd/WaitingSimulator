@@ -192,7 +192,7 @@ Difficulty is how much the game tells you. The simulation is identical across al
 - **Normal:** a subtle hint layer (for example, a faint indicator when a gap has opened).
 - **Easy (full HUD):** deadpan numbers such as "PATIENCE OF PERSON BEHIND: 62%", plus a gap timer.
 
-- **Prototype:** normal shows "GAP" while a gap is open in front of the player; easy shows the patience of the person behind and the grace left on a gap. Normal is the default; F2 cycles the difficulty in game.
+- **Prototype:** normal shows "GAP" while a gap is open in front of the player; easy shows the patience of the person behind and the grace left on a gap. Normal is the default; F2 cycles the difficulty in game, and the game remembers it between launches.
 
 Leaderboards split per difficulty. The no-HUD version must be fully readable on its own; playtest it first. If it only works with the HUD, the cues need work.
 

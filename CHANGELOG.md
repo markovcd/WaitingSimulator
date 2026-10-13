@@ -14,7 +14,7 @@
 - Your ticket slips now and then; reach the counter without it and the clerk sends you away.
 - The person behind makes small talk now and then; glance back to listen, or they take offense.
 - How to play shows at the start of a level.
-- Easy, normal and hard difficulties, from a HUD of numbers to none, cycled with F2.
+- Easy, normal and hard difficulties, from a HUD of numbers to none, cycled with F2 and remembered between launches.
 - People in line are crude humanoids instead of capsules, each a little different, with faces that get angrier as they lose patience.
 - F3 shows a debug overlay.
 - F5 reloads the tuning and restarts the level on it.

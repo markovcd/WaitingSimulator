@@ -83,7 +83,7 @@ public sealed class HudTests
     {
         var problems = new List<string>();
 
-        Assert.Equal(Enum.Parse<Difficulty>(difficulty), Difficulties.From(arguments, problems));
+        Assert.Equal(Enum.Parse<Difficulty>(difficulty), Difficulties.From(arguments, Difficulty.Normal, problems));
         Assert.Empty(problems);
     }
 
@@ -94,8 +94,18 @@ public sealed class HudTests
     {
         var problems = new List<string>();
 
-        Assert.Equal(Difficulty.Normal, Difficulties.From(arguments, problems));
+        Assert.Equal(Difficulty.Normal, Difficulties.From(arguments, Difficulty.Normal, problems));
         Assert.Equal(["--difficulty: takes easy, normal or hard"], problems);
+    }
+
+    [Fact]
+    public void Without_a_difficulty_on_the_command_line_the_saved_one_plays()
+    {
+        var problems = new List<string>();
+
+        Assert.Equal(Difficulty.Hard, Difficulties.From(["--smoke"], Difficulty.Hard, problems));
+        Assert.Equal(Difficulty.Easy, Difficulties.From(["--difficulty", "easy"], Difficulty.Hard, problems));
+        Assert.Empty(problems);
     }
 
     [Fact]
