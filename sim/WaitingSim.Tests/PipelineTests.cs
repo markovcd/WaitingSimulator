@@ -5,7 +5,7 @@ namespace WaitingSim.Tests;
 /// <summary>Versions the repo names in more than one place, held equal.</summary>
 public sealed partial class PipelineTests
 {
-    private static readonly string Root = FindRoot();
+    internal static readonly string Root = FindRoot();
 
     [Fact]
     public void The_gate_image_carries_the_Godot_the_game_is_built_against()
