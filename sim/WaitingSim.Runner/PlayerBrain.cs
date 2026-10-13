@@ -4,7 +4,8 @@ namespace WaitingSim.Runner;
 
 /// <summary>
 /// Turns what a scripted player sees into its command each tick: close up on the person ahead, or at the front, step
-/// up to the counter. Every bot but the distracted one fetches a dropped ticket and steps back into the lane.
+/// up to the counter. Every bot but the distracted one fetches a dropped ticket and steps back into the lane, and
+/// glances back to listen to small talk without missing a step.
 /// </summary>
 internal sealed class PlayerBrain(PlayerBot bot, Lane lane, Rng rng)
 {
@@ -18,6 +19,12 @@ internal sealed class PlayerBrain(PlayerBot bot, Lane lane, Rng rng)
     private int phoneTicksLeft;
 
     public Command Next(AgentSnapshot self)
+    {
+        var move = Move(self);
+        return bot != PlayerBot.Distracted && self.SmallTalkEndsAt is not null ? move with { GlancingBack = true } : move;
+    }
+
+    private Command Move(AgentSnapshot self)
     {
         var behind = self.Spacing is { } spacing ? spacing > WantedSpacing : self is { InLane: true, ReachedCounterAt: null };
         ticksSinceGap = behind ? ticksSinceGap + 1 : 0;

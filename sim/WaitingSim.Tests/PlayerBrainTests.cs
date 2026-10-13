@@ -31,6 +31,25 @@ public sealed class PlayerBrainTests
         Assert.NotNull(Agent(sim, player).TicketAt);
     }
 
+    [Theory]
+    [InlineData("Attentive", true)]
+    [InlineData("Slow", true)]
+    [InlineData("Distracted", false)]
+    public void Only_a_bot_that_is_not_distracted_listens_to_small_talk(string bot, bool listens)
+    {
+        var tuning = Snappy with { Distractions = new DistractionTuning(SmallTalk: new SmallTalkTuning(new(60, 60), new(120, 120), 0.6f, 5, 15)) };
+        var sim = new Sim(tuning, Straight, seed: 1);
+        sim.Spawn(new(2, 0));
+        var player = sim.Spawn(new(3.2f, 0));
+        sim.Spawn(new(4.4f, 0), new Trait("plain", 1, 1, 1, new HashSet<Stage> { Stage.Calm }));
+        sim.TalkTo(player);
+        var brain = new PlayerBrain(Enum.Parse<PlayerBot>(bot), Straight, new Rng(1, stream: 2));
+
+        var events = Run(sim, 3 * TickRate.PerSecond, snapshot => new() { [player] = brain.Next(snapshot.Agents[player.Value]) });
+
+        Assert.Equal(listens, Assert.Single(events.OfType<SmallTalkEnded>()).Listened);
+    }
+
     /// <summary>The bot standing in a still line for two seconds while its ticket slips after one.</summary>
     private static (Sim Sim, AgentId Player, List<SimEvent> Events) Play(PlayerBot bot)
     {

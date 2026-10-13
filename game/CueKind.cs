@@ -14,4 +14,7 @@ internal enum CueKind
 
     /// <summary>The agent's ticket slipped to the floor: a paper flutter.</summary>
     TicketDropped,
+
+    /// <summary>The person behind started making small talk: a mumble.</summary>
+    SmallTalk,
 }

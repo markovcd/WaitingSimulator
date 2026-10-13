@@ -94,7 +94,36 @@ public sealed record Tuning(
             ticket = new(interval, JsonFile.Positive(dropped, "distractions.droppedTicket.pickupMeters", problems));
         }
 
-        return new(ticket);
+        SmallTalkTuning? talk = null;
+        if (distractions is { } talkSection && talkSection.TryGetProperty("smallTalk", out _))
+        {
+            talk = ReadSmallTalk(JsonFile.Section(distractions, "distractions.smallTalk", problems), problems);
+        }
+
+        return new(ticket, talk);
+    }
+
+    private static SmallTalkTuning ReadSmallTalk(JsonElement? talk, List<string> problems)
+    {
+        var interval = ReadTicks(talk, "distractions.smallTalk.intervalTicks", problems);
+        var length = ReadTicks(talk, "distractions.smallTalk.talkTicks", problems);
+        if ((interval.Min < 1 || length.Min < 1) && problems.Count == 0)
+        {
+            problems.Add("distractions.smallTalk: intervalTicks.min and talkTicks.min must be at least 1");
+        }
+
+        var share = JsonFile.Positive(talk, "distractions.smallTalk.listenShare", problems);
+        if (share > 1f && problems.Count == 0)
+        {
+            problems.Add("distractions.smallTalk.listenShare: must be above 0 and at most 1");
+        }
+
+        return new(
+            interval,
+            length,
+            share,
+            JsonFile.Positive(talk, "distractions.smallTalk.listenedRecovery", problems),
+            JsonFile.Positive(talk, "distractions.smallTalk.ignoredHit", problems));
     }
 
     /// <summary>Reads the <c>arrivals</c> object, which a tuning file may leave out.</summary>

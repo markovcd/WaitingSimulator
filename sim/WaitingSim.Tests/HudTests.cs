@@ -57,6 +57,17 @@ public sealed class HudTests
     }
 
     [Fact]
+    public void Small_talk_from_behind_shows_on_easy_with_the_key_to_listen_and_on_normal_as_a_word()
+    {
+        var snapshot = Line(gapOpenedAt: null, tick: 130);
+        var talking = snapshot with { Agents = [.. snapshot.Agents.Select(agent => agent.Id == Player ? agent with { SmallTalkEndsAt = 300 } : agent)] };
+
+        Assert.EndsWith("SMALL TALK: LISTEN (Q)", Hud.Text(talking, Player, Tuning, Difficulty.Easy), StringComparison.Ordinal);
+        Assert.Equal("TALK", Hud.Text(talking, Player, Tuning, Difficulty.Normal));
+        Assert.Equal("", Hud.Text(talking, Player, Tuning, Difficulty.Hard));
+    }
+
+    [Fact]
     public void Easy_with_no_one_behind_and_no_gap_shows_nothing()
     {
         var snapshot = Line(gapOpenedAt: null, tick: 130);

@@ -53,6 +53,7 @@ public sealed partial class Client : Node3D
     private StandardMaterial3D? laneFill;
     private MeshInstance3D? heldMarker;
     private MeshInstance3D? ticket;
+    private Label3D? speech;
     private readonly List<AudioStreamPlayer3D> voices = [];
 
     /// <inheritdoc/>
@@ -113,7 +114,7 @@ public sealed partial class Client : Node3D
         head.GlancingBack = Input.IsActionPressed(Controls.GlanceBack);
         var stick = Input.GetVector(Controls.MoveLeft, Controls.MoveRight, Controls.MoveForward, Controls.MoveBack);
         var ended = Ended();
-        var events = driver.Advance(delta, ended ? Command.Idle : Floor.Walk(new(stick.X, stick.Y), head.Yaw));
+        var events = driver.Advance(delta, ended ? Command.Idle : Floor.Walk(new(stick.X, stick.Y), head.Yaw) with { GlancingBack = head.GlancingBack });
         AddNewcomers();
         if (!ended && Ended())
         {
@@ -223,6 +224,7 @@ public sealed partial class Client : Node3D
         laneFill = Scenery.Lane(this, marking);
         heldMarker = Scenery.HeldMarker(this, marking);
         ticket = Scenery.Ticket(this);
+        speech = Scenery.SpeechBubble(this);
 
         foreach (var tone in Sounds.All())
         {
@@ -288,6 +290,13 @@ public sealed partial class Client : Node3D
         if (you.TicketAt is { } lying)
         {
             ticket.Position = Floor.ToWorld(lying, Scenery.TicketHeight);
+        }
+
+        var talker = you.SmallTalkEndsAt is null ? null : driver.Current.Agents.FirstOrDefault(agent => agent.Ahead == you.Id);
+        speech!.Visible = talker is not null;
+        if (talker is not null)
+        {
+            speech.Position = Floor.ToWorld(driver.Position(talker.Id), Scenery.SpeechHeight);
         }
 
         Scenery.Show(heldMarker!, LaneMarking.Held(you, level.Lane, driver.Current.Tick, tuning!.StepOut?.SpotHoldTicks ?? 0));

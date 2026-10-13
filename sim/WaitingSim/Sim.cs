@@ -26,6 +26,7 @@ public sealed class Sim
     private Arrivals? arrivals;
     private Vector2? exit;
     private Tickets? tickets;
+    private SmallTalk? smallTalk;
     private readonly Bodies? bodies;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
@@ -71,6 +72,18 @@ public sealed class Sim
 
         tickets = new Tickets(ticket, lane, line[holder]);
         tickets.Schedule(Tick, rng);
+    }
+
+    /// <summary>Has whoever stands behind <paramref name="listener"/> make small talk now and then, if the tuning has small talk. Level setup.</summary>
+    public void TalkTo(AgentId listener)
+    {
+        if (tuning.Distractions?.SmallTalk is not { } talk)
+        {
+            return;
+        }
+
+        smallTalk = new SmallTalk(talk, line, line[listener]);
+        smallTalk.Schedule(Tick, rng);
     }
 
     /// <summary>Has agents done with the line walk out to <paramref name="exit"/> and be gone. Level setup.</summary>
@@ -137,17 +150,17 @@ public sealed class Sim
         var before = agents.Select(agent => (agent.InLane, agent.Zone, agent.Lane.Along)).ToList();
         line.Measure();
         var placed = new List<SimEvent>?[agents.Count];
-        var cutHits = new float[agents.Count];
+        var hits = new float[agents.Count];
         for (var i = 0; i < agents.Count; i++)
         {
             var agent = agents[i];
             if (agent is { Step: LineStep.Cutting, InLane: true } && !before[i].InLane && cutters is not null)
             {
-                placed[i] = cutters.SlideIn(agent, Tick, cutHits);
+                placed[i] = cutters.SlideIn(agent, Tick, hits);
             }
             else if (stepOut is not null)
             {
-                placed[i] = stepOut.Place(agent, before[i].InLane, before[i].Along, Tick, cutHits);
+                placed[i] = stepOut.Place(agent, before[i].InLane, before[i].Along, Tick, hits);
             }
         }
 
@@ -181,9 +194,15 @@ public sealed class Sim
             TrackGap(agent, events);
         }
 
+        if (smallTalk is not null)
+        {
+            var glancingBack = commands.TryGetValue(smallTalk.Listener.Id, out var listening) && listening.GlancingBack;
+            smallTalk.Update(Tick, rng, glancingBack, hits, events);
+        }
+
         foreach (var agent in agents)
         {
-            patience.Wear(agent, bumped[agent.Id.Value], cutHits[agent.Id.Value], Tick, events);
+            patience.Wear(agent, bumped[agent.Id.Value], hits[agent.Id.Value], Tick, events);
         }
 
         patience.KickOuts(Tick, events);
@@ -253,10 +272,16 @@ public sealed class Sim
         var (state, increment) = rng.Position;
         var hash = new StateHash().Add(Tick).Add(state).Add(increment).Add((long)line.Agents.Count);
 
-        // A sim without a ticket or arrivals has none to drop or due, and leaves them out.
+        // A sim without a ticket, small talk or arrivals has none to drop, make or due, and leaves them out.
         if (tickets is not null)
         {
             hash.Add(tickets.NextDropAt).Add(tickets.Holder.TicketAt?.X ?? float.NaN).Add(tickets.Holder.TicketAt?.Y ?? float.NaN);
+        }
+
+        if (smallTalk is not null)
+        {
+            hash.Add(smallTalk.NextAt).Add((long)(smallTalk.Talker?.Id.Value ?? -1)).Add(smallTalk.StartedAt)
+                .Add(smallTalk.Listener.SmallTalkEndsAt ?? -1).Add((long)smallTalk.ListenedTicks);
         }
 
         if (arrivals is not null)

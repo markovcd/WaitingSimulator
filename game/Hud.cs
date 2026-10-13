@@ -5,9 +5,9 @@ using WaitingSim;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The player's HUD text, which the difficulty decides: nothing on hard, a word when a gap opens in front of the player or
-/// their ticket drops on normal, and on easy the patience of the person behind, the grace left on a gap and a dropped
-/// ticket. It reads the snapshot only.
+/// The player's HUD text, which the difficulty decides: nothing on hard, a word when a gap opens in front of the player,
+/// their ticket drops or the person behind makes small talk on normal, and on easy the patience of the person behind, the
+/// grace left on a gap, a dropped ticket and small talk with the key to listen. It reads the snapshot only.
 /// </summary>
 internal static class Hud
 {
@@ -18,10 +18,11 @@ internal static class Hud
         var you = snapshot.Agents[player.Value];
         var gapOpenedAt = you.Zone == Zone.Gap ? you.GapOpenedAt : null;
         var dropped = you.TicketAt is not null;
+        var talking = you.SmallTalkEndsAt is not null;
         switch (difficulty)
         {
             case Difficulty.Normal:
-                return string.Join('\n', new[] { gapOpenedAt is null ? null : "GAP", dropped ? "TICKET" : null }.OfType<string>());
+                return string.Join('\n', new[] { gapOpenedAt is null ? null : "GAP", dropped ? "TICKET" : null, talking ? "TALK" : null }.OfType<string>());
             case Difficulty.Easy:
                 var text = new StringBuilder();
                 if (snapshot.Agents.FirstOrDefault(agent => agent.Ahead == player) is { Patience: { } patience })
@@ -40,6 +41,11 @@ internal static class Hud
                 if (dropped)
                 {
                     text.Append("\nTICKET DROPPED");
+                }
+
+                if (talking)
+                {
+                    text.Append("\nSMALL TALK: LISTEN (Q)");
                 }
 
                 return text.ToString().Trim('\n');

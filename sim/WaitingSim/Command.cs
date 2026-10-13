@@ -4,9 +4,10 @@ namespace WaitingSim;
 
 /// <summary>
 /// One agent's input for one tick. A player's input and an NPC brain both produce this.
-/// <see cref="Move"/> is the wanted walking direction on the floor plane, at most 1 long.
+/// <see cref="Move"/> is the wanted walking direction on the floor plane, at most 1 long. <see cref="GlancingBack"/>
+/// is looking back at the person behind, which is how small talk is listened to.
 /// </summary>
-public readonly record struct Command(Vector2 Move)
+public readonly record struct Command(Vector2 Move, bool GlancingBack = false)
 {
     /// <summary>Standing still.</summary>
     public static Command Idle { get; } = new(Vector2.Zero);
@@ -16,9 +17,9 @@ public readonly record struct Command(Vector2 Move)
     {
         if (!float.IsFinite(Move.X) || !float.IsFinite(Move.Y))
         {
-            return Idle;
+            return this with { Move = Vector2.Zero };
         }
 
-        return Move.LengthSquared() > 1f ? new(Vector2.Normalize(Move)) : this;
+        return Move.LengthSquared() > 1f ? this with { Move = Vector2.Normalize(Move) } : this;
     }
 }

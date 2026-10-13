@@ -201,6 +201,7 @@ Leaderboards split per difficulty. The no-HUD version must be fully readable on 
 Each distraction competes with watching the line, so the player constantly trades boredom relief against vigilance. Each is optional tuning data, timed by the sim's seeded RNG.
 
 - **Dropped ticket:** every 20 to 40 s the player's ticket slips and lands on the floor just outside the lane beside them, with a paper flutter. Picking it up means walking within reach of it, which means stepping out of the lane: the spot hold and the line moving on apply as usual. Only one lies on the floor at a time, and it only slips while the player stands in the line. Reaching the counter without it, the clerk sends the player away: "NO TICKET", a failed level like a kick-out. Easy shows "TICKET DROPPED", normal "TICKET".
+- **Small talk from behind:** every 25 to 50 s the person behind starts talking to the player for 3 to 5 s, unless they are annoyed or worse. Listening means holding glance back for most of it (60%), so the front of the line is out of view while you do. Listened to, they get a little patience back (5); ignored, they take a hit (15). Easy shows "SMALL TALK: LISTEN (Q)", normal "TALK"; a "..." floats over their head and they mumble.
 
 Still open: other candidates (phone buzz, slipping bag strap, a call from your boss, a kid tugging your sleeve), and how distractions interact with boredom and fatigue.
 

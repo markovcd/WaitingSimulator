@@ -6,8 +6,8 @@ namespace WaitingSim;
 /// </summary>
 internal sealed class Patience(PatienceTuning rates, Line line)
 {
-    /// <summary>Wears the agent's patience for this tick, with a bump into it and any cut-in hits, and reports changes.</summary>
-    public void Wear(Agent agent, bool bumped, float cutHit, long tick, List<SimEvent> events)
+    /// <summary>Wears the agent's patience for this tick, with a bump into it and any one-off hits, and reports changes.</summary>
+    public void Wear(Agent agent, bool bumped, float hit, long tick, List<SimEvent> events)
     {
         if (agent.Trait is not { } trait)
         {
@@ -26,7 +26,7 @@ internal sealed class Patience(PatienceTuning rates, Line line)
             change -= rates.BumpHit * trait.BumpScale;
         }
 
-        change -= cutHit;
+        change -= hit;
 
         var before = agent.Patience;
         var shownBefore = trait.Shown(agent.Stage);

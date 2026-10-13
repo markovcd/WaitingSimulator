@@ -1,8 +1,8 @@
 namespace WaitingSim.Runner;
 
 /// <summary>
-/// One line played for the sweep: people ahead, the scripted player, and the person behind with the trait under test.
-/// The line moves everyone but the player.
+/// One line played for the sweep: people ahead, the scripted player, and the person behind with the trait under test,
+/// who makes small talk if the tuning has it. The line moves everyone but the player.
 /// </summary>
 internal static class SweepLine
 {
@@ -30,6 +30,7 @@ internal static class SweepLine
 
         var player = sim.Spawn(new(PeopleAhead * StartSpacing, 0));
         var behind = sim.Spawn(new((PeopleAhead + 1) * StartSpacing, 0), trait);
+        sim.TalkTo(player);
         var brain = new PlayerBrain(bot, Lane, new Rng(seed, stream: 2));
 
         var ranOut = false;

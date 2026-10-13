@@ -44,6 +44,14 @@ public sealed class CuesTests
     }
 
     [Fact]
+    public void Small_talk_starting_is_cued_on_the_one_talking()
+    {
+        var cues = Cues.From([new SmallTalkStarted(10, Behind, Player)], After);
+
+        Assert.Equal([new Cue(Behind, CueKind.SmallTalk, null)], cues);
+    }
+
+    [Fact]
     public void Patience_running_out_is_cued()
     {
         var cues = Cues.From([new PatienceRanOut(10, Behind)], After);

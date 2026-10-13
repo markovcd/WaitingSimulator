@@ -21,6 +21,7 @@ internal static class Cues
                 StageChanged changed when changed.To > changed.From => new Cue(changed.Agent, CueKind.Escalated, changed.To),
                 PatienceRanOut ranOut => new Cue(ranOut.Agent, CueKind.RanOut, agent.Stage),
                 TicketDropped dropped => new Cue(dropped.Agent, CueKind.TicketDropped, null),
+                SmallTalkStarted talk => new Cue(talk.Agent, CueKind.SmallTalk, null),
                 _ => null,
             };
             if (cue is { } found)

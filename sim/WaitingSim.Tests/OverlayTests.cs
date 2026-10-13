@@ -60,6 +60,16 @@ public sealed class OverlayTests
     }
 
     [Fact]
+    public void An_agent_being_made_small_talk_shows_how_long_the_talk_has_left()
+    {
+        var agent = new AgentSnapshot(new AgentId(0), Vector2.Zero, Vector2.Zero, true, null, null, null, null, null, null, null, LineStep.Standing, null, false, default, null, null, SmallTalkEndsAt: 220);
+
+        var text = Overlay.Text(new Snapshot(100, [agent]), Game.Level, Game.Tuning);
+
+        Assert.Contains("small talk 2.00 s", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void An_agent_refused_a_place_says_so_instead_of_a_zone()
     {
         var agent = new AgentSnapshot(new AgentId(0), Vector2.Zero, Vector2.Zero, true, null, null, null, null, null, null, null, LineStep.Standing, null, true, default, null, null);

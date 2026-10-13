@@ -79,6 +79,28 @@ public sealed class TuningTests
         Assert.Equal([problem], parsed.Problems);
     }
 
+    private static readonly string WithSmallTalk = Valid.Replace(
+        "\"patience\": {",
+        "\"distractions\": { \"smallTalk\": { \"intervalTicks\": { \"min\": 1500, \"max\": 3000 }, \"talkTicks\": { \"min\": 180, \"max\": 300 }, \"listenShare\": 0.6, \"listenedRecovery\": 5, \"ignoredHit\": 15 } },\n  \"patience\": {",
+        StringComparison.Ordinal);
+
+    [Fact]
+    public void Small_talk_reads_into_its_values_and_a_tuning_file_may_leave_it_out()
+    {
+        Assert.Equal(new SmallTalkTuning(new(1500, 3000), new(180, 300), 0.6f, 5, 15), Tuning.Parse(WithSmallTalk).Value!.Distractions!.SmallTalk);
+        Assert.Null(Tuning.Parse(Valid).Value!.Distractions);
+    }
+
+    [Theory]
+    [InlineData("\"listenShare\": 0.6", "\"listenShare\": 1.5", "distractions.smallTalk.listenShare: must be above 0 and at most 1")]
+    [InlineData("\"listenShare\": 0.6", "\"listenShare\": 0", "distractions.smallTalk.listenShare: missing, or not a positive number")]
+    [InlineData("\"min\": 180", "\"min\": 0", "distractions.smallTalk: intervalTicks.min and talkTicks.min must be at least 1")]
+    [InlineData("\"ignoredHit\": 15", "\"ignoredHit\": -1", "distractions.smallTalk.ignoredHit: missing, or not a positive number")]
+    public void A_bad_small_talk_field_is_reported_by_name(string field, string replacement, string problem)
+    {
+        Assert.Equal([problem], Tuning.Parse(WithSmallTalk.Replace(field, replacement, StringComparison.Ordinal)).Problems);
+    }
+
     [Fact]
     public void Arrivals_read_into_their_values_and_a_tuning_file_may_leave_them_out()
     {

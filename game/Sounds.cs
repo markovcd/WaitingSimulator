@@ -11,6 +11,7 @@ internal static class Sounds
         { Kind: CueKind.Bumped } => new(110f, 0.15f),
         { Kind: CueKind.RanOut } => new(147f, 0.8f),
         { Kind: CueKind.TicketDropped } => new(1320f, 0.08f),
+        { Kind: CueKind.SmallTalk } => new(185f, 0.6f),
         { Stage: Stage.Restless } => new(330f, 0.3f),
         { Stage: Stage.Annoyed } => new(294f, 0.35f),
         { Stage: Stage.Confronting } => new(262f, 0.4f),
@@ -19,7 +20,7 @@ internal static class Sounds
 
     /// <summary>Every tone a cue can play, so each can be built once.</summary>
     public static IEnumerable<Tone> All() =>
-        new[] { new Cue(default, CueKind.Bumped, null), new Cue(default, CueKind.RanOut, null), new Cue(default, CueKind.TicketDropped, null) }
+        new[] { new Cue(default, CueKind.Bumped, null), new Cue(default, CueKind.RanOut, null), new Cue(default, CueKind.TicketDropped, null), new Cue(default, CueKind.SmallTalk, null) }
             .Concat(Enum.GetValues<Stage>().Select(stage => new Cue(default, CueKind.Escalated, stage)))
             .Select(For)
             .Distinct();

@@ -50,6 +50,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **distraction** | Anything that competes with watching the line or listening for the call. | | |
 | **tally** | The count of each mistake an agent made on its way to the counter; the clerk names the worst. | `Tally`, `Mistake` | score, record |
 | **dropped ticket** | The player's ticket lying on the floor beside the lane after it slipped; reaching the counter without it is being turned away. | `TicketDropped`, `TicketAt` | lost item |
+| **small talk** | The person behind talking to the player for a few seconds; glancing back through most of it is listening, and ignoring it costs them patience. | `SmallTalkStarted`, `SmallTalkEnded`, `SmallTalkEndsAt` | chat, conversation |
 | **turned away** | Sent off unserved at the counter for having no ticket; it ends the level like a kick-out. | `TurnedAway`, `Mistake.NoTicket` | rejected, refused (refused is the line's word for a missed cut in) |
 | **result screen** | What shows once the player reaches the counter: the clerk's line, the time in line and the tally. | `ResultScreen` | game over screen |
 | **clerk** | The person at the counter who ends a level with one line. | | NPC at the desk |

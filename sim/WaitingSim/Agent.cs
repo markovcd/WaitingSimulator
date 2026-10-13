@@ -76,9 +76,12 @@ internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, bool cut
 
     public long? TurnedAwayAt { get; set; }
 
+    /// <summary>The tick the small talk the agent is listening to ends, while someone behind is talking to it.</summary>
+    public long? SmallTalkEndsAt { get; set; }
+
     public AgentSnapshot Snapshot() => Trait is null
-        ? new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, null, null, null, Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt)
-        : new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, Trait.Id, Patience, Trait.Shown(Stage), Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt);
+        ? new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, null, null, null, Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt, SmallTalkEndsAt)
+        : new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, Trait.Id, Patience, Trait.Shown(Stage), Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt, SmallTalkEndsAt);
 
     private long? SpotHeldUntil => HeldAlong is null ? null : HoldEndsAt;
 }

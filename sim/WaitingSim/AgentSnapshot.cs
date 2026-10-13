@@ -23,6 +23,7 @@ namespace WaitingSim;
 /// <param name="HeldAlong">While its place is held, how far along the lane from the front the place is, in meters.</param>
 /// <param name="TicketAt">Where its dropped ticket lies on the floor, while it does.</param>
 /// <param name="TurnedAwayAt">The tick the clerk turned it away for reaching the counter without its ticket, once it has.</param>
+/// <param name="SmallTalkEndsAt">The tick the small talk it is being made ends, while the person behind is talking to it.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -43,4 +44,5 @@ public sealed record AgentSnapshot(
     long? KickedOutAt,
     float? HeldAlong = null,
     Vector2? TicketAt = null,
-    long? TurnedAwayAt = null);
+    long? TurnedAwayAt = null,
+    long? SmallTalkEndsAt = null);

@@ -34,6 +34,7 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
         }
 
         sim.HandTicket(Player);
+        sim.TalkTo(Player);
         if (Exit is { } exit)
         {
             sim.ExitAt(exit);

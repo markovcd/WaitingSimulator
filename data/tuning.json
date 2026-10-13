@@ -20,7 +20,14 @@
     "maxCutters": 2
   },
   "distractions": {
-    "droppedTicket": { "intervalTicks": { "min": 1200, "max": 2400 }, "pickupMeters": 0.4 }
+    "droppedTicket": { "intervalTicks": { "min": 1200, "max": 2400 }, "pickupMeters": 0.4 },
+    "smallTalk": {
+      "intervalTicks": { "min": 1500, "max": 3000 },
+      "talkTicks": { "min": 180, "max": 300 },
+      "listenShare": 0.6,
+      "listenedRecovery": 5,
+      "ignoredHit": 15
+    }
   },
   "ripple": {
     "serviceTicks": { "min": 120, "max": 360 },

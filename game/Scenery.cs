@@ -141,6 +141,27 @@ internal static class Scenery
         return ticket;
     }
 
+    /// <summary>How high above the floor a speech bubble floats, in meters: over the head of someone talking.</summary>
+    public const float SpeechHeight = 2.0f;
+
+    /// <summary>A "..." over the head of the person making small talk, hidden until they start; it always faces the eyes.</summary>
+    public static Label3D SpeechBubble(Node parent)
+    {
+        var bubble = new Label3D
+        {
+            Name = "SpeechBubble",
+            Text = "...",
+            FontSize = 96,
+            Modulate = Colors.Black,
+            OutlineModulate = Colors.White,
+            OutlineSize = 24,
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            Visible = false,
+        };
+        parent.AddChild(bubble);
+        return bubble;
+    }
+
     /// <summary><paramref name="paint"/> as a Godot color.</summary>
     public static Color ToColor(Paint paint) => new(paint.R, paint.G, paint.B);
 
