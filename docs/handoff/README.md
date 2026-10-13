@@ -6,6 +6,7 @@ Planned work that has its own document is not repeated here; link to it instead.
 
 | # | Issue | Severity | Status |
 |---|---|---|---|
+| [01](01-room-mode-plan.md) | Room mode needs its moment-to-moment play decided before it is built | Low | Open |
 
 Severity: **Critical**, act now; **High**, security or data problem in production; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
 
