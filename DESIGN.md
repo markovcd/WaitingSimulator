@@ -111,7 +111,7 @@ Every NPC that depends on the player has patience, a value from 0 to 100, and a 
 ### Recovery (slow and small, so players cannot just park in a safe zone)
 - Staying tight on the person ahead (trickle)
 - Small social gestures (nod, letting someone pass)
-- Letting someone ahead of you can cost position but buys patience (trade-off choice)
+- Letting someone ahead of you can cost position but buys patience (trade-off choice). **Prototype:** step out of the lane (your place is held) and press interact: the person behind goes ahead into your place and gets 15 patience back, your held place moves to just behind them with the hold started over, and stepping back in there is returning. Easy shows "E: LET THE PERSON BEHIND GO AHEAD" while you can.
 
 ### Escalation stages
 The meter is hidden. Behavior is the readout.
@@ -173,7 +173,7 @@ Prototype scope: "reach the counter, clerk says one line, result screen." Add tw
 - **Move:** WASD / left stick. Walking only; no run button.
 - **Look:** mouse / right stick.
 - **Glance back:** hold to turn your head toward the person behind you, release to snap forward. The cost is that the front of the line is out of view while you look back, and held too long it is staring (§8).
-- **Interact:** one context button (tap a stranger, let someone ahead, pick up a dropped item).
+- **Interact:** one context button (tap a stranger, let someone ahead, pick up a dropped item). E or the gamepad's X; it lets the person behind go ahead today.
 - **Phone:** separate hold. Raises the phone and lowers the camera; the main temptation and the most common way to miss a gap. (Hold vs toggle: start with hold.)
 - Plan for gamepad support from the start.
 

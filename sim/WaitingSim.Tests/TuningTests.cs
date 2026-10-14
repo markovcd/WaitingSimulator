@@ -102,6 +102,16 @@ public sealed class TuningTests
     }
 
     [Fact]
+    public void Letting_past_reads_into_its_values_and_a_tuning_file_may_leave_it_out()
+    {
+        var withLetPast = Valid.Replace("\"patience\": {", "\"letPast\": { \"recovery\": 15 },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal(new LetPastTuning(15), Tuning.Parse(withLetPast).Value!.LetPast);
+        Assert.Equal(["letPast.recovery: missing, or not a positive number"], Tuning.Parse(withLetPast.Replace("\"recovery\": 15", "\"recovery\": 0", StringComparison.Ordinal)).Problems);
+        Assert.Null(Tuning.Parse(Valid).Value!.LetPast);
+    }
+
+    [Fact]
     public void Staring_reads_into_its_values_and_a_tuning_file_may_leave_it_out()
     {
         var withStaring = Valid.Replace("\"patience\": {", "\"staring\": { \"afterTicks\": 90, \"drainPerSecond\": 8 },\n  \"patience\": {", StringComparison.Ordinal);

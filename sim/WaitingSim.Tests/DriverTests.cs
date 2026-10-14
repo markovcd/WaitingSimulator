@@ -14,6 +14,28 @@ public sealed class DriverTests
     private static readonly Command Forward = new(new Vector2(0, -1));
 
     [Fact]
+    public void A_wave_past_is_one_press_however_many_ticks_its_frame_steps_and_even_in_a_frame_that_steps_none()
+    {
+        var plain = new Trait("plain", 1, 1, 1, new HashSet<Stage> { Stage.Calm });
+        var sim = new Sim(SimTests.Snappy with { StepOut = new StepOutTuning(300, 10, 20, 35, 15), LetPast = new LetPastTuning(10) }, SimTests.Straight, seed: 1);
+        sim.Spawn(new(2, 0));
+        var player = sim.Spawn(new(3.2f, 0));
+        sim.Spawn(new(4.4f, 0), plain);
+        sim.Spawn(new(5.6f, 0), plain);
+        var driver = new Driver(sim, player);
+        for (var frame = 0; frame < 12; frame++)
+        {
+            driver.Advance(SixteenthOfASecond, new Command(new Vector2(0, 1)));
+        }
+
+        var events = driver.Advance(HundredTwentyEighthOfASecond, new Command(Vector2.Zero, LetPast: true)).ToList();
+        events.AddRange(driver.Advance(SixteenthOfASecond, Command.Idle));
+        events.AddRange(driver.Advance(SixteenthOfASecond, Command.Idle));
+
+        Assert.Single(events.OfType<WavedPast>());
+    }
+
+    [Fact]
     public void A_frame_steps_one_tick_for_each_sixtieth_of_a_second_it_took()
     {
         var (driver, _) = Line();

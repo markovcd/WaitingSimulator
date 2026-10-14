@@ -7,7 +7,8 @@ namespace WaitingSimulator.Game;
 /// <summary>
 /// The player's HUD text, which the difficulty decides: nothing on hard, a word when a gap opens in front of the player,
 /// their ticket drops or the person behind makes small talk on normal, and on easy the patience of the person behind, the
-/// grace left on a gap, a dropped ticket, small talk with the key to listen, and staring back. It reads the snapshot only.
+/// grace left on a gap, a dropped ticket, small talk with the key to listen, staring back, and the key to let the person
+/// behind go ahead while the player is out of the lane with their place held. It reads the snapshot only.
 /// </summary>
 internal static class Hud
 {
@@ -51,6 +52,11 @@ internal static class Hud
                 if (you.Staring)
                 {
                     text.Append("\nSTARING AT PERSON BEHIND");
+                }
+
+                if (you is { InLane: false, HeldAlong: not null } && snapshot.Agents.Any(agent => agent.Ahead == player))
+                {
+                    text.Append("\nE: LET THE PERSON BEHIND GO AHEAD");
                 }
 
                 return text.ToString().Trim('\n');

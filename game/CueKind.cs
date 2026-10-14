@@ -20,4 +20,7 @@ internal enum CueKind
 
     /// <summary>The player glanced back so long it became staring at the agent: a pointed "hm?".</summary>
     StaredAt,
+
+    /// <summary>The player waved the agent past to go ahead of them: a "thanks".</summary>
+    WavedPast,
 }

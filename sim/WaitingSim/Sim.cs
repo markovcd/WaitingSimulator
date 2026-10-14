@@ -28,6 +28,7 @@ public sealed class Sim
     private Tickets? tickets;
     private SmallTalk? smallTalk;
     private readonly Staring? staring;
+    private readonly LettingPast? lettingPast;
     private readonly Bodies? bodies;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
@@ -46,6 +47,7 @@ public sealed class Sim
         cutters = tuning.Cutter is { } cutterTuning ? new Cutters(cutterTuning, tuning.GraceWindowTicks, lane, line) : null;
         bodies = tuning.Bodies is { } bodyTuning ? new Bodies(bodyTuning, line) : null;
         staring = tuning.Staring is { } staringTuning ? new Staring(staringTuning, line) : null;
+        lettingPast = tuning is { LetPast: { } letPastTuning, StepOut: { } heldTuning } ? new LettingPast(letPastTuning, heldTuning, tuning.Zones, line) : null;
     }
 
     /// <summary>
@@ -166,9 +168,15 @@ public sealed class Sim
             }
         }
 
+        var waved = lettingPast?.Update(agents, commands, Tick, hits);
         line.Classify();
 
         var events = new List<SimEvent>();
+        if (waved is not null)
+        {
+            events.AddRange(waved);
+        }
+
         var bumped = new bool[agents.Count];
         for (var i = 0; i < agents.Count; i++)
         {

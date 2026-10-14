@@ -23,6 +23,7 @@ internal static class Cues
                 TicketDropped dropped => new Cue(dropped.Agent, CueKind.TicketDropped, null),
                 SmallTalkStarted talk => new Cue(talk.Agent, CueKind.SmallTalk, null),
                 StaredAt stared => new Cue(stared.Agent, CueKind.StaredAt, null),
+                WavedPast waved => new Cue(waved.Agent, CueKind.WavedPast, null),
                 _ => null,
             };
             if (cue is { } found)

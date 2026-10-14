@@ -17,6 +17,7 @@ internal static class Controls
     public static readonly StringName LookUp = "look_up";
     public static readonly StringName LookDown = "look_down";
     public static readonly StringName GlanceBack = "glance_back";
+    public static readonly StringName LetPast = "let_past";
     public static readonly StringName DebugOverlay = "debug_overlay";
     public static readonly StringName LineUpAgain = "line_up_again";
     public static readonly StringName CycleDifficulty = "cycle_difficulty";
@@ -46,6 +47,7 @@ internal static class Controls
         Add(CycleDifficulty, Key(Godot.Key.F2));
         Add(ReloadTuning, Key(Godot.Key.F5));
         Add(LineUpAgain, Key(Godot.Key.R), new InputEventJoypadButton { ButtonIndex = JoyButton.Start });
+        Add(LetPast, Key(Godot.Key.E), new InputEventJoypadButton { ButtonIndex = JoyButton.X });
         Add(GlanceBack, Key(Godot.Key.Q), new InputEventMouseButton { ButtonIndex = MouseButton.Right }, new InputEventJoypadButton { ButtonIndex = JoyButton.LeftShoulder });
     }
 

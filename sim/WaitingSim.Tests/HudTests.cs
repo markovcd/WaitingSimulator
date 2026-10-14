@@ -78,6 +78,17 @@ public sealed class HudTests
     }
 
     [Fact]
+    public void Out_of_the_lane_with_someone_behind_easy_shows_the_key_to_wave_them_past()
+    {
+        var snapshot = Line(gapOpenedAt: null, tick: 130);
+        var holding = snapshot with { Agents = [.. snapshot.Agents.Select(agent => agent.Id == Player ? agent with { InLane = false, HeldAlong = 3f } : agent)] };
+
+        Assert.EndsWith("E: LET THE PERSON BEHIND GO AHEAD", Hud.Text(holding, Player, Tuning, Difficulty.Easy), StringComparison.Ordinal);
+        Assert.DoesNotContain("LET THE PERSON", Hud.Text(snapshot, Player, Tuning, Difficulty.Easy), StringComparison.Ordinal);
+        Assert.Equal("", Hud.Text(holding, Player, Tuning, Difficulty.Normal));
+    }
+
+    [Fact]
     public void Easy_with_no_one_behind_and_no_gap_shows_nothing()
     {
         var snapshot = Line(gapOpenedAt: null, tick: 130);

@@ -14,6 +14,7 @@
 - Your ticket slips now and then; reach the counter without it and the clerk sends you away.
 - The person behind makes small talk now and then; glance back to listen, or they take offense.
 - Glancing back for too long is staring, and the person behind does not like it.
+- Step out and press E to let the person behind go ahead: you lose a place, they get some patience back.
 - How to play shows at the start of a level.
 - Easy, normal and hard difficulties, from a HUD of numbers to none, cycled with F2 and remembered between launches.
 - People in line are crude humanoids instead of capsules, each a little different, with faces that get angrier as they lose patience.

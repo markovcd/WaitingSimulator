@@ -15,6 +15,7 @@ namespace WaitingSim;
 /// <param name="Arrivals">How often newcomers arrive at a level's entrance; without it, nobody arrives.</param>
 /// <param name="Distractions">What competes with watching the line; without it, nothing does.</param>
 /// <param name="Staring">How glancing back too long drains the person behind; without it, glancing back costs nothing.</param>
+/// <param name="LetPast">What waving the person behind past does; without it, or without a step out, waving does nothing.</param>
 public sealed record Tuning(
     int GraceWindowTicks,
     ZoneLimits Zones,
@@ -27,7 +28,8 @@ public sealed record Tuning(
     BodyTuning? Bodies = null,
     ArrivalTuning? Arrivals = null,
     DistractionTuning? Distractions = null,
-    StaringTuning? Staring = null)
+    StaringTuning? Staring = null,
+    LetPastTuning? LetPast = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -72,8 +74,15 @@ public sealed record Tuning(
             ReadBodies(root, limits, problems),
             ReadArrivals(root, problems),
             ReadDistractions(root, problems),
-            ReadStaring(root, problems));
+            ReadStaring(root, problems),
+            ReadLetPast(root, problems));
     }
+
+    /// <summary>Reads the <c>letPast</c> object, which a tuning file may leave out.</summary>
+    private static LetPastTuning? ReadLetPast(JsonElement root, List<string> problems) =>
+        root.TryGetProperty("letPast", out _)
+            ? new(JsonFile.Positive(JsonFile.Section(root, "letPast", problems), "letPast.recovery", problems))
+            : null;
 
     /// <summary>Reads the <c>staring</c> object, which a tuning file may leave out.</summary>
     private static StaringTuning? ReadStaring(JsonElement root, List<string> problems)

@@ -128,7 +128,7 @@ public sealed partial class Client : Node3D
         head.GlancingBack = Input.IsActionPressed(Controls.GlanceBack);
         var stick = Input.GetVector(Controls.MoveLeft, Controls.MoveRight, Controls.MoveForward, Controls.MoveBack);
         var ended = Ended();
-        var events = driver.Advance(delta, ended ? Command.Idle : Floor.Walk(new(stick.X, stick.Y), head.Yaw) with { GlancingBack = head.GlancingBack });
+        var events = driver.Advance(delta, ended ? Command.Idle : Floor.Walk(new(stick.X, stick.Y), head.Yaw) with { GlancingBack = head.GlancingBack, LetPast = Input.IsActionJustPressed(Controls.LetPast) });
         AddNewcomers();
         if (!ended && Ended())
         {

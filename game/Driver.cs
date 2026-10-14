@@ -5,7 +5,8 @@ namespace WaitingSimulator.Game;
 
 /// <summary>
 /// Steps the sim at its tick rate from the client's frame times, and keeps the last two snapshots so a frame can show
-/// the agents part way between ticks. The player's command holds from one frame to the next; the line moves everyone else.
+/// the agents part way between ticks. The player's command holds from one frame to the next, except a wave past, which
+/// is one press acted on in the next tick stepped; the line moves everyone else.
 /// </summary>
 internal sealed class Driver
 {
@@ -16,6 +17,7 @@ internal sealed class Driver
     private readonly AgentId player;
     private readonly Dictionary<AgentId, Command> commands = [];
     private double owed;
+    private bool wavePending;
 
     public Driver(Sim sim, AgentId player)
     {
@@ -43,7 +45,7 @@ internal sealed class Driver
     /// </summary>
     public IReadOnlyList<SimEvent> Advance(double seconds, Command command)
     {
-        commands[player] = command;
+        wavePending |= command.LetPast;
         if (double.IsFinite(seconds) && seconds > 0)
         {
             owed += seconds * TickRate.PerSecond;
@@ -54,6 +56,8 @@ internal sealed class Driver
         var events = new List<SimEvent>();
         for (var i = 0; i < ticks; i++)
         {
+            commands[player] = command with { LetPast = wavePending };
+            wavePending = false;
             events.AddRange(sim.Step(commands));
             Previous = Current;
             Current = sim.Snapshot();
