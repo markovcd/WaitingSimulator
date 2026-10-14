@@ -15,7 +15,7 @@
     "rebound": 0.5
   },
   "arrivals": {
-    "intervalTicks": { "min": 360, "max": 720 },
+    "intervalTicks": { "min": 1620, "max": 3240 },
     "cutterShare": 0.15,
     "maxCutters": 2
   },
@@ -32,7 +32,7 @@
   "letPast": { "recovery": 15 },
   "staring": { "afterTicks": 90, "drainPerSecond": 8 },
   "ripple": {
-    "serviceTicks": { "min": 120, "max": 360 },
+    "serviceTicks": { "min": 540, "max": 1620 },
     "reactionTicks": { "min": 15, "max": 60 },
     "spacingMeters": { "min": 0.6, "max": 1.1 },
     "noticeMeters": 0.2,

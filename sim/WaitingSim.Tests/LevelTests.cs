@@ -73,8 +73,8 @@ public sealed class LevelTests
 
         var gone = withExit.Start(Tuning);
         var stays = without.Start(Tuning);
-        SimTests.Run(gone, 20 * TickRate.PerSecond, _ => SimTests.Commands());
-        SimTests.Run(stays, 20 * TickRate.PerSecond, _ => SimTests.Commands());
+        SimTests.Run(gone, 40 * TickRate.PerSecond, _ => SimTests.Commands());
+        SimTests.Run(stays, 40 * TickRate.PerSecond, _ => SimTests.Commands());
 
         Assert.Equal(new Vector2(3, -1), withExit.Exit);
         Assert.Equal(LineStep.Gone, gone.Snapshot().Agents[0].Step);
@@ -176,7 +176,7 @@ public sealed class LevelTests
         var joined = new HashSet<AgentId>();
 
         // Nobody commands the player, so the line moves everyone, the player too.
-        var events = SimTests.Run(sim, 120 * TickRate.PerSecond, snapshot =>
+        var events = SimTests.Run(sim, 540 * TickRate.PerSecond, snapshot =>
         {
             joined.UnionWith(snapshot.Agents.Where(agent => agent is { InLane: true, Refused: false }).Select(agent => agent.Id));
             return SimTests.Commands();

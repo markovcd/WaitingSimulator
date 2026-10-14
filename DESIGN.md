@@ -69,10 +69,10 @@ If the gap stays open too long, a cutter slides in front. You lose position and 
 
 ### The line ripple
 The front moves in bursts, and the movement travels back with a variable delay. Reading and anticipating the ripple is the core skill.
-- The person at the counter is served for a few seconds, then leaves to the side and walks out of the room. The next steps up to the counter.
+- The person at the counter is served for 9 to 27 s, then leaves to the side and walks out of the room. The next steps up to the counter.
 - Each person behind notices the person ahead moving off and steps up after a reaction delay of their own, stopping at the spacing they like.
 - A burst moves the line by the spacing of whoever steps up to the counter, so some bursts open a gap and some only loosen the line.
-- The line never runs out: newcomers keep arriving at the entrance, every 6 to 12 s, walk up beside the line to the back and join it, with a trait drawn at random. Nobody arrives while the back of the line is near the end of the lane.
+- The line never runs out: newcomers keep arriving at the entrance, every 27 to 54 s, walk up beside the line to the back and join it, with a trait drawn at random. Nobody arrives while the back of the line is near the end of the lane.
 - Some newcomers (about one in seven, at most two cutters waiting at once) come to cut in: one walks up beside the line looking for a gap left open too long and slides into it like any cutter. Reaching the front without finding one, it gives up and walks back to join the back.
 
 ### Leaving the line
