@@ -6,7 +6,9 @@ namespace WaitingSim;
 /// made only into a gap left open past its grace window with room to stand clear of a bump: the person behind takes a
 /// hit either way, and a missed cut in leaves the agent refused a place. Everyone it passed,
 /// who stood ahead of its place and is behind it now, takes a hit too, and the person behind one more per person
-/// passed; without a held place, its place is the back of the line.
+/// passed; without a held place, its place is the back of the line. Stepping in close enough to bump the person just
+/// ahead of the held place is falling in behind them: the place stays held, behind them, until the agent stands there
+/// or the hold runs out, which leaves it refused.
 /// </summary>
 internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line)
 {
@@ -19,7 +21,7 @@ internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line
     {
         if (wasInLane && !agent.InLane)
         {
-            if (agent is { Refused: false, Step: not (LineStep.Leaving or LineStep.Done) })
+            if (agent is { Refused: false, HeldAlong: null, Step: not (LineStep.Leaving or LineStep.Done) })
             {
                 agent.HeldAlong = wasAlong;
                 agent.HoldEndsAt = tick + stepOut.SpotHoldTicks;
@@ -30,9 +32,15 @@ internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line
             return null;
         }
 
-        if (wasInLane || !agent.InLane)
+        if (agent.HeldAlong is not null && tick >= agent.HoldEndsAt)
         {
-            return agent.HeldAlong is not null && tick >= agent.HoldEndsAt ? [LoseSpot(agent, tick)] : null;
+            agent.Refused = agent.InLane;
+            return [LoseSpot(agent, tick)];
+        }
+
+        if (!agent.InLane || (wasInLane && agent.HeldAlong is null))
+        {
+            return null;
         }
 
         var along = agent.Lane.Along;
@@ -42,6 +50,11 @@ internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line
         {
             agent.HeldAlong = null;
             agent.HeldBehind = null;
+            return null;
+        }
+
+        if (holding && (wasInLane || (behind is not null && behind == AheadOfPlace(agent) && behind.LineAlong - along < zones.BumpBelow)))
+        {
             return null;
         }
 
@@ -69,6 +82,9 @@ internal sealed class StepOut(StepOutTuning stepOut, ZoneLimits zones, Line line
 
         return outcomes;
     }
+
+    /// <summary>Who stands just ahead of the agent's held place.</summary>
+    private Agent? AheadOfPlace(Agent agent) => line.Around(agent, agent.HeldAlong!.Value).Ahead;
 
     /// <summary>Who in the line an agent cutting in at <paramref name="along"/> gets ahead of that stood ahead of its place.</summary>
     private List<Agent> Passed(Agent agent, float along) =>

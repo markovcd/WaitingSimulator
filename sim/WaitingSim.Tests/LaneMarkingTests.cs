@@ -43,6 +43,12 @@ public sealed class LaneMarkingTests
     }
 
     [Fact]
+    public void Falling_in_behind_someone_still_shows_the_place_held()
+    {
+        Assert.Equal(LaneState.PlaceHeld, LaneMarking.StateOf(Player(inLane: true) with { SpotHeldUntil = 300 }));
+    }
+
+    [Fact]
     public void Every_state_has_its_own_fill()
     {
         var fills = Enum.GetValues<LaneState>().Select(LaneMarking.Fill).ToList();

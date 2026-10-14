@@ -19,6 +19,18 @@ public sealed class LetPastTests
         LetPast = new LetPastTuning(Recovery),
     };
 
+    // Polite with the line walking up and bodies that bump, for the moves a player makes after a wave.
+    // A lead already at the counter, and a player closer to them than the line walks up to, so the person waved past
+    // stops short of the player's place.
+    private const float AtCounter = 0.2f;
+    private const float CloseUp = 0.5f;
+
+    private static readonly Tuning Walking = Polite with
+    {
+        Ripple = new RippleTuning(new(6000, 6000), new(15, 15), new(0.8f, 0.8f), 0.2f, 1f),
+        Bodies = new BodyTuning(0.18f, 0.5f),
+    };
+
     [Fact]
     public void Waving_the_person_behind_past_from_a_held_place_puts_them_ahead_and_the_place_behind_them()
     {
@@ -75,6 +87,54 @@ public sealed class LetPastTests
     }
 
     [Fact]
+    public void Stepping_straight_back_in_beside_the_person_waved_past_and_then_back_falls_in_behind_them()
+    {
+        var (sim, lead, player, behind, _) = Line(Walking, AtCounter, CloseUp);
+        StepOut(sim, player);
+        Run(sim, 1, _ => Wave(player));
+        Run(sim, 3 * TickRate.PerSecond, _ => Commands((player, Vector2.Zero)));
+        var aside = Agent(sim, player).Position;
+        var backOf = new Vector2(Agent(sim, behind).Position.X + 0.6f, 0);
+
+        var events = Run(sim, 3 * TickRate.PerSecond, snapshot => Toward(player, snapshot, snapshot.Agents[player.Value].InLane ? backOf : aside with { Y = 0 }));
+
+        Assert.DoesNotContain(events, e => e is CutIn or CutInMissed or SpotLost);
+        Assert.True(Agent(sim, player).InLane, "The player never stepped back into the lane.");
+        Assert.False(Agent(sim, player).Refused);
+        Assert.Null(Agent(sim, player).HeldAlong);
+        Assert.Equal((lead, behind), (Agent(sim, behind).Ahead, Agent(sim, player).Ahead));
+    }
+
+    [Fact]
+    public void Standing_ahead_of_the_person_waved_past_until_the_hold_runs_out_loses_the_place()
+    {
+        var (sim, _, player, behind, _) = Line(Walking, AtCounter, CloseUp);
+        StepOut(sim, player);
+        Run(sim, 1, _ => Wave(player));
+        Run(sim, 3 * TickRate.PerSecond, _ => Commands((player, Vector2.Zero)));
+        var aside = Agent(sim, player).Position;
+        var ahead = new Vector2(Agent(sim, behind).Position.X - 0.3f, 0);
+
+        var events = Run(sim, Walking.StepOut!.SpotHoldTicks, snapshot => Toward(player, snapshot, snapshot.Agents[player.Value].InLane ? ahead : aside with { Y = 0 }));
+
+        Assert.Single(events.OfType<SpotLost>());
+        Assert.DoesNotContain(events, e => e is CutIn or CutInMissed);
+        Assert.True(Agent(sim, player).Refused, "The player kept a place ahead of the person they waved past.");
+    }
+
+    [Fact]
+    public void Stepping_back_in_well_ahead_of_the_person_waved_past_is_cutting_in()
+    {
+        var (sim, _, player, behind, _) = Line(Polite);
+        StepOut(sim, player);
+        Run(sim, 1, _ => Wave(player));
+
+        var events = Run(sim, 120, snapshot => Toward(player, snapshot, new(3.2f, 0)));
+
+        Assert.Equal(behind, Assert.Single(events.OfType<CutInMissed>()).Behind);
+    }
+
+    [Fact]
     public void Waving_from_inside_the_lane_does_nothing()
     {
         var (sim, lead, player, behind, _) = Line(Polite);
@@ -98,14 +158,14 @@ public sealed class LetPastTests
         Assert.Equal(player, Agent(sim, behind).Ahead);
     }
 
-    /// <summary>A still line, everyone standing loose: someone ahead, the player, a plain person behind, and one more behind them.</summary>
-    private static (Sim Sim, AgentId Lead, AgentId Player, AgentId Behind, AgentId Last) Line(Tuning tuning)
+    /// <summary>A still line, everyone standing loose unless the player is put closer: someone ahead at <paramref name="front"/>, the player, a plain person behind, and one more behind them.</summary>
+    private static (Sim Sim, AgentId Lead, AgentId Player, AgentId Behind, AgentId Last) Line(Tuning tuning, float front = 2f, float playerSpacing = 1.2f)
     {
         var sim = new Sim(tuning, Straight, seed: 1);
-        var lead = sim.Spawn(new(2, 0));
-        var player = sim.Spawn(new(3.2f, 0));
-        var behind = sim.Spawn(new(4.4f, 0), Plain);
-        var last = sim.Spawn(new(5.6f, 0), Plain);
+        var lead = sim.Spawn(new(front, 0));
+        var player = sim.Spawn(new(front + playerSpacing, 0));
+        var behind = sim.Spawn(new(front + playerSpacing + 1.2f, 0), Plain);
+        var last = sim.Spawn(new(front + playerSpacing + 2.4f, 0), Plain);
         return (sim, lead, player, behind, last);
     }
 

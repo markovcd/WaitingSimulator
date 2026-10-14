@@ -29,13 +29,13 @@ internal sealed record LaneMarking(IReadOnlyList<LaneStrip> Strips, IReadOnlyLis
         ArgumentNullException.ThrowIfNull(player);
         return player switch
         {
+            { SpotHeldUntil: not null } => LaneState.PlaceHeld,
             { InLane: true, Refused: false } => LaneState.InLine,
-            { InLane: false, SpotHeldUntil: not null } => LaneState.PlaceHeld,
             _ => LaneState.OutOfLine,
         };
     }
 
-    /// <summary>The mark at <paramref name="player"/>'s held place at <paramref name="tick"/>, while they are out with one held.</summary>
+    /// <summary>The mark at <paramref name="player"/>'s held place at <paramref name="tick"/>, while they hold one.</summary>
     public static HeldMarker? Held(AgentSnapshot player, Lane lane, long tick, int spotHoldTicks)
     {
         ArgumentNullException.ThrowIfNull(player);
