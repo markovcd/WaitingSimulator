@@ -68,6 +68,16 @@ public sealed class HudTests
     }
 
     [Fact]
+    public void Staring_back_shows_on_easy_only()
+    {
+        var snapshot = Line(gapOpenedAt: null, tick: 130);
+        var staring = snapshot with { Agents = [.. snapshot.Agents.Select(agent => agent.Id == Player ? agent with { Staring = true } : agent)] };
+
+        Assert.EndsWith("STARING AT PERSON BEHIND", Hud.Text(staring, Player, Tuning, Difficulty.Easy), StringComparison.Ordinal);
+        Assert.Equal("", Hud.Text(staring, Player, Tuning, Difficulty.Normal));
+    }
+
+    [Fact]
     public void Easy_with_no_one_behind_and_no_gap_shows_nothing()
     {
         var snapshot = Line(gapOpenedAt: null, tick: 130);

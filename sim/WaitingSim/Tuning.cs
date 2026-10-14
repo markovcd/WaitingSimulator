@@ -14,6 +14,7 @@ namespace WaitingSim;
 /// <param name="Bodies">How agents keep out of each other; without it, agents walk through each other.</param>
 /// <param name="Arrivals">How often newcomers arrive at a level's entrance; without it, nobody arrives.</param>
 /// <param name="Distractions">What competes with watching the line; without it, nothing does.</param>
+/// <param name="Staring">How glancing back too long drains the person behind; without it, glancing back costs nothing.</param>
 public sealed record Tuning(
     int GraceWindowTicks,
     ZoneLimits Zones,
@@ -25,7 +26,8 @@ public sealed record Tuning(
     CutterTuning? Cutter = null,
     BodyTuning? Bodies = null,
     ArrivalTuning? Arrivals = null,
-    DistractionTuning? Distractions = null)
+    DistractionTuning? Distractions = null,
+    StaringTuning? Staring = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -69,7 +71,26 @@ public sealed record Tuning(
             ReadCutter(root, problems),
             ReadBodies(root, limits, problems),
             ReadArrivals(root, problems),
-            ReadDistractions(root, problems));
+            ReadDistractions(root, problems),
+            ReadStaring(root, problems));
+    }
+
+    /// <summary>Reads the <c>staring</c> object, which a tuning file may leave out.</summary>
+    private static StaringTuning? ReadStaring(JsonElement root, List<string> problems)
+    {
+        if (!root.TryGetProperty("staring", out _))
+        {
+            return null;
+        }
+
+        var staring = JsonFile.Section(root, "staring", problems);
+        var after = JsonFile.Integer(staring, "staring.afterTicks", problems);
+        if (after is < 1 or > MaxDurationTicks && problems.Count == 0)
+        {
+            problems.Add(JsonFile.Invariant($"staring.afterTicks: must be from 1 up to {MaxDurationTicks}"));
+        }
+
+        return new(after, JsonFile.Positive(staring, "staring.drainPerSecond", problems));
     }
 
     /// <summary>Reads the <c>distractions</c> object, which a tuning file may leave out, as it may each distraction in it.</summary>

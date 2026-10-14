@@ -102,6 +102,25 @@ public sealed class TuningTests
     }
 
     [Fact]
+    public void Staring_reads_into_its_values_and_a_tuning_file_may_leave_it_out()
+    {
+        var withStaring = Valid.Replace("\"patience\": {", "\"staring\": { \"afterTicks\": 90, \"drainPerSecond\": 8 },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal(new StaringTuning(90, 8), Tuning.Parse(withStaring).Value!.Staring);
+        Assert.Null(Tuning.Parse(Valid).Value!.Staring);
+    }
+
+    [Theory]
+    [InlineData("\"afterTicks\": 90", "\"afterTicks\": 0", "staring.afterTicks: must be from 1 up to 216000")]
+    [InlineData("\"drainPerSecond\": 8", "\"drainPerSecond\": 0", "staring.drainPerSecond: missing, or not a positive number")]
+    public void A_bad_staring_field_is_reported_by_name(string field, string replacement, string problem)
+    {
+        var withStaring = Valid.Replace("\"patience\": {", "\"staring\": { \"afterTicks\": 90, \"drainPerSecond\": 8 },\n  \"patience\": {", StringComparison.Ordinal);
+
+        Assert.Equal([problem], Tuning.Parse(withStaring.Replace(field, replacement, StringComparison.Ordinal)).Problems);
+    }
+
+    [Fact]
     public void Arrivals_read_into_their_values_and_a_tuning_file_may_leave_them_out()
     {
         var withArrivals = Valid.Replace("\"patience\": {", "\"arrivals\": { \"intervalTicks\": { \"min\": 360, \"max\": 720 } },\n  \"patience\": {", StringComparison.Ordinal);

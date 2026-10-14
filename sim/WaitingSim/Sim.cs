@@ -27,6 +27,7 @@ public sealed class Sim
     private Vector2? exit;
     private Tickets? tickets;
     private SmallTalk? smallTalk;
+    private readonly Staring? staring;
     private readonly Bodies? bodies;
 
     /// <summary>A line on <paramref name="lane"/> with no agents yet, at tick 0. Its randomness all comes from <paramref name="seed"/>.</summary>
@@ -44,6 +45,7 @@ public sealed class Sim
         stepOut = tuning.StepOut is { } stepOutTuning ? new StepOut(stepOutTuning, tuning.Zones, line) : null;
         cutters = tuning.Cutter is { } cutterTuning ? new Cutters(cutterTuning, tuning.GraceWindowTicks, lane, line) : null;
         bodies = tuning.Bodies is { } bodyTuning ? new Bodies(bodyTuning, line) : null;
+        staring = tuning.Staring is { } staringTuning ? new Staring(staringTuning, line) : null;
     }
 
     /// <summary>
@@ -200,6 +202,8 @@ public sealed class Sim
             smallTalk.Update(Tick, rng, glancingBack, hits, events);
         }
 
+        staring?.Update(agents, commands, Tick, hits, events);
+
         foreach (var agent in agents)
         {
             patience.Wear(agent, bumped[agent.Id.Value], hits[agent.Id.Value], Tick, events);
@@ -290,6 +294,15 @@ public sealed class Sim
             foreach (var cutter in arrivals.Cutters)
             {
                 hash.Add((long)cutter.Value);
+            }
+        }
+
+        // Likewise each agent's glance back, only when glancing back can stare.
+        if (staring is not null)
+        {
+            foreach (var agent in line.Agents)
+            {
+                hash.Add(agent.GlancingSince ?? -1).Add(agent.Staring);
             }
         }
 

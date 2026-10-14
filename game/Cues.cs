@@ -22,6 +22,7 @@ internal static class Cues
                 PatienceRanOut ranOut => new Cue(ranOut.Agent, CueKind.RanOut, agent.Stage),
                 TicketDropped dropped => new Cue(dropped.Agent, CueKind.TicketDropped, null),
                 SmallTalkStarted talk => new Cue(talk.Agent, CueKind.SmallTalk, null),
+                StaredAt stared => new Cue(stared.Agent, CueKind.StaredAt, null),
                 _ => null,
             };
             if (cue is { } found)

@@ -17,4 +17,7 @@ internal enum CueKind
 
     /// <summary>The person behind started making small talk: a mumble.</summary>
     SmallTalk,
+
+    /// <summary>The player glanced back so long it became staring at the agent: a pointed "hm?".</summary>
+    StaredAt,
 }

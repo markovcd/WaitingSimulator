@@ -7,7 +7,7 @@ namespace WaitingSimulator.Game;
 /// <summary>
 /// The player's HUD text, which the difficulty decides: nothing on hard, a word when a gap opens in front of the player,
 /// their ticket drops or the person behind makes small talk on normal, and on easy the patience of the person behind, the
-/// grace left on a gap, a dropped ticket and small talk with the key to listen. It reads the snapshot only.
+/// grace left on a gap, a dropped ticket, small talk with the key to listen, and staring back. It reads the snapshot only.
 /// </summary>
 internal static class Hud
 {
@@ -46,6 +46,11 @@ internal static class Hud
                 if (talking)
                 {
                     text.Append("\nSMALL TALK: LISTEN (Q)");
+                }
+
+                if (you.Staring)
+                {
+                    text.Append("\nSTARING AT PERSON BEHIND");
                 }
 
                 return text.ToString().Trim('\n');

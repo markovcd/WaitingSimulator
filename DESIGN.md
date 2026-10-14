@@ -105,7 +105,7 @@ Every NPC that depends on the player has patience, a value from 0 to 100, and a 
 - Bumping the person ahead (one-off)
 - Letting a cutter in (large one-off)
 - Distractions that make you stall
-- Staring back at them
+- Staring back at them: a glance back longer than 1.5 s is staring, and drains them (8 a second) until you look away. Glancing back while they make small talk is listening, not staring. Easy shows "STARING AT PERSON BEHIND".
 - Room mode: loud phone, crunchy snacks, spreading your stuff, sitting too close
 
 ### Recovery (slow and small, so players cannot just park in a safe zone)
@@ -172,7 +172,7 @@ Prototype scope: "reach the counter, clerk says one line, result screen." Add tw
 
 - **Move:** WASD / left stick. Walking only; no run button.
 - **Look:** mouse / right stick.
-- **Glance back:** hold to turn your head toward the person behind you, release to snap forward. The cost is that the front of the line is out of view while you look back.
+- **Glance back:** hold to turn your head toward the person behind you, release to snap forward. The cost is that the front of the line is out of view while you look back, and held too long it is staring (§8).
 - **Interact:** one context button (tap a stranger, let someone ahead, pick up a dropped item).
 - **Phone:** separate hold. Raises the phone and lowers the camera; the main temptation and the most common way to miss a gap. (Hold vs toggle: start with hold.)
 - Plan for gamepad support from the start.

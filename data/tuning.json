@@ -29,6 +29,7 @@
       "ignoredHit": 15
     }
   },
+  "staring": { "afterTicks": 90, "drainPerSecond": 8 },
   "ripple": {
     "serviceTicks": { "min": 120, "max": 360 },
     "reactionTicks": { "min": 15, "max": 60 },
