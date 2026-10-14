@@ -20,6 +20,12 @@ internal static class Scenery
     private static readonly Color Background = new(0.62f, 0.64f, 0.66f);
     private static readonly Color FloorColor = new(0.55f, 0.53f, 0.5f);
 
+    /// <summary>Washes out the scene behind the result screen, so its text never sits on a face.</summary>
+    private static readonly Color ResultBackdrop = new(1f, 1f, 1f, 0.7f);
+
+    /// <summary>For text laid out in padded columns, which only line up when every character is as wide.</summary>
+    private static readonly SystemFont Monospace = new() { FontNames = ["monospace"] };
+
     /// <summary>Adds the light, the sky and a floor centered on <paramref name="center"/> to <paramref name="parent"/>.</summary>
     public static void AddRoom(Node parent, Vector3 center)
     {
@@ -217,6 +223,7 @@ internal static class Scenery
         var layer = new CanvasLayer { Name = "Overlay" };
         var label = new Label { Name = "Text", Position = new Vector2(12f, 12f), Visible = false };
         label.AddThemeColorOverride("font_color", Colors.Black);
+        label.AddThemeFontOverride("font", Monospace);
         layer.AddChild(label);
         parent.AddChild(layer);
         return label;
@@ -233,7 +240,7 @@ internal static class Scenery
         return label;
     }
 
-    /// <summary>The result screen, hidden until the player reaches the counter: a label in the middle of the view.</summary>
+    /// <summary>The result screen, hidden until the player reaches the counter: a label in the middle of the view, over a wash.</summary>
     public static Label Result(Node parent)
     {
         var layer = new CanvasLayer { Name = "Result" };
@@ -246,6 +253,8 @@ internal static class Scenery
         };
         label.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         label.AddThemeColorOverride("font_color", Colors.Black);
+        label.AddThemeFontOverride("font", Monospace);
+        label.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = ResultBackdrop });
         layer.AddChild(label);
         parent.AddChild(layer);
         return label;

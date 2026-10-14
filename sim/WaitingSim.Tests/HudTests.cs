@@ -57,6 +57,15 @@ public sealed class HudTests
     }
 
     [Fact]
+    public void Easy_leaves_no_blank_line_where_there_is_no_gap()
+    {
+        var snapshot = Line(gapOpenedAt: null, tick: 130);
+        var dropped = snapshot with { Agents = [.. snapshot.Agents.Select(agent => agent.Id == Player ? agent with { TicketAt = new(1, 1) } : agent)] };
+
+        Assert.Equal("PATIENCE OF PERSON BEHIND: 62%\nTICKET DROPPED", Hud.Text(dropped, Player, Tuning, Difficulty.Easy));
+    }
+
+    [Fact]
     public void Small_talk_from_behind_shows_on_easy_with_the_key_to_listen_and_on_normal_as_a_word()
     {
         var snapshot = Line(gapOpenedAt: null, tick: 130);

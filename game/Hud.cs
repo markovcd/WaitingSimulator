@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 using WaitingSim;
 
 namespace WaitingSimulator.Game;
@@ -25,41 +24,22 @@ internal static class Hud
             case Difficulty.Normal:
                 return string.Join('\n', new[] { gapOpenedAt is null ? null : "GAP", dropped ? "TICKET" : null, talking ? "TALK" : null }.OfType<string>());
             case Difficulty.Easy:
-                var text = new StringBuilder();
-                if (snapshot.Agents.FirstOrDefault(agent => agent.Ahead == player) is { Patience: { } patience })
+                var patience = snapshot.Agents.FirstOrDefault(agent => agent.Ahead == player)?.Patience;
+                var left = gapOpenedAt is { } opened ? tuning.GraceWindowTicks - (snapshot.Tick - opened) : (long?)null;
+                return string.Join('\n', new[]
                 {
-                    text.Append(CultureInfo.InvariantCulture, $"PATIENCE OF PERSON BEHIND: {patience:0}%\n");
-                }
-
-                if (gapOpenedAt is { } opened)
-                {
-                    var left = tuning.GraceWindowTicks - (snapshot.Tick - opened);
-                    text.Append(left > 0
-                        ? string.Create(CultureInfo.InvariantCulture, $"GAP: {(float)left / TickRate.PerSecond:0.00} S OF GRACE LEFT")
-                        : "GAP: GRACE RAN OUT");
-                }
-
-                if (dropped)
-                {
-                    text.Append("\nTICKET DROPPED");
-                }
-
-                if (talking)
-                {
-                    text.Append("\nSMALL TALK: LISTEN (Q)");
-                }
-
-                if (you.Staring)
-                {
-                    text.Append("\nSTARING AT PERSON BEHIND");
-                }
-
-                if (you is { InLane: false, HeldAlong: not null } && snapshot.Agents.Any(agent => agent.Ahead == player))
-                {
-                    text.Append("\nE: LET THE PERSON BEHIND GO AHEAD");
-                }
-
-                return text.ToString().Trim('\n');
+                    patience is { } shown ? string.Create(CultureInfo.InvariantCulture, $"PATIENCE OF PERSON BEHIND: {shown:0}%") : null,
+                    left switch
+                    {
+                        null => null,
+                        > 0 => string.Create(CultureInfo.InvariantCulture, $"GAP: {(float)left / TickRate.PerSecond:0.00} S OF GRACE LEFT"),
+                        _ => "GAP: GRACE RAN OUT",
+                    },
+                    dropped ? "TICKET DROPPED" : null,
+                    talking ? "SMALL TALK: LISTEN (Q)" : null,
+                    you.Staring ? "STARING AT PERSON BEHIND" : null,
+                    you is { InLane: false, HeldAlong: not null } && snapshot.Agents.Any(agent => agent.Ahead == player) ? "E: LET THE PERSON BEHIND GO AHEAD" : null,
+                }.OfType<string>());
             default:
                 return "";
         }

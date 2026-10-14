@@ -11,6 +11,9 @@ namespace WaitingSimulator.Game;
 /// </summary>
 internal static class Overlay
 {
+    /// <summary>Room for an id up to 999 and the longest trait name, so the columns after it line up.</summary>
+    private const int IdAndWhoWidth = 24;
+
     public static string Text(Snapshot snapshot, Level level, Tuning tuning)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -30,7 +33,7 @@ internal static class Overlay
     {
         var row = new StringBuilder();
         var who = agent.Id == level.Player ? "player" : agent.Trait ?? "-";
-        row.Append(CultureInfo.InvariantCulture, $"#{agent.Id.Value} {who,-18}");
+        row.Append(string.Create(CultureInfo.InvariantCulture, $"#{agent.Id.Value} {who}").PadRight(IdAndWhoWidth));
         if (!agent.InLane)
         {
             row.Append("  out of the lane");

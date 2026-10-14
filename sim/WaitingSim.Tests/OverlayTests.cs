@@ -35,6 +35,17 @@ public sealed class OverlayTests
         Assert.EndsWith("patience 100.0  stage calm", withTrait, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void The_overlay_s_columns_line_up_past_agent_9()
+    {
+        var snapshot = Game.Level.Start(Game.Tuning).Snapshot();
+
+        var rows = Overlay.Text(snapshot, Game.Level, Game.Tuning).Split('\n').Skip(1).ToList();
+
+        Assert.True(rows.Count > 10);
+        Assert.Single(rows.Select(row => row.IndexOf("  zone", StringComparison.Ordinal) is var zone and >= 0 ? zone : row.IndexOf("  out of the lane", StringComparison.Ordinal)).Distinct());
+    }
+
     [Theory]
     [InlineData(100, 100, "1.50 s")]
     [InlineData(100, 160, "0.50 s")]
