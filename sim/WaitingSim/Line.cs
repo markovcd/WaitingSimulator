@@ -49,6 +49,25 @@ internal sealed class Line(Lane lane, ZoneLimits zones)
     /// <summary>The person behind <paramref name="agent"/>, as the line last stood.</summary>
     public Agent? Behind(Agent agent) => agents.FirstOrDefault(other => other.Ahead == agent.Id);
 
+    /// <summary>
+    /// Who stands in the lane refused a place between <paramref name="agent"/> and the person ahead of it, nearest
+    /// first, or null for no one. An agent walking off after a kick-out blocks no one.
+    /// </summary>
+    public Agent? Blocking(Agent agent)
+    {
+        if (agent is not { InLane: true, Refused: false })
+        {
+            return null;
+        }
+
+        var aheadAlong = agent.Ahead is { } ahead ? this[ahead].LineAlong : float.NegativeInfinity;
+        return agents
+            .Where(other => other is { InLane: true, Refused: true, Step: not (LineStep.Leaving or LineStep.Done or LineStep.Gone) }
+                && other.Lane.Along < agent.Lane.Along
+                && other.Lane.Along > aheadAlong)
+            .MaxBy(other => (other.Lane.Along, other.Id.Value));
+    }
+
     /// <summary>Who in the line would stand ahead of and behind <paramref name="agent"/> if it took a place at <paramref name="along"/>.</summary>
     public (Agent? Ahead, Agent? Behind) Around(Agent agent, float along)
     {

@@ -1,8 +1,9 @@
 namespace WaitingSim;
 
 /// <summary>
-/// How patience wears: it drains while the person ahead holds a gap open past its grace window, recovers while they
-/// stay tight on theirs, and takes one-off hits. Running out pushes past the person ahead, who is kicked out.
+/// How patience wears: it drains while the person ahead holds a gap open past its grace window or someone refused a
+/// place stands in the way, recovers while the person ahead stays tight on theirs, and takes one-off hits. Running out
+/// pushes past whoever is in the way, or else the person ahead, who is kicked out.
 /// </summary>
 internal sealed class Patience(PatienceTuning rates, Line line)
 {
@@ -15,9 +16,10 @@ internal sealed class Patience(PatienceTuning rates, Line line)
         }
 
         var ahead = agent.Ahead is { } id ? line[id] : null;
-        var change = ahead switch
+        var drain = -rates.GapDrainPerSecond * trait.DrainScale / TickRate.PerSecond;
+        var change = line.Blocking(agent) is not null ? drain : ahead switch
         {
-            { Zone: Zone.Gap, GraceExpired: true } => -rates.GapDrainPerSecond * trait.DrainScale / TickRate.PerSecond,
+            { Zone: Zone.Gap, GraceExpired: true } => drain,
             { Zone: Zone.Tight } => rates.TightRecoveryPerSecond * trait.RecoveryScale / TickRate.PerSecond,
             _ => 0f,
         };
@@ -44,14 +46,18 @@ internal sealed class Patience(PatienceTuning rates, Line line)
         }
     }
 
-    /// <summary>Kicks out the person ahead of each agent whose patience ran out in <paramref name="events"/>, adding a <see cref="KickedOut"/> for each.</summary>
+    /// <summary>
+    /// Kicks out whoever blocks each agent whose patience ran out in <paramref name="events"/>, or else the person
+    /// ahead of it, adding a <see cref="KickedOut"/> for each.
+    /// </summary>
     public void KickOuts(long tick, List<SimEvent> events)
     {
         foreach (var ranOut in events.OfType<PatienceRanOut>().ToList())
         {
-            if (line[ranOut.Agent].Ahead is { } ahead)
+            var agent = line[ranOut.Agent];
+            if ((line.Blocking(agent) ?? (agent.Ahead is { } ahead ? line[ahead] : null)) is { } pushedPast)
             {
-                events.Add(KickOut(line[ahead], ranOut.Agent, tick));
+                events.Add(KickOut(pushedPast, ranOut.Agent, tick));
             }
         }
     }

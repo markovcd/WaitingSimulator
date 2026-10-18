@@ -7,7 +7,7 @@
 - A first-person post office line to wait through to the counter, ending in the clerk's verdict and a result screen.
 - The line moves forward in bursts, and people are solid: walking into one is a bump.
 - People behind you lose patience at gaps you leave open, show it in stages, and push past you when it runs out.
-- Stepping out of the line holds your place for a while; stepping back in anywhere else cuts in, which works only into a gap left open too long, and everyone you pass loses patience.
+- Stepping out of the line holds your place for a while; stepping back in anywhere else cuts in, which works only into a gap left open too long, and everyone you pass loses patience; standing where the line refused you blocks the person behind, who pushes past you.
 - Cutters slide into gaps left open too long.
 - New people keep arriving to join the back of the line, some of them looking for a gap to squeeze into on the way, and served people walk out of the room.
 - The lane is marked on the floor, and its color shows whether you are in the line, holding your place or out of it, with your held place marked.

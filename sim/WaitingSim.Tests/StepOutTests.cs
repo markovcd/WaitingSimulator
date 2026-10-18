@@ -172,6 +172,22 @@ public sealed class StepOutTests
     }
 
     [Fact]
+    public void Standing_in_the_lane_refused_a_place_blocks_the_person_behind_until_they_push_past()
+    {
+        var sim = new Sim(SteppingOut, Straight, seed: 1);
+        var ahead = sim.Spawn(new(2, 0), Still);
+        var target = sim.Spawn(new(3.2f, 0), Still with { DrainScale = 10 });
+        var player = sim.Spawn(new(2.6f, 1));
+        StepIn(sim, player);
+
+        var events = Run(sim, 5 * TickRate.PerSecond, _ => Commands());
+
+        Assert.Equal(target, events.OfType<KickedOut>().Single().By);
+        Assert.Equal(player, events.OfType<KickedOut>().Single().Agent);
+        Assert.Null(Agent(sim, ahead).KickedOutAt);
+    }
+
+    [Fact]
     public void Stepping_in_at_the_back_of_the_line_is_not_cutting_in()
     {
         var sim = new Sim(SteppingOut, Straight, seed: 1);
