@@ -5,14 +5,16 @@ namespace WaitingSim;
 /// <summary>
 /// Keeps agents out of each other: each takes up a circle on the floor. An agent that walks into another is pushed back
 /// out of it and bounces off, and the one walked into stays where it is; two walking into each other alike share the push.
-/// An agent done with the line, or gone out of the exit, takes up no room.
 /// </summary>
-internal sealed class Bodies(BodyTuning tuning, Line line)
+internal sealed class Bodies(BodyTuning tuning)
 {
-    /// <summary>Pushes every overlapping pair apart, in agent id order.</summary>
-    public void Separate()
+    /// <summary>
+    /// Pushes every overlapping pair of <paramref name="agents"/> apart, in agent id order, leaving out an agent that
+    /// takes up no room and a pair that is <paramref name="passing"/> through each other. Each push of one agent walking
+    /// into another is added to <paramref name="pushes"/>, when there is one.
+    /// </summary>
+    public void Separate(IReadOnlyList<Agent> agents, Func<Agent, bool> takesRoom, Func<Agent, Agent, bool>? passing = null, List<(Agent Pusher, Agent Pushed)>? pushes = null)
     {
-        var agents = line.Agents;
         var reach = tuning.Radius * 2f;
         for (var i = 0; i < agents.Count; i++)
         {
@@ -21,7 +23,7 @@ internal sealed class Bodies(BodyTuning tuning, Line line)
                 var (first, second) = (agents[i], agents[j]);
                 var offset = second.Position - first.Position;
                 var distance = offset.Length();
-                if (distance >= reach || first.Step is LineStep.Done or LineStep.Gone || second.Step is LineStep.Done or LineStep.Gone)
+                if (distance >= reach || !takesRoom(first) || !takesRoom(second) || passing?.Invoke(first, second) == true)
                 {
                     continue;
                 }
@@ -34,6 +36,10 @@ internal sealed class Bodies(BodyTuning tuning, Line line)
                 var overlap = reach - distance;
                 Push(first, -toSecond, overlap * firstShare);
                 Push(second, toSecond, overlap * (1f - firstShare));
+                if (pushes is not null && firstShare != 0.5f)
+                {
+                    pushes.Add(firstShare > 0.5f ? (first, second) : (second, first));
+                }
             }
         }
     }

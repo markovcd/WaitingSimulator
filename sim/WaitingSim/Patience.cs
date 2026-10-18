@@ -28,7 +28,16 @@ internal sealed class Patience(PatienceTuning rates, Line line)
             change -= rates.BumpHit * trait.BumpScale;
         }
 
-        change -= hit;
+        Shift(rates, agent, change - hit, tick, events);
+    }
+
+    /// <summary>Moves the agent's patience by <paramref name="change"/> within its range and reports a stage shown or patience run out.</summary>
+    public static void Shift(PatienceTuning rates, Agent agent, float change, long tick, List<SimEvent> events)
+    {
+        if (agent.Trait is not { } trait)
+        {
+            return;
+        }
 
         var before = agent.Patience;
         var shownBefore = trait.Shown(agent.Stage);

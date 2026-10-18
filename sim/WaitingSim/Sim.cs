@@ -45,7 +45,7 @@ public sealed class Sim
         ripple = tuning.Ripple is { } rippleTuning ? new Ripple(rippleTuning, lane, tuning.WalkAcceleration) : null;
         stepOut = tuning.StepOut is { } stepOutTuning ? new StepOut(stepOutTuning, tuning.Zones, line) : null;
         cutters = tuning.Cutter is { } cutterTuning ? new Cutters(cutterTuning, tuning.GraceWindowTicks, lane, line) : null;
-        bodies = tuning.Bodies is { } bodyTuning ? new Bodies(bodyTuning, line) : null;
+        bodies = tuning.Bodies is { } bodyTuning ? new Bodies(bodyTuning) : null;
         staring = tuning.Staring is { } staringTuning ? new Staring(staringTuning, line) : null;
         lettingPast = tuning is { LetPast: { } letPastTuning, StepOut: { } heldTuning } ? new LettingPast(letPastTuning, heldTuning, tuning.Zones, line) : null;
     }
@@ -149,7 +149,8 @@ public sealed class Sim
             Walk(agent, commands.TryGetValue(agent.Id, out var command) ? command.Validated() : FollowLine(agent));
         }
 
-        bodies?.Separate();
+        // An agent done with the line, or gone out of the exit, takes up no room.
+        bodies?.Separate(agents, agent => agent.Step is not (LineStep.Done or LineStep.Gone));
 
         var before = agents.Select(agent => (agent.InLane, agent.Zone, agent.Lane.Along)).ToList();
         line.Measure();
