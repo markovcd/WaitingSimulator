@@ -50,6 +50,13 @@ public sealed record Counter
     /// <summary>How far along the counter from <see cref="From"/> <paramref name="point"/> is, and how far out into the crowd.</summary>
     public (float Along, float Out) Measure(Vector2 point) => (Vector2.Dot(point - From, Along), Vector2.Dot(point - From, TowardCrowd));
 
+    /// <summary>Whether a body of <paramref name="radius"/> at <paramref name="point"/> stands against the counter, within <paramref name="frontMeters"/> of it.</summary>
+    public bool AtFront(Vector2 point, float radius, float frontMeters)
+    {
+        var (along, @out) = Measure(point);
+        return along >= -radius && along <= Length + radius && @out <= radius + frontMeters;
+    }
+
     /// <summary>The point <paramref name="out"/> meters out into the crowd from <paramref name="along"/> meters along the counter, kept on it.</summary>
     public Vector2 At(float along, float @out) => From + (Along * Math.Clamp(along, 0f, Length)) + (TowardCrowd * @out);
 }

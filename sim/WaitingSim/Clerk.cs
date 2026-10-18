@@ -22,11 +22,7 @@ internal sealed class Clerk(CrowdTuning tuning, Counter counter, float radius)
     public long ServiceEndsAt { get; private set; }
 
     /// <summary>Whether <paramref name="agent"/> stands at the front of the crowd, against the counter.</summary>
-    public bool AtFront(Agent agent)
-    {
-        var (along, @out) = counter.Measure(agent.Position);
-        return along >= -radius && along <= counter.Length + radius && @out <= radius + tuning.FrontMeters;
-    }
+    public bool AtFront(Agent agent) => counter.AtFront(agent.Position, radius, tuning.FrontMeters);
 
     /// <summary>Whether <paramref name="first"/> is ahead of <paramref name="second"/> in the invisible line.</summary>
     public static bool Before(Agent first, Agent second) =>

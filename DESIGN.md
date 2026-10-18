@@ -62,7 +62,7 @@ A crowd pressing against a counter with no line: a bar, a deli counter with no n
 - **Cutters block and get blocked.** A cutter is someone who arrived after you drifting forward past you. You stop one by holding your shoulder in its path, or by telling the clerk "I was here first" when it tries to be served, which works only if the sim recorded you as first. Blocking has a limit: everyone around the blocker loses patience with it, and a crowd lets a blocked agent through after a while, so nobody can be held back forever.
 - **Losing is social pressure.** Push too many people to fed up and staff (a bouncer, at a bar) move you out; the softer loss is being edged to the back with no way forward. Staff blame whoever caused the drain, which the sim records, never whoever stands nearest.
 
-**As built** (the deli counter, `data/levels/deli-counter.json`, 28 people along a 7 m counter; F6 or `-- --level deli-counter` plays it): everything above but these.
+**As built** (the deli counter, `data/levels/deli-counter.json`, 28 people six deep at a 3 m counter; F6 or `-- --level deli-counter` plays it): everything above but these.
 - Bodies are soft. People overlapping ease apart a quarter of the overlap each tick, the one moving in giving way most, so a press from the back ripples forward through the crowd like a fluid. Everyone the crowd moves sways a little and keeps leaning toward its spot when the way is blocked, so nobody stands exactly still.
 - The glance lands on whoever is at the front within reach of it, facing the clerk or not.
 - Blocking costs nothing by itself; its limit is the crowd letting the shover through after four seconds of shoving. Charging the blocker would charge everyone standing at the front, since everyone behind presses toward it.
