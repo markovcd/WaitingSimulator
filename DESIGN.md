@@ -12,7 +12,7 @@ Working title: **Waiting Simulator 2026** (earlier: Line Simulator 2026).
 
 ## 2. Pillars
 
-1. **Stay alert while boredom pulls you away.** Line and room levels share this skill; only what you watch or listen for changes.
+1. **Stay alert while boredom pulls you away.** Line, room and crowd levels share this skill; only what you watch or listen for changes.
 2. **Social pressure is the fail state.** Slapstick is not. Sighs, "excuse me?", a shoulder tap, someone stepping past you.
 3. **Imperfect information.** You cannot see the whole line. You read rhythm from partial cues: the shoulders ahead, shuffling feet, distant bells and announcements.
 4. **Strict rules, loose feel.** Gap timing and the patience system are precise. Controls, physics and animation supply the jank.
@@ -46,7 +46,20 @@ Levels are built once and reused. A level is a scenario; the mode is the rules w
 
 - **Line levels:** close the gap when the line moves.
 - **Room levels:** listen and watch for your call (number, name, screen, receptionist).
+- **Crowd levels:** get served from a crowd with no visible order, without crossing the people who were there first.
 - **Hybrids:** queue to take a number, then wait in a room listening for it; or get called, then pick the right line for the right window.
+
+### Crowd levels (designed, not built)
+
+A crowd pressing against a counter with no line: a bar, a deli counter with no numbers, tram doors opening, an airport gate when boarding is called, a bakery on a Sunday morning. It reuses the line's bodies, bumps and patience; nothing about it is fighting. Designed single-player first, with the two rules multiplayer needs (blocking has a limit, blame follows the cause) in from the start.
+
+- **The invisible line.** The crowd has no visible order, but every agent remembers who arrived before it. Getting served ahead of someone who was there first costs their patience, and that of anyone who saw it. The player cannot see the order; noticing and remembering who came after you is the skill.
+- **Catching the clerk's eye.** The clerk's glance sweeps along the front edge, and an agent at the front, facing the clerk, when the glance passes is served next. Waving or calling out catches it sooner but drains everyone near you. The clerk half-remembers the invisible line, so a blatant jump gets "I think she was first." Two agents in the glance at once are settled by the invisible line, never by timing.
+- **Squeezing forward.** The crowd is denser near the front. When someone is served and leaves, a hole opens, and whoever leans in first takes it, decided on the tick. Leaning in is a short push, a bump that does not bounce, and costs the person squeezed past some patience.
+- **Cutters block and get blocked.** A cutter is someone who arrived after you drifting forward past you. You stop one by holding your shoulder in its path, or by telling the clerk "I was here first" when it tries to be served, which works only if the sim recorded you as first. Blocking has a limit: everyone around the blocker loses patience with it, and a crowd lets a blocked agent through after a while, so nobody can be held back forever.
+- **Losing is social pressure.** Push too many people to fed up and staff (a bouncer, at a bar) move you out; the softer loss is being edged to the back with no way forward. Staff blame whoever caused the drain, which the sim records, never whoever stands nearest.
+
+Open questions are in §16.
 
 ### After Ego (boss level, parked)
 
@@ -78,7 +91,7 @@ The layout, seen from above:
 - **The bar sells only on its north side**, facing the dance floor. People crowd both sides.
 - **The run:** you come in, push through the south crowd to the bar, are sent to the other side, go round the west end and start over in the north crowd.
 
-Needs mechanics that do not exist yet: a crowd instead of a line, being drunk, fighting cutters, a bar reachable from both sides, and the wrong-side twist (a wrong-window twist, §9). Open questions are in §16.
+Needs mechanics that do not exist yet: a crowd instead of a line (crowd levels, above), being drunk, fighting cutters, a bar reachable from both sides, and the wrong-side twist (a wrong-window twist, §9). Open questions are in §16.
 
 ## 6. Line Mechanics
 
@@ -251,7 +264,7 @@ Engine: **Godot 4 with C# (decided).** The simulation lives in an engine-free .N
 
 ## 14. Multiplayer (future, out of v1)
 
-Strong fits: players as each other's "person behind you" in a shared line; co-op line where one slow player hurts the whole team; competitive parallel lines with cutting and spot-saving; an asymmetric cutter mode; human neighbors in room mode.
+Strong fits: players as each other's "person behind you" in a shared line; co-op line where one slow player hurts the whole team; competitive parallel lines with cutting and spot-saving; an asymmetric cutter mode; human neighbors in room mode; crowd levels, where players block and outwait each other (§5).
 
 Considerations: each client should only receive what that player could plausibly see (imperfect information doubles as anti-cheat). The 1.5 s grace window tolerates ordinary latency. A human reacting replaces the cue system, which changes tuning. Budget for disconnects and late joins when the time comes.
 
@@ -273,7 +286,8 @@ Differentiator: the gap-and-patience loop, the person behind you as a character,
 - Phone: hold vs toggle (start with hold).
 - Kick-out details: which outcome (push past, staff, crowd) in which situation.
 - Final title.
-- After Ego (§5), parked: how the crowd decides who the bartender serves next, how you get forward in it (squeezing into gaps, pushing), where cutters come from and how you fight them, what makes you lose (a bouncer?), how many people stand on each side, what being drunk changes for you, and what starting over keeps (time, tally).
+- Crowd levels (§5): how many people a crowd holds, how often the clerk's glance passes, how long a block holds before the crowd lets someone through, and how the player is meant to read the invisible line without a HUD.
+- After Ego (§5), parked: how many people stand on each side, what being drunk changes for you, and what starting over keeps (time, tally).
 
 ## 17. Deferred (Later List)
 

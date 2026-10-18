@@ -16,7 +16,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 
 | Say | Means | Code | Not |
 |---|---|---|---|
-| **level** | One playable scenario: a line, a room or a hybrid. Built once, used by both modes. | `Level` | map, stage (a **stage** is a patience band) |
+| **level** | One playable scenario: a line, a room, a crowd or a hybrid. Built once, used by both modes. | `Level` | map, stage (a **stage** is a patience band) |
 | **mode** | The rules wrapper around a level: campaign or arcade. | | game type |
 | **campaign** | The mode where a day of errands runs in order and state carries over. | | story mode |
 | **arcade** | The mode where any level is played alone, scored, with no carry-over. | | |
@@ -26,6 +26,9 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **exit** | Where people done with the line walk out of the room. | `Level.Exit`, `LineStep.Gone` | door, despawn |
 | **lane** | The volume the line occupies; being in it is what makes you part of the line. | `Lane` | |
 | **lane marking** | The lane painted on the floor, tinted by where the player stands against the line. | `LaneMarking` | line area, queue zone |
+| **crowd** | The unordered press of agents at a counter that a crowd level is about. | | mob, scrum |
+| **invisible line** | The order a crowd's agents arrived in, which each of them remembers and the player cannot see. | | queue order, hidden queue |
+| **glance** | The clerk's look sweeping along a crowd's front edge; the agent it lands on, facing the clerk, is served next. | | eye contact, attention |
 | **room** | A waiting room where you listen and watch for your call. | | |
 | **call** | The moment your number or name is announced in a room. | | |
 | **agent** | Anything that stands in a line or sits in a room and acts each tick: the player or an NPC. | `AgentId` | actor, entity (Godot words) |
