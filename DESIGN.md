@@ -48,6 +48,38 @@ Levels are built once and reused. A level is a scenario; the mode is the rules w
 - **Room levels:** listen and watch for your call (number, name, screen, receptionist).
 - **Hybrids:** queue to take a number, then wait in a room listening for it; or get called, then pick the right line for the right window.
 
+### After Ego (boss level, parked)
+
+A reproduction of a real night club, After Ego in Szczecin. You are not sober, and the line is not a line: it is a crowd pressing against the bar, and you have to really fight the cutters. When you finally reach the bar, it turns out you are on the wrong side, and you have to start over.
+
+The layout, seen from above:
+
+```text
+                              N
+ +-------------------------------------------------------+
+ |                     DANCE FLOOR                       |
+ |                                                       |
+ |                                      +----------------+
+ |      crowd at the selling side       |  rest of the   |
+ |   o  o  o  o      o  o  o            |  dance floor   |
+ |  ^                                   |  (north-east)  |
+ |  |      +---------------------------------------------|
+ |  |      |      BAR: sells on the north side only      |
+ |  |      +---------------------------------------------|
+ |  +--<--  o  o  o  YOU  o  o  o   crowd at the wrong   |
+ |  round      o      o      o         side              |
+ |  the west end                                         |
+ +---------------------------------------- ENTRANCE -----+
+```
+
+- **The bar** runs east to west. Its east end meets the wall, so the only way round it is past its west end.
+- **The dance floor** fills the north of the room, and the rest of it the north-east.
+- **The entrance** is in the south-east, parallel to the bar. It lets you in on the bar's south side, the side that does not sell.
+- **The bar sells only on its north side**, facing the dance floor. People crowd both sides.
+- **The run:** you come in, push through the south crowd to the bar, are sent to the other side, go round the west end and start over in the north crowd.
+
+Needs mechanics that do not exist yet: a crowd instead of a line, being drunk, fighting cutters, a bar reachable from both sides, and the wrong-side twist (a wrong-window twist, §9). Open questions are in §16.
+
 ## 6. Line Mechanics
 
 ### The gap
@@ -241,6 +273,7 @@ Differentiator: the gap-and-patience loop, the person behind you as a character,
 - Phone: hold vs toggle (start with hold).
 - Kick-out details: which outcome (push past, staff, crowd) in which situation.
 - Final title.
+- After Ego (§5), parked: how the crowd decides who the bartender serves next, how you get forward in it (squeezing into gaps, pushing), where cutters come from and how you fight them, what makes you lose (a bouncer?), how many people stand on each side, what being drunk changes for you, and what starting over keeps (time, tally).
 
 ## 17. Deferred (Later List)
 
