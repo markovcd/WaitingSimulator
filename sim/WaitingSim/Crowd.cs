@@ -15,8 +15,8 @@ public sealed class Crowd : ISim
     /// <summary>How near the exit an agent walking out has to come to be gone, in meters.</summary>
     private const float ExitReachMeters = 0.3f;
 
-    /// <summary>How near its spot an agent the crowd moves stops, in meters.</summary>
-    private const float ArrivedMeters = 0.05f;
+    /// <summary>How near its spot an agent the crowd moves starts to slow, in meters, so it settles there and sways about it.</summary>
+    private const float ApproachMeters = 0.5f;
 
     /// <summary>How square on someone has to stand to be in an agent's way: the cosine of the widest angle off its path.</summary>
     private const float InTheWay = 0.7f;
@@ -35,7 +35,6 @@ public sealed class Crowd : ISim
     private readonly ulong seed;
     private readonly Rng rng;
     private readonly List<Agent> agents = [];
-    private readonly Bodies bodies;
     private readonly Jostle jostle;
     private readonly Clerk clerk;
     private readonly Blame blame = new();
@@ -59,11 +58,8 @@ public sealed class Crowd : ISim
         this.exit = exit;
         this.seed = seed;
         rng = new Rng(seed);
-
-        // Squeezing in is a push that does not bounce.
-        body = bodyTuning with { Rebound = 0f };
-        bodies = new Bodies(body);
-        jostle = new Jostle(crowdTuning);
+        body = bodyTuning;
+        jostle = new Jostle(crowdTuning, body.Radius);
         clerk = new Clerk(crowdTuning, counter, body.Radius);
     }
 
@@ -105,7 +101,7 @@ public sealed class Crowd : ISim
 
     /// <summary>
     /// Advances one tick. Each agent acts on its command in <paramref name="commands"/>; without one, the crowd moves it.
-    /// Returns what happened: pushing first, then the clerk, then patience in agent id order, then staff moving out
+    /// Returns what happened: shoves first, then the clerk, then patience in agent id order, then staff moving out
     /// whoever the agents that ran out blame, then arrivals.
     /// </summary>
     public IReadOnlyList<SimEvent> Step(IReadOnlyDictionary<AgentId, Command> commands)
@@ -127,8 +123,7 @@ public sealed class Crowd : ISim
             KeepOffCounter(agent);
         }
 
-        var pushes = new List<(Agent Pusher, Agent Pushed)>();
-        bodies.Separate(agents, TakesRoom, jostle.Passing, pushes);
+        var shoves = jostle.Settle(agents, TakesRoom);
         foreach (var agent in agents)
         {
             KeepOffCounter(agent);
@@ -136,7 +131,7 @@ public sealed class Crowd : ISim
 
         var events = new List<SimEvent>();
         var changes = new float[agents.Count];
-        jostle.Update(pushes, Tick, changes, blame, events);
+        jostle.Update(shoves, Tick, changes, blame, events);
 
         var waiting = agents.Where(Waiting).ToList();
         var waving = new HashSet<Agent>();
@@ -202,6 +197,7 @@ public sealed class Crowd : ISim
                 .Add((long)agent.Step)
                 .Add(agent.ArrivedAt)
                 .Add(agent.TargetAlong)
+                .Add(agent.Sway.X).Add(agent.Sway.Y).Add(agent.SwayChangesAt)
                 .Add(agent.Cutter)
                 .Add(agent.ReachedCounterAt ?? -1)
                 .Add(agent.KickedOutAt ?? -1)
@@ -217,7 +213,10 @@ public sealed class Crowd : ISim
     /// <summary>An agent walking out takes up no room, so it does not jam the crowd it leaves through.</summary>
     private static bool TakesRoom(Agent agent) => agent.Step is not (LineStep.Exiting or LineStep.Gone);
 
-    /// <summary>The command for an agent nobody commands: out once done, still while served, else toward its spot at the counter.</summary>
+    /// <summary>
+    /// The command for an agent nobody commands: out once done, still while served, else swaying about on its way to its
+    /// spot at the counter, walking while the way is clear and pressing on while someone is in it.
+    /// </summary>
     private Command Next(Agent agent)
     {
         if (agent.Step is LineStep.Exiting or LineStep.Gone)
@@ -237,21 +236,35 @@ public sealed class Crowd : ISim
             return Command.Idle;
         }
 
+        if (Tick >= agent.SwayChangesAt)
+        {
+            // Drawn as whole numbers and normalized, which rounds the same everywhere, unlike sine and cosine.
+            var drawn = new Vector2(agent.Rng.NextBelow(201) - 100, agent.Rng.NextBelow(201) - 100);
+            agent.Sway = drawn == Vector2.Zero ? Vector2.Zero : Vector2.Normalize(drawn) * crowd.SwayShare;
+            agent.SwayChangesAt = Tick + crowd.SwayTicks.Draw(agent.Rng);
+        }
+
+        return new(Toward(agent) + agent.Sway);
+    }
+
+    /// <summary>Where an agent the crowd moves walks or presses, without its sway.</summary>
+    private Vector2 Toward(Agent agent)
+    {
         // A cutter makes for the counter straight ahead of it; everyone else for a spot of its own.
         var spot = counter.At(agent.Cutter ? counter.Measure(agent.Position).Along : agent.TargetAlong, body.Radius);
         var way = spot - agent.Position;
-        if (way.Length() <= ArrivedMeters)
+        if (way == Vector2.Zero)
         {
-            return Command.Idle;
+            return Vector2.Zero;
         }
 
         var ahead = Vector2.Normalize(way);
         if (agent.Cutter || Clear(agent, ahead))
         {
-            return new(ahead);
+            return ahead * Math.Min(1f, way.Length() / ApproachMeters);
         }
 
-        // Someone in the way: an eighth turn to either side, the side of the spot first, or wait.
+        // Someone in the way: an eighth turn to either side, the side of the spot first, or press on.
         var left = new Vector2((ahead.X * SideStep) - (ahead.Y * SideStep), (ahead.X * SideStep) + (ahead.Y * SideStep));
         var right = new Vector2((ahead.X * SideStep) + (ahead.Y * SideStep), (ahead.Y * SideStep) - (ahead.X * SideStep));
         var spotIsLeft = Vector2.Dot(left - right, way) > 0f;
@@ -259,11 +272,11 @@ public sealed class Crowd : ISim
         {
             if (Clear(agent, side))
             {
-                return new(side);
+                return side;
             }
         }
 
-        return Command.Idle;
+        return ahead * crowd.PressShare;
     }
 
     /// <summary>Whether nobody taking up room stands in <paramref name="agent"/>'s way along <paramref name="direction"/>.</summary>

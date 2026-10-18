@@ -114,6 +114,16 @@ public sealed record Tuning(
             problems.Add("crowd.cutterShare: must be from 0 up to 1");
         }
 
+        var sway = ReadTicks(crowd, "crowd.swayTicks", problems);
+        if (sway.Min < 1 && problems.Count == 0)
+        {
+            problems.Add("crowd.swayTicks: min must be at least 1");
+        }
+
+        var press = Share(crowd, "crowd.pressShare", problems);
+        var swayShare = Share(crowd, "crowd.swayShare", problems);
+        var give = Share(crowd, "crowd.give", problems);
+
         return new(
             JsonFile.Positive(crowd, "crowd.glanceMetersPerSecond", problems),
             glanceReach,
@@ -130,9 +140,26 @@ public sealed record Tuning(
             letThrough,
             pass,
             JsonFile.Positive(crowd, "crowd.standOffMeters", problems),
+            press,
+            swayShare,
+            sway,
+            JsonFile.Positive(crowd, "crowd.shoveMetersPerSecond", problems),
+            give,
             JsonFile.Positive(crowd, "crowd.recoveryPerSecond", problems),
             arrival,
             share);
+    }
+
+    /// <summary>The share at <paramref name="path"/>, above 0 and at most 1.</summary>
+    private static float Share(JsonElement? parent, string path, List<string> problems)
+    {
+        var share = JsonFile.Positive(parent, path, problems);
+        if (share > 1f && problems.Count == 0)
+        {
+            problems.Add($"{path}: must be above 0 and at most 1");
+        }
+
+        return share;
     }
 
     /// <summary>The duration at <paramref name="path"/>, from 1 tick up to <see cref="MaxDurationTicks"/>.</summary>

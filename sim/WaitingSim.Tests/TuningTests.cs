@@ -135,7 +135,8 @@ public sealed class TuningTests
             "glanceMetersPerSecond": 1.5, "glanceReachMeters": 0.35, "waveReachMeters": 1.2, "waveDrainPerSecond": 10,
             "frontMeters": 0.6, "pickTicks": 60, "serviceTicks": { "min": 300, "max": 300 }, "clerkMemoryTicks": 1800,
             "sightMeters": 2.5, "servedAheadHit": 15, "falseClaimHit": 20, "squeezeDrainPerSecond": 6,
-            "letThroughAfterTicks": 120, "passTicks": 60, "standOffMeters": 0.15, "recoveryPerSecond": 0.5,
+            "letThroughAfterTicks": 120, "passTicks": 60, "standOffMeters": 0.15, "pressShare": 0.3,
+            "swayShare": 0.15, "swayTicks": { "min": 30, "max": 90 }, "shoveMetersPerSecond": 0.6, "give": 0.25, "recoveryPerSecond": 0.5,
             "arrivalTicks": { "min": 600, "max": 600 }, "cutterShare": 0.15
           },
           "patience": {

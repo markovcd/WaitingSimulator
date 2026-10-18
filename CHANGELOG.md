@@ -20,6 +20,6 @@
 - People in line are crude humanoids instead of capsules, each a little different, with faces that get angrier as they lose patience.
 - F3 shows a debug overlay.
 - F5 reloads the tuning and restarts the level on it.
-- A crowd at a deli counter, a second kind of level: no line, the clerk serves whoever catches their eye, and everyone remembers who was there first.
+- A crowd at a deli counter, a second kind of level: no line, the clerk serves whoever catches their eye, and everyone remembers who was there first. The crowd is big, presses and sways, and a shove ripples through it.
 - F6 moves to the next level.
 - An Android build for playtesting on a phone, with on-screen touch controls.

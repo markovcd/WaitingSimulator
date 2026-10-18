@@ -29,6 +29,11 @@ public sealed class CrowdTests
         LetThroughAfterTicks,
         PassTicks: 60,
         StandOffMeters: 0.15f,
+        PressShare: 0.3f,
+        SwayShare: 0.15f,
+        new TickRange(30, 90),
+        ShoveMetersPerSecond: 0.6f,
+        Give: 0.25f,
         RecoveryPerSecond: 0.5f,
         new TickRange(600, 600),
         CutterShare: 0.15f);
@@ -173,7 +178,7 @@ public sealed class CrowdTests
     }
 
     [Fact]
-    public void People_the_crowd_moves_wait_for_room_instead_of_pushing()
+    public void People_the_crowd_moves_press_toward_the_counter_without_shoving_anyone()
     {
         // Being served ahead costs nothing here, so only pushing could drain anyone.
         var (crowd, _) = Start(Crowding with { Crowd = Rules with { ServedAheadHit = 0 } },
@@ -190,20 +195,48 @@ public sealed class CrowdTests
     }
 
     [Fact]
+    public void A_shove_carries_on_through_whoever_stands_behind_the_one_shoved()
+    {
+        var (crowd, ids) = Start((new(0f, 1.3f), Plain), (new(0f, 1.65f), Plain), (new(0f, 2.0f), null));
+
+        for (var i = 0; i < TickRate.PerSecond; i++)
+        {
+            crowd.Step(Idle(crowd, ids[2], new Command(new(0, -1))));
+        }
+
+        Assert.True(crowd.Snapshot().Agents[ids[0].Value].Position.Y < 1.2f, "The shove never reached the one in front.");
+    }
+
+    [Fact]
+    public void Nobody_the_crowd_moves_stands_exactly_still()
+    {
+        var (crowd, ids) = Start(Crowding with { Crowd = Rules with { GlanceReachMeters = 0.0001f, WaveReachMeters = 0.0001f } }, (new(1.5f, Front), Plain));
+        var seen = new HashSet<Vector2>();
+
+        for (var i = 0; i < 10 * TickRate.PerSecond; i++)
+        {
+            crowd.Step(new Dictionary<AgentId, Command>());
+            seen.Add(crowd.Snapshot().Agents[ids[0].Value].Position);
+        }
+
+        Assert.True(seen.Count > 5 * TickRate.PerSecond, $"It stood still for most of ten seconds: {seen.Count} positions.");
+    }
+
+    [Fact]
     public void A_cutter_pushes_straight_for_the_counter_through_whoever_is_in_its_way()
     {
         var crowd = new Crowd(Crowding, Bar, exit: new(5, 5), seed: 1);
         var held = crowd.Spawn(new(0f, Front), Plain);
         var cutter = crowd.Spawn(new(0f, 0.8f), Plain, cutter: true);
-        var events = new List<SimEvent>();
 
         for (var i = 0; i < LetThroughAfterTicks + 30; i++)
         {
-            events.AddRange(crowd.Step(new Dictionary<AgentId, Command> { [held] = Command.Idle }));
+            crowd.Step(new Dictionary<AgentId, Command> { [held] = Command.Idle });
         }
 
+        // Shoved aside or let through, the cutter ends up at the counter.
         Assert.True(crowd.Snapshot().Agents[held.Value].Patience < PatienceTuning.Full);
-        Assert.Contains(events.OfType<LetThrough>(), through => through.Agent == cutter && through.Past == held);
+        Assert.InRange(crowd.Snapshot().Agents[cutter.Value].Position.Y, 0f, Front + Rules.FrontMeters);
     }
 
     [Fact]

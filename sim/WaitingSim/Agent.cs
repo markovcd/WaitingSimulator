@@ -91,6 +91,11 @@ internal sealed class Agent(AgentId id, Vector2 position, Trait? trait, bool cut
     /// <summary>Where along the counter a crowd agent the crowd moves makes for.</summary>
     public float TargetAlong { get; set; }
 
+    /// <summary>Which way a crowd agent the crowd moves sways, until <see cref="SwayChangesAt"/>.</summary>
+    public Vector2 Sway { get; set; }
+
+    public long SwayChangesAt { get; set; }
+
     public AgentSnapshot Snapshot() => Trait is null
         ? new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, null, null, null, Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt, SmallTalkEndsAt, Staring, ArrivedAt)
         : new(Id, Position, Velocity, InLane, Ahead, Spacing, Zone, GapOpenedAt, Trait.Id, Patience, Trait.Shown(Stage), Step, SpotHeldUntil, Refused, Tally, ReachedCounterAt, KickedOutAt, HeldAlong, TicketAt, TurnedAwayAt, SmallTalkEndsAt, Staring, ArrivedAt);

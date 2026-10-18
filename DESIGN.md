@@ -62,12 +62,13 @@ A crowd pressing against a counter with no line: a bar, a deli counter with no n
 - **Cutters block and get blocked.** A cutter is someone who arrived after you drifting forward past you. You stop one by holding your shoulder in its path, or by telling the clerk "I was here first" when it tries to be served, which works only if the sim recorded you as first. Blocking has a limit: everyone around the blocker loses patience with it, and a crowd lets a blocked agent through after a while, so nobody can be held back forever.
 - **Losing is social pressure.** Push too many people to fed up and staff (a bouncer, at a bar) move you out; the softer loss is being edged to the back with no way forward. Staff blame whoever caused the drain, which the sim records, never whoever stands nearest.
 
-**As built** (the deli counter, `data/levels/deli-counter.json`; F6 or `-- --level deli-counter` plays it): everything above but these.
+**As built** (the deli counter, `data/levels/deli-counter.json`, 28 people along a 7 m counter; F6 or `-- --level deli-counter` plays it): everything above but these.
+- Bodies are soft. People overlapping ease apart a quarter of the overlap each tick, the one moving in giving way most, so a press from the back ripples forward through the crowd like a fluid. Everyone the crowd moves sways a little and keeps leaning toward its spot when the way is blocked, so nobody stands exactly still.
 - The glance lands on whoever is at the front within reach of it, facing the clerk or not.
-- Blocking costs nothing by itself; its limit is the crowd letting the pusher through after four seconds of pushing. Charging the blocker would charge everyone standing at the front, since everyone behind presses toward it.
+- Blocking costs nothing by itself; its limit is the crowd letting the shover through after four seconds of shoving. Charging the blocker would charge everyone standing at the front, since everyone behind presses toward it.
 - The softer loss is not built. Once staff move someone out, the person who called them is calm again.
 - Hold F to wave; E says "I was here first".
-- Starting values (`crowd` in `data/tuning.json`): the glance sweeps 1 m/s and lands within 0.35 m (1.2 m when waving), "Yes?" lasts 1 s, service 6 to 15 s, a newcomer every 15 to 30 s with one in seven pushing straight for the counter, sight 2.5 m, the clerk remembers anyone who arrived 45 s earlier, being served ahead costs 10, a false "I was here first" 20, being pushed into 6 a second.
+- Starting values (`crowd` in `data/tuning.json`): the glance sweeps 1 m/s and lands within 0.35 m (1.2 m when waving), "Yes?" lasts 1 s, service 6 to 15 s, a newcomer every 10 to 20 s with one in seven pushing straight for the counter, sight 2.5 m, the clerk remembers anyone who arrived 45 s earlier, being served ahead costs 10, a false "I was here first" 20, being shoved (pressed into faster than 0.6 m/s) 6 a second. A press is 0.3 of walking pace and a sway 0.15, changing every 0.5 to 1.5 s.
 
 Open questions are in §16.
 
