@@ -12,3 +12,13 @@ config/features=PackedStringArray("4.7", "C#")
 [dotnet]
 
 project/assembly_name="WaitingSimulator.Game"
+
+[input_devices]
+
+; TouchControls reads the fingers itself; a touch that also clicked would grab the mouse and turn the head twice.
+pointing/emulate_mouse_from_touch=false
+
+[rendering]
+
+; Android exports refuse to run without it.
+textures/vram_compression/import_etc2_astc=true

@@ -66,7 +66,7 @@ Pulled from DESIGN.md; every choice below is checked against this list.
 
 ### Accepted costs
 - **Audio tooling is the weakest link.** Godot's built-in audio may be enough; otherwise FMOD through a community integration. Spike before room mode (§5.1).
-- **No browser build.** C# web export in Godot is still experimental. Not a goal.
+- **No browser build.** Godot 4.7 cannot export C# to the web. Not a goal. Android export of C# is experimental; it is used only for playtest builds on a phone.
 - **Most Godot tutorials are GDScript.** They translate to C# almost line for line.
 - **Consoles would mean a third-party port** with weak C# support. Out of scope by decision; revisit only as a post-launch business question.
 
@@ -170,7 +170,7 @@ Room levels depend on hearing your call through noise, so audio is not polish.
 ## 7. Tooling and workflow
 
 - **Repo:** monorepo as in §4.1. Git LFS for `*.blend`, `*.wav`, `*.ogg`, `*.png`, `*.psd`, `*.glb`.
-- **CI (GitHub Actions):** on every push to main and every pull request, `./gate.sh`: in the gate image (`ci/gate.Dockerfile`, the .NET SDK and Godot pinned), build everything, run every test, import the game with headless Godot and fail if that changes any file, then start the game headless (`-- --smoke`) and fail unless it quits by itself. On tags, export with headless Godot and upload builds as artifacts.
+- **CI (GitHub Actions):** on every push to main and every pull request, `./gate.sh`: in the gate image (`ci/gate.Dockerfile`, the .NET SDK and Godot pinned), build everything, run every test, import the game with headless Godot and fail if that changes any file, then start the game headless (`-- --smoke`) and fail unless it quits by itself. Once the gate passes, `./export.sh` exports with headless Godot in the image's android stage: a Linux build that must pass the same smoke runs, which proves an exported build finds its data (`ShippedData` unpacks the `data/` the export packs), and a debug Android APK built with Gradle (Godot's prebuilt Android template only carries .NET 9), uploaded as the run's artifact. The export restores unlocked, since the lock files describe no runtime or export configuration; the gate before it holds every restore to them.
 - **Debug tools:** the debug overlay (F3) shows the tick, the seed, and each agent's zone, spacing, grace left, patience and stage; the smoke run logs the same text. F5 re-reads `data/` and restarts the level on it (`TuningReload`); a file with problems keeps the level running and shows and logs each problem with its file and field. Still to come: a record-and-replay hotkey; a "step one tick" pause mode. These cost little given the architecture and are essential for tuning the hidden meter (§8 readability risk).
 - **AI-assisted development (Claude Code):**
   - `AGENTS.md` (imported by `CLAUDE.md`) loads the engineering rules in `docs/agents/rules/`, adapted from the agentic-coding-practices repo. `simulation.md` and `godot.md` hold this project's architecture rules: no engine calls in `WaitingSim`, commands in, events out, ticks not seconds, no Godot 3 APIs.

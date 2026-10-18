@@ -50,6 +50,7 @@ public sealed partial class Client : Node3D
     private Head? head;
     private Motion? motion;
     private Camera3D? camera;
+    private TouchControls? touch;
     private Label? overlay;
     private Label? result;
     private Label? howToPlay;
@@ -136,6 +137,8 @@ public sealed partial class Client : Node3D
         var look = Input.GetVector(Controls.LookLeft, Controls.LookRight, Controls.LookUp, Controls.LookDown);
         var turn = Controls.StickRadiansPerSecond * (float)delta;
         head.Turn(-look.X * turn, -look.Y * turn);
+        var swipe = (touch?.TakeLook() ?? Vector2.Zero) * Controls.TouchRadiansPerPixel;
+        head.Turn(-swipe.X, -swipe.Y);
         head.GlancingBack = Input.IsActionPressed(Controls.GlanceBack);
         var stick = Input.GetVector(Controls.MoveLeft, Controls.MoveRight, Controls.MoveForward, Controls.MoveBack);
         var ended = Ended();
@@ -260,8 +263,8 @@ public sealed partial class Client : Node3D
     private bool Ended() => driver is not null && level is not null
         && driver.Current.Agents[level.Player.Value] is { ReachedCounterAt: not null } or { KickedOutAt: not null } or { TurnedAwayAt: not null };
 
-    /// <summary>The repo's <c>data/</c>, beside the Godot project.</summary>
-    internal static string DataFolder() => System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "data"));
+    /// <summary>The folder the data files are read from (<see cref="ShippedData"/>).</summary>
+    internal static string DataFolder() => ShippedData.Folder();
 
     private void Build()
     {
@@ -292,6 +295,7 @@ public sealed partial class Client : Node3D
         howToPlay = Scenery.HowToPlay(this);
         hud = Scenery.Hud(this);
         notice = Scenery.Notice(this);
+        touch = TouchControls.AddTo(this, TouchButton.Line);
     }
 
     /// <summary>Builds a figure and a voice for every agent the sim has that the scene does not yet; the player gets the eyes' voice.</summary>

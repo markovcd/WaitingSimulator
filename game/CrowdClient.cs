@@ -36,6 +36,7 @@ public sealed partial class CrowdClient : Node3D
     private Head? head;
     private Motion? motion;
     private Camera3D? camera;
+    private TouchControls? touch;
     private Label? overlay;
     private Label? result;
     private Label? howToPlay;
@@ -87,6 +88,8 @@ public sealed partial class CrowdClient : Node3D
         var look = Input.GetVector(Controls.LookLeft, Controls.LookRight, Controls.LookUp, Controls.LookDown);
         var turn = Controls.StickRadiansPerSecond * (float)delta;
         head.Turn(-look.X * turn, -look.Y * turn);
+        var swipe = (touch?.TakeLook() ?? Vector2.Zero) * Controls.TouchRadiansPerPixel;
+        head.Turn(-swipe.X, -swipe.Y);
         head.GlancingBack = Input.IsActionPressed(Controls.GlanceBack);
         var stick = Input.GetVector(Controls.MoveLeft, Controls.MoveRight, Controls.MoveForward, Controls.MoveBack);
         var ended = Ended();
@@ -218,6 +221,7 @@ public sealed partial class CrowdClient : Node3D
         howToPlay.Text = HowToPlay.CrowdText;
         hud = Scenery.Hud(this);
         notice = Scenery.Notice(this);
+        touch = TouchControls.AddTo(this, TouchButton.Crowd);
     }
 
     /// <summary>Builds a figure and a voice for every agent the crowd has that the scene does not yet; the player gets the eyes' voice.</summary>

@@ -7,6 +7,9 @@ TestResults/
 # Godot
 .godot/
 
+# export.sh output
+exports/
+
 # Editors
 .vs/
 .idea/

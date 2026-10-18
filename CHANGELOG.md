@@ -22,3 +22,4 @@
 - F5 reloads the tuning and restarts the level on it.
 - A crowd at a deli counter, a second kind of level: no line, the clerk serves whoever catches their eye, and everyone remembers who was there first.
 - F6 moves to the next level.
+- An Android build for playtesting on a phone, with on-screen touch controls.

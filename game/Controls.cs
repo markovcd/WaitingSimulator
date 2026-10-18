@@ -29,6 +29,9 @@ internal static class Controls
     /// <summary>Radians the head turns per pixel of mouse movement.</summary>
     public const float MouseRadiansPerPixel = 0.0025f;
 
+    /// <summary>Radians the head turns per pixel a finger drags on a touchscreen.</summary>
+    public const float TouchRadiansPerPixel = 0.004f;
+
     /// <summary>Radians per second the head turns with the look stick pushed all the way.</summary>
     public const float StickRadiansPerSecond = 2.5f;
 

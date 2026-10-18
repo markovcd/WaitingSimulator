@@ -1,6 +1,6 @@
-# Runs the gate (gate.sh, the command AGENTS.md names) on every push to main and every pull request.
+# Runs the gate (gate.sh, the command AGENTS.md names) on every push to main and every pull request, then the exports.
 # gate.sh builds the gate image (ci/gate.Dockerfile: the pinned .NET SDK and Godot) and runs every check in it,
-# so CI runs exactly what a local gate run does. Restores inside are always locked to the committed lock files.
+# so CI runs exactly what a local gate run does. The gate's restores are always locked to the committed lock files.
 # Actions are pinned to commit SHAs and the image's base by digest; Dependabot (.github/dependabot.yml) proposes moving them.
 name: Gate
 
@@ -28,3 +28,26 @@ jobs:
 
       - name: Gate
         run: ./gate.sh
+
+  # Exports the game once the gate has passed (export.sh): a Linux build that must pass the smoke runs, and the
+  # Android APK for playtesting on a phone, uploaded as the run's artifact. Gradle fetches the Android build's
+  # dependencies, so it reaches Maven as well as NuGet.
+  export:
+    needs: gate
+    runs-on: ubuntu-latest
+    # Downloading the 1.2 GB export templates, the Android SDK and Gradle's dependencies is most of a run.
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Export
+        run: ./export.sh
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: WaitingSimulator-android
+          path: exports/WaitingSimulator.apk
+          if-no-files-found: error
+          retention-days: 14

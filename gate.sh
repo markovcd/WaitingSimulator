@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 export MSYS_NO_PATHCONV=1
 source=$(pwd -W 2>/dev/null || pwd)
 
-docker build --file ci/gate.Dockerfile --tag waitingsim-gate ci
+docker build --file ci/gate.Dockerfile --target gate --tag waitingsim-gate ci
 # The NuGet cache is a named volume so repeated local runs restore from it; the checkout is mounted read-only.
 docker run --rm \
     --volume "$source:/src:ro" \

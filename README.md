@@ -14,6 +14,7 @@ A first-person game about the mundane tension of waiting. In line levels you ste
 Requirements: the .NET SDK version in [global.json](global.json), [Git LFS](https://git-lfs.com) (run `git lfs install` once; binary assets are stored in LFS per [.gitattributes](.gitattributes)), and Docker for the gate. To open the game in the editor, Godot 4.7.2 (.NET build), the version [game/WaitingSimulator.Game.csproj](game/WaitingSimulator.Game.csproj) names.
 
 - Gate (build, every test and a headless Godot start, in the gate image): `./gate.sh` (from Git Bash on Windows)
+- Exports (a Linux build it smoke-tests, and the Android APK in `exports/`): `./export.sh`
 - Every test, without Docker or Godot: `dotnet build WaitingSimulator.slnx && dotnet test --solution WaitingSimulator.slnx --no-build`
 - One test class: `dotnet test --project sim/WaitingSim.Tests --filter-class "*CliTests"`
 - The headless runner: `dotnet run --project sim/WaitingSim.Runner -- help`
@@ -21,6 +22,7 @@ Requirements: the .NET SDK version in [global.json](global.json), [Git LFS](http
 - Play a level to the counter with a scripted bot: `dotnet run --project sim/WaitingSim.Runner -- play` (`--bot slow`, `--level <name>`, `--json`; `--level deli-counter` plays the crowd)
 - A tuning sweep, every trait against every scripted player bot: `dotnet run --project sim/WaitingSim.Runner -- sweep` (`--json` for a report a script can read)
 - Play: open `game/` in Godot 4.7.2 (.NET) and run it. WASD or the left stick walks, the mouse or the right stick looks, holding Q, the right mouse button or the left shoulder glances back (which is how you listen when the person behind makes small talk; held too long otherwise, it is staring and annoys them), E or the gamepad's X lets the person behind go ahead while you are out of the lane with your place held, F2 cycles the difficulty (easy, normal or hard: how much the HUD tells you; the game remembers the last one picked, and `-- --difficulty easy` starts on one), F3 toggles the debug overlay, F5 re-reads `data/` and restarts the level on it (a file with problems is shown and changes nothing), and Esc frees the mouse; a click in the window takes it back. A line at the bottom says how to play until you walk off your spot. The lane is marked on the floor: pale while you are in the line, amber while you are out with your place held, with a bar across the lane at your place that shrinks as the hold runs out, red once you are out of it. Reaching the counter, or being kicked out when the person behind runs out of patience, ends the level with a result screen; R or Start lines up again. F6 moves to the next level in `data/levels/` (`-- --level deli-counter` starts on one): the deli counter is a crowd, where the clerk's glance picks who is served, holding F or the gamepad's Y waves for it, and E or X says "I was here first" while the clerk asks someone who came after you.
+- Play on an Android phone: download the `WaitingSimulator-android` artifact from a green run of the Gate workflow, unzip it and install the APK (the phone asks to allow installs from the app that opened it). Each build is signed with a key made for it, so uninstall the old build before installing a newer one. On a touchscreen, a finger on the left of the screen is a stick that walks, a finger dragged anywhere else looks, and the buttons on the right glance back, let past (in the crowd: wave and "I was here first"), line up again and move to the next level.
 
 | Project | What it is |
 |---|---|
@@ -29,4 +31,4 @@ Requirements: the .NET SDK version in [global.json](global.json), [Git LFS](http
 | `sim/WaitingSim.Runner` | Command-line program that plays levels headlessly. |
 | `sim/WaitingSim.Tests` | Tests for the sim, the runner and the client's engine-free parts (xunit v3). Golden replays are in `Replays/`. |
 | `data` | Data the sim reads: `tuning.json`, `traits.json` and the levels in `levels/`. The tests load the shipped files. |
-| `ci` | The gate image and the script it runs. |
+| `ci` | The gate image, with the android stage the exports build in, and the scripts each runs. |
