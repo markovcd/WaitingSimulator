@@ -8,6 +8,8 @@ A first-person "simulator" game about the mundane tension of waiting. In line le
 
 The premise is played straight. The comedy comes from deadpan presentation and deliberately janky simulator-style controls and physics.
 
+Audience: neurodivergent players first. The game turns the unwritten rules of waiting (when to step up, how long a glance back may last, what counts as cutting in) into a strict, readable system, and the joke is how absurd those rules are, never the player.
+
 Working title: **Waiting Simulator 2026** (earlier: Line Simulator 2026).
 
 ## 2. Pillars
@@ -17,6 +19,7 @@ Working title: **Waiting Simulator 2026** (earlier: Line Simulator 2026).
 3. **Imperfect information.** You cannot see the whole line. You read rhythm from partial cues: the shoulders ahead, shuffling feet, distant bells and announcements.
 4. **Strict rules, loose feel.** Gap timing and the patience system are precise. Controls, physics and animation supply the jank.
 5. **Mundane-realistic tone.** Plausible events, restrained visuals, body language doing the storytelling. Absurdity comes from deadpan UI and simulator conventions, not wacky events.
+6. **Unwritten rules made legible.** Every social rule is a precise mechanic the game can show: easy's numbers are a feature, not a crutch. Sensory overload (noise, crowds, too many cues at once) is fair game as pressure.
 
 ## 3. View and Style
 
