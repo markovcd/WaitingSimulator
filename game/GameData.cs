@@ -15,7 +15,8 @@ internal sealed record GameData(Tuning Tuning, Level Level)
         return tuning is not null && read is not null ? new(new GameData(tuning, read), []) : new(null, problems);
     }
 
-    private static T? Read<T>(string path, Func<string, Parsed<T>> parse, List<string> problems)
+    /// <summary>Reads and parses the file at <paramref name="path"/>, or adds what is wrong with it, naming the file, and returns null.</summary>
+    internal static T? Read<T>(string path, Func<string, Parsed<T>> parse, List<string> problems)
         where T : class
     {
         string json;

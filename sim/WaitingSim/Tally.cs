@@ -1,12 +1,14 @@
 namespace WaitingSim;
 
 /// <summary>How many times an agent made each mistake.</summary>
-public readonly record struct Tally(int Bumps, int GapsLeftOpen, int PlacesLost, int CuttersLetIn, int MissedCutIns, int CutIns, int NoTickets = 0)
+public readonly record struct Tally(int Bumps, int GapsLeftOpen, int PlacesLost, int CuttersLetIn, int MissedCutIns, int CutIns, int NoTickets = 0, int ServedAhead = 0, int FalseClaims = 0)
 {
     /// <summary>The most serious mistake made at least once, or null for none.</summary>
     public Mistake? Worst => this switch
     {
         { NoTickets: > 0 } => Mistake.NoTicket,
+        { FalseClaims: > 0 } => Mistake.FalseClaim,
+        { ServedAhead: > 0 } => Mistake.ServedAhead,
         { CutIns: > 0 } => Mistake.CutIn,
         { MissedCutIns: > 0 } => Mistake.MissedCutIn,
         { CuttersLetIn: > 0 } => Mistake.LetCutterIn,
@@ -27,6 +29,8 @@ public readonly record struct Tally(int Bumps, int GapsLeftOpen, int PlacesLost,
         CutInMissed => this with { MissedCutIns = MissedCutIns + 1 },
         CutIn => this with { CutIns = CutIns + 1 },
         TurnedAway => this with { NoTickets = NoTickets + 1 },
+        WaitingSim.ServedAhead => this with { ServedAhead = ServedAhead + 1 },
+        CalledOut { Honest: false } => this with { FalseClaims = FalseClaims + 1 },
         _ => this,
     };
 }

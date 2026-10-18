@@ -5,7 +5,8 @@ namespace WaitingSim.Runner;
 
 /// <summary>
 /// <c>play</c>: plays a level with a scripted player bot until the player reaches the counter or is kicked out, and
-/// reports which, how long it took and the mistakes it made on the way.
+/// reports which, how long it took and the mistakes it made on the way. A crowd level is played by the one crowd bot,
+/// whatever <c>--bot</c> says.
 /// </summary>
 internal static class PlayCommand
 {
@@ -51,13 +52,43 @@ internal static class PlayCommand
 
         var tuning = DataFile.Load(dataFolder, "tuning.json", Tuning.Parse, error);
         var traits = DataFile.Load(dataFolder, "traits.json", Traits.Parse, error);
-        var level = traits is null ? null : DataFile.Load(Path.Combine(dataFolder, "levels"), levelName + ".json", text => Level.Parse(text, traits), error);
-        if (tuning is null || level is null)
+        var path = Path.Combine(dataFolder, "levels", levelName + ".json");
+        var text = traits is null ? null : DataFile.Text(path, error);
+        if (tuning is null || traits is null || text is null)
         {
             return ExitCode.DataProblem;
         }
 
-        var player = Play(tuning, level, bot, seconds);
+        ulong seed;
+        AgentSnapshot player;
+        if (Level.IsCrowd(text))
+        {
+            if (DataFile.Report(path, CrowdLevel.Parse(text, traits), error) is not { } crowd)
+            {
+                return ExitCode.DataProblem;
+            }
+
+            if (tuning is not { Crowd: { } crowdTuning, Bodies: { } bodies })
+            {
+                error.WriteLine($"{Path.Combine(dataFolder, "tuning.json")}: a crowd level needs the crowd and bodies sections");
+                return ExitCode.DataProblem;
+            }
+
+            seed = crowd.Seed;
+            player = Play(crowd.Start(tuning), crowd.Player, new CrowdBrain(crowd.Counter, crowdTuning, bodies, crowd.Player).Next, seconds);
+        }
+        else
+        {
+            if (DataFile.Report(path, Level.Parse(text, traits), error) is not { } level)
+            {
+                return ExitCode.DataProblem;
+            }
+
+            seed = level.Seed;
+            var brain = new PlayerBrain(bot, level.Lane, new Rng(level.Seed, stream: 2));
+            player = Play(level.Start(tuning), level.Player, snapshot => brain.Next(snapshot.Agents[level.Player.Value]), seconds);
+        }
+
         var botName = bot.ToString().ToLowerInvariant();
         var worst = player.Tally.Worst is { } mistake ? JsonNamingPolicy.CamelCase.ConvertName(mistake.ToString()) : null;
         var kicked = player.ReachedCounterAt is null && player.KickedOutAt is not null;
@@ -71,12 +102,12 @@ internal static class PlayCommand
                 {
                     level = levelName,
                     bot = botName,
-                    level.Seed,
+                    seed,
                     reachedCounter = player.ReachedCounterAt is not null,
                     kickedOut = kicked,
                     turnedAway,
                     seconds = endedSeconds,
-                    tally = new { tally.Bumps, tally.GapsLeftOpen, tally.PlacesLost, tally.CuttersLetIn, tally.MissedCutIns, tally.CutIns, tally.NoTickets },
+                    tally = new { tally.Bumps, tally.GapsLeftOpen, tally.PlacesLost, tally.CuttersLetIn, tally.MissedCutIns, tally.CutIns, tally.NoTickets, tally.ServedAhead, tally.FalseClaims },
                     worst,
                 },
                 JsonOptions));
@@ -92,17 +123,17 @@ internal static class PlayCommand
     }
 
     /// <summary>The player as it stands once it reaches the counter, is turned away there or is kicked out, or after <paramref name="seconds"/> if neither happens.</summary>
-    private static AgentSnapshot Play(Tuning tuning, Level level, PlayerBot bot, int seconds)
+    private static AgentSnapshot Play(ISim sim, AgentId self, Func<Snapshot, Command> brain, int seconds)
     {
-        var sim = level.Start(tuning);
-        var brain = new PlayerBrain(bot, level.Lane, new Rng(level.Seed, stream: 2));
         var commands = new Dictionary<AgentId, Command>();
-        var player = sim.Snapshot().Agents[level.Player.Value];
+        var snapshot = sim.Snapshot();
+        var player = snapshot.Agents[self.Value];
         for (var tick = 0; tick < seconds * TickRate.PerSecond && player is { ReachedCounterAt: null, KickedOutAt: null, TurnedAwayAt: null }; tick++)
         {
-            commands[level.Player] = brain.Next(player);
+            commands[self] = brain(snapshot);
             sim.Step(commands);
-            player = sim.Snapshot().Agents[level.Player.Value];
+            snapshot = sim.Snapshot();
+            player = snapshot.Agents[self.Value];
         }
 
         return player;

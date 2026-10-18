@@ -6,7 +6,7 @@ namespace WaitingSim;
 /// One running line: agents on a lane, stepped one tick at a time by their commands.
 /// Reports what happened as events and shows its state as snapshots; nothing outside writes to it.
 /// </summary>
-public sealed class Sim
+public sealed class Sim : ISim
 {
     // Each agent draws from a stream of its own, numbered from here so none is the sim's.
     private const ulong AgentStreams = 1UL << 32;

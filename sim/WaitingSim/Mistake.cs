@@ -23,4 +23,10 @@ public enum Mistake
 
     /// <summary>Reached the counter without its ticket.</summary>
     NoTicket,
+
+    /// <summary>Was served in a crowd ahead of someone who was there first.</summary>
+    ServedAhead,
+
+    /// <summary>Told the clerk "I was here first" in a crowd, and was not.</summary>
+    FalseClaim,
 }

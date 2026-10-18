@@ -34,10 +34,20 @@ public sealed class LevelTests
     [MemberData(nameof(ShippedLevels))]
     public void Every_shipped_level_loads_without_problems(string name)
     {
-        var parsed = Level.Parse(File.ReadAllText(Path.Combine(Levels, name)), Traits);
+        var text = File.ReadAllText(Path.Combine(Levels, name));
+        var problems = Level.IsCrowd(text) ? CrowdLevel.Parse(text, Traits).Problems : Level.Parse(text, Traits).Problems;
 
-        Assert.Empty(parsed.Problems);
-        Assert.NotNull(parsed.Value);
+        Assert.Empty(problems);
+    }
+
+    [Fact]
+    public void A_line_level_refuses_a_file_of_another_kind()
+    {
+        var crowd = Valid.Replace("\"seed\": 7", "\"kind\": \"crowd\",\n  \"seed\": 7", StringComparison.Ordinal);
+
+        Assert.True(Level.IsCrowd(crowd));
+        Assert.False(Level.IsCrowd(Valid));
+        Assert.Equal(["kind: \"crowd\" is not \"line\""], Level.Parse(crowd, Traits).Problems);
     }
 
     [Fact]

@@ -26,9 +26,12 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 | **exit** | Where people done with the line walk out of the room. | `Level.Exit`, `LineStep.Gone` | door, despawn |
 | **lane** | The volume the line occupies; being in it is what makes you part of the line. | `Lane` | |
 | **lane marking** | The lane painted on the floor, tinted by where the player stands against the line. | `LaneMarking` | line area, queue zone |
-| **crowd** | The unordered press of agents at a counter that a crowd level is about. | | mob, scrum |
-| **invisible line** | The order a crowd's agents arrived in, which each of them remembers and the player cannot see. | | queue order, hidden queue |
-| **glance** | The clerk's look sweeping along a crowd's front edge; the agent it lands on, facing the clerk, is served next. | | eye contact, attention |
+| **crowd** | The unordered press of agents at a counter that a crowd level is about. | `Crowd`, `CrowdLevel` | mob, scrum |
+| **invisible line** | The order a crowd's agents arrived in, which each of them remembers and the player cannot see. | `ArrivedAt` | queue order, hidden queue |
+| **glance** | The clerk's look sweeping along a crowd's front edge; the agent it lands on is asked "Yes?" and then served. | `ClerkSnapshot.Glance`, `Picked` | eye contact, attention |
+| **call out** | Telling the clerk "I was here first" in a crowd; it turns the clerk only if it is true. | `Command.CallOut`, `CalledOut` | complain, claim |
+| **let through** | The crowd giving way to someone who has pushed into one person long enough. | `LetThrough` | push through |
+| **moved out** | Removed from a crowd by staff, called by someone whose patience ran out on you; a crowd's kick-out. | `KickedOut` | thrown out, banned |
 | **room** | A waiting room where you listen and watch for your call. | | |
 | **call** | The moment your number or name is announced in a room. | | |
 | **agent** | Anything that stands in a line or sits in a room and acts each tick: the player or an NPC. | `AgentId` | actor, entity (Godot words) |

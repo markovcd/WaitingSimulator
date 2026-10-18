@@ -6,9 +6,10 @@ namespace WaitingSim;
 /// One agent's input for one tick. A player's input and an NPC brain both produce this.
 /// <see cref="Move"/> is the wanted walking direction on the floor plane, at most 1 long. <see cref="GlancingBack"/>
 /// is looking back at the person behind, which is how small talk is listened to. <see cref="LetPast"/> waves the person
-/// behind past, from out of the lane with the place held.
+/// behind past, from out of the lane with the place held. In a crowd, <see cref="Waving"/> catches the clerk's glance from
+/// further away and <see cref="CallOut"/> says "I was here first" to the clerk.
 /// </summary>
-public readonly record struct Command(Vector2 Move, bool GlancingBack = false, bool LetPast = false)
+public readonly record struct Command(Vector2 Move, bool GlancingBack = false, bool LetPast = false, bool Waving = false, bool CallOut = false)
 {
     /// <summary>Standing still.</summary>
     public static Command Idle { get; } = new(Vector2.Zero);

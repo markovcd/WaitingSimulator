@@ -5,21 +5,22 @@ namespace WaitingSimulator.Game;
 
 /// <summary>
 /// Steps the sim at its tick rate from the client's frame times, and keeps the last two snapshots so a frame can show
-/// the agents part way between ticks. The player's command holds from one frame to the next, except a wave past, which
-/// is one press acted on in the next tick stepped; the line moves everyone else.
+/// the agents part way between ticks. The player's command holds from one frame to the next, except a wave past and a
+/// call out, each one press acted on in the next tick stepped; the line or the crowd moves everyone else.
 /// </summary>
 internal sealed class Driver
 {
     /// <summary>The most ticks one frame steps. A longer frame drops the rest, so a hitch slows the game rather than stalling it.</summary>
     public const int MaxTicksPerFrame = 6;
 
-    private readonly Sim sim;
+    private readonly ISim sim;
     private readonly AgentId player;
     private readonly Dictionary<AgentId, Command> commands = [];
     private double owed;
     private bool wavePending;
+    private bool callOutPending;
 
-    public Driver(Sim sim, AgentId player)
+    public Driver(ISim sim, AgentId player)
     {
         ArgumentNullException.ThrowIfNull(sim);
         this.sim = sim;
@@ -46,6 +47,7 @@ internal sealed class Driver
     public IReadOnlyList<SimEvent> Advance(double seconds, Command command)
     {
         wavePending |= command.LetPast;
+        callOutPending |= command.CallOut;
         if (double.IsFinite(seconds) && seconds > 0)
         {
             owed += seconds * TickRate.PerSecond;
@@ -56,8 +58,9 @@ internal sealed class Driver
         var events = new List<SimEvent>();
         for (var i = 0; i < ticks; i++)
         {
-            commands[player] = command with { LetPast = wavePending };
+            commands[player] = command with { LetPast = wavePending, CallOut = callOutPending };
             wavePending = false;
+            callOutPending = false;
             events.AddRange(sim.Step(commands));
             Previous = Current;
             Current = sim.Snapshot();

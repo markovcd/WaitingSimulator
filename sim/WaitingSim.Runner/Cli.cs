@@ -21,7 +21,8 @@ internal static class Cli
                   worst mistake made.
                     --data <folder>  Where tuning.json, traits.json and levels/ are (default: data).
                     --level <name>   The level file in levels/, without .json (default: post-office).
-                    --bot <bot>      attentive, slow or distracted (default: attentive).
+                    --bot <bot>      attentive, slow or distracted (default: attentive). A crowd
+                                     level has one bot, which waits for room and calls out.
                     --seconds <n>    Give up after this long, 1 to 3600 (default: 600).
                     --json           Report as JSON.
           replay <file>

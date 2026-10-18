@@ -11,12 +11,13 @@ namespace WaitingSimulator.Game;
 /// difficulty allows; F2 cycles the difficulty and remembers it for the next launch, and <c>-- --difficulty easy</c>
 /// starts on one. F5 re-reads the data
 /// files and restarts the level on them. F3 toggles the debug overlay. Esc frees the mouse and a click in the window
-/// takes it back. Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay and quits, which is how the
-/// gate checks the game starts under Godot; a data problem quits with exit code 1.
+/// takes it back. <c>-- --level &lt;name&gt;</c> starts on another level and F6 moves to the next; a crowd level plays in
+/// its own scene (<see cref="CrowdClient"/>). Started with <c>-- --smoke</c>, it plays a few frames, logs the overlay
+/// and quits, which is how the gate checks the game starts under Godot; a data problem quits with exit code 1.
 /// </summary>
 public sealed partial class Client : Node3D
 {
-    internal const string LevelName = "post-office";
+    internal const string LevelName = Levels.Default;
     private const int SmokeFrames = 10;
 
     /// <summary>Ticks between neighbors' strides, so a line stepping up does not walk in step.</summary>
@@ -30,6 +31,9 @@ public sealed partial class Client : Node3D
 
     // The difficulty outlives the scene, so lining up again keeps the one the player picked.
     private static Difficulty? difficulty;
+
+    private const string LineScene = "res://Client.tscn";
+    private const string CrowdScene = "res://Crowd.tscn";
 
     /// <summary>Where the settings that outlive a launch are kept, in the user's folder Godot gives the game.</summary>
     private const string SettingsPath = "user://settings.json";
@@ -64,19 +68,8 @@ public sealed partial class Client : Node3D
     public override void _Ready()
     {
         smoke = OS.GetCmdlineUserArgs().Contains("--smoke");
-        var data = reloaded is { Data: var fresh } ? new Parsed<GameData>(fresh, []) : GameData.Load(DataFolder(), LevelName);
-        if (data.Value is not { } loaded)
-        {
-            foreach (var problem in data.Problems)
-            {
-                GD.PrintErr(problem);
-            }
-
-            GetTree().Quit(1);
-            return;
-        }
-
         var problems = new List<string>();
+        Levels.Playing ??= Levels.From(OS.GetCmdlineUserArgs(), problems);
         if (difficulty is null)
         {
             var (settings, problem) = Settings.Load(ProjectSettings.GlobalizePath(SettingsPath));
@@ -91,6 +84,24 @@ public sealed partial class Client : Node3D
         foreach (var problem in problems)
         {
             GD.PrintErr(problem);
+        }
+
+        if (Levels.IsCrowd(DataFolder(), Levels.Playing))
+        {
+            GetTree().CallDeferred(SceneTree.MethodName.ChangeSceneToFile, CrowdScene);
+            return;
+        }
+
+        var data = reloaded is { Data: var fresh } ? new Parsed<GameData>(fresh, []) : GameData.Load(DataFolder(), Levels.Playing);
+        if (data.Value is not { } loaded)
+        {
+            foreach (var problem in data.Problems)
+            {
+                GD.PrintErr(problem);
+            }
+
+            GetTree().Quit(1);
+            return;
         }
 
         Controls.Register();
@@ -156,7 +167,7 @@ public sealed partial class Client : Node3D
 
         if (smoke && ++frames == SmokeFrames)
         {
-            GD.Print($"Client ready; sim {typeof(Sim).Assembly.GetName().Version}; level {LevelName}, {frames} frames.\n"
+            GD.Print($"Client ready; sim {typeof(Sim).Assembly.GetName().Version}; level {Levels.Playing}, {frames} frames.\n"
                 + Overlay.Text(driver.Current, level, tuning)
                 + $"\nHUD ({Difficulties.Name(Difficulty)}): {hud.Text}");
             GetTree().Quit();
@@ -178,14 +189,13 @@ public sealed partial class Client : Node3D
         {
             Reload();
         }
+        else if (@event.IsActionPressed(Controls.NextLevel))
+        {
+            PlayNext(GetTree());
+        }
         else if (@event.IsActionPressed(Controls.CycleDifficulty))
         {
-            difficulty = Difficulties.Next(Difficulty);
-            Notify($"DIFFICULTY: {Difficulties.Name(Difficulty).ToUpperInvariant()}");
-            foreach (var problem in Settings.Save(ProjectSettings.GlobalizePath(SettingsPath), new Settings(Difficulty)))
-            {
-                GD.PrintErr(problem);
-            }
+            Notify(CycleDifficulty());
         }
         else if (@event.IsActionPressed(Controls.DebugOverlay))
         {
@@ -201,7 +211,27 @@ public sealed partial class Client : Node3D
         }
     }
 
-    private static Difficulty Difficulty => difficulty ?? Difficulty.Normal;
+    internal static Difficulty Difficulty => difficulty ?? Difficulty.Normal;
+
+    /// <summary>Moves to the next difficulty and remembers it for the next launch; returns the notice saying which.</summary>
+    internal static string CycleDifficulty()
+    {
+        difficulty = Difficulties.Next(Difficulty);
+        foreach (var problem in Settings.Save(ProjectSettings.GlobalizePath(SettingsPath), new Settings(Difficulty)))
+        {
+            GD.PrintErr(problem);
+        }
+
+        return $"DIFFICULTY: {Difficulties.Name(Difficulty).ToUpperInvariant()}";
+    }
+
+    /// <summary>Starts the next level in <c>data/levels/</c>, in the scene its kind plays in.</summary>
+    internal static void PlayNext(SceneTree tree)
+    {
+        Levels.Playing = Levels.Next(DataFolder(), Levels.Playing ?? Levels.Default);
+        reloaded = null;
+        tree.ChangeSceneToFile(Levels.IsCrowd(DataFolder(), Levels.Playing) ? CrowdScene : LineScene);
+    }
 
     /// <summary>Shows <paramref name="text"/> under the HUD for <paramref name="seconds"/>.</summary>
     private void Notify(string text, double seconds = NoticeSeconds)
@@ -213,7 +243,7 @@ public sealed partial class Client : Node3D
     /// <summary>Re-reads the data files and restarts the level on them; a file with problems keeps the level as it is.</summary>
     private void Reload()
     {
-        var (data, text) = TuningReload.Try(DataFolder(), LevelName);
+        var (data, text) = TuningReload.Try(DataFolder(), Levels.Playing ?? LevelName);
         if (data is null)
         {
             GD.PrintErr(text);
@@ -231,7 +261,7 @@ public sealed partial class Client : Node3D
         && driver.Current.Agents[level.Player.Value] is { ReachedCounterAt: not null } or { KickedOutAt: not null } or { TurnedAwayAt: not null };
 
     /// <summary>The repo's <c>data/</c>, beside the Godot project.</summary>
-    private static string DataFolder() => System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "data"));
+    internal static string DataFolder() => System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "data"));
 
     private void Build()
     {

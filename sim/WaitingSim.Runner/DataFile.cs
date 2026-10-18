@@ -8,18 +8,27 @@ internal static class DataFile
         where T : class
     {
         var path = Path.Combine(folder, name);
-        string text;
+        return Text(path, error) is { } text ? Report(path, parse(text), error) : null;
+    }
+
+    /// <summary>The text of the file at <paramref name="path"/>, or null after writing why it could not be read.</summary>
+    public static string? Text(string path, TextWriter error)
+    {
         try
         {
-            text = File.ReadAllText(path);
+            return File.ReadAllText(path);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             error.WriteLine($"{path}: {exception.Message}");
             return null;
         }
+    }
 
-        var parsed = parse(text);
+    /// <summary>The value <paramref name="parsed"/> read from <paramref name="path"/>, or null after writing its problems, naming the file.</summary>
+    public static T? Report<T>(string path, Parsed<T> parsed, TextWriter error)
+        where T : class
+    {
         foreach (var problem in parsed.Problems)
         {
             error.WriteLine($"{path}: {problem}");

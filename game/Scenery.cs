@@ -150,6 +150,28 @@ internal static class Scenery
     /// <summary>How high above the floor a speech bubble floats, in meters: over the head of someone talking.</summary>
     public const float SpeechHeight = 2.0f;
 
+    /// <summary>How high the counter a crowd presses against stands, in meters.</summary>
+    private const float CounterHeight = 1.0f;
+
+    /// <summary>How deep the counter is, back from its edge toward the clerk, in meters.</summary>
+    private const float CounterDepth = 0.6f;
+
+    private static readonly Color CounterColor = new(0.42f, 0.33f, 0.26f);
+
+    /// <summary>The counter a crowd presses against: a block behind its edge from <paramref name="counter"/>, on the clerk's side.</summary>
+    public static void Counter(Node parent, WaitingSim.Counter counter)
+    {
+        var middle = ((counter.From + counter.To) / 2f) - (counter.TowardCrowd * (CounterDepth / 2f));
+        parent.AddChild(new MeshInstance3D
+        {
+            Name = "Counter",
+            Mesh = new BoxMesh { Size = new Vector3(counter.Length, CounterHeight, CounterDepth) },
+            MaterialOverride = Flat(CounterColor),
+            Position = Floor.ToWorld(middle, CounterHeight / 2f),
+            Rotation = new Vector3(0f, Floor.YawFacing(counter.TowardCrowd), 0f),
+        });
+    }
+
     /// <summary>A "..." over the head of the person making small talk, hidden until they start; it always faces the eyes.</summary>
     public static Label3D SpeechBubble(Node parent)
     {

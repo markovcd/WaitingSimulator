@@ -25,6 +25,7 @@ namespace WaitingSim;
 /// <param name="TurnedAwayAt">The tick the clerk turned it away for reaching the counter without its ticket, once it has.</param>
 /// <param name="Staring">Whether it has glanced back long enough to be staring at the person behind, draining their patience.</param>
 /// <param name="SmallTalkEndsAt">The tick the small talk it is being made ends, while the person behind is talking to it.</param>
+/// <param name="ArrivedAt">The tick it arrived in a crowd; with its id, its place in the invisible line.</param>
 public sealed record AgentSnapshot(
     AgentId Id,
     Vector2 Position,
@@ -47,4 +48,5 @@ public sealed record AgentSnapshot(
     Vector2? TicketAt = null,
     long? TurnedAwayAt = null,
     long? SmallTalkEndsAt = null,
-    bool Staring = false);
+    bool Staring = false,
+    long ArrivedAt = 0);

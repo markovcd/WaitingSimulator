@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "kind": "crowd",
+  "seed": 1,
+  "counter": { "from": [-2.5, 0], "to": [2.5, 0] },
+  "clerk": [0, -1.0],
+  "agents": [
+    { "position": [-1.6, 0.18], "trait": "patient" },
+    { "position": [0.4, 0.18], "trait": "anxious" },
+    { "position": [1.5, 0.18], "trait": "oblivious" },
+    { "position": [-0.6, 0.18], "trait": "aggressive" },
+    { "position": [-1.1, 0.7], "trait": "passive-aggressive" },
+    { "position": [0.9, 0.75], "trait": "patient" },
+    { "position": [-0.1, 0.8], "trait": "anxious" },
+    { "position": [0.3, 1.6] },
+    { "position": [-0.7, 1.5], "trait": "oblivious" },
+    { "position": [1.4, 1.4], "trait": "aggressive", "cutter": true },
+    { "position": [-1.8, 1.3], "trait": "patient" }
+  ],
+  "player": 7,
+  "entrance": [4.0, 6.0],
+  "exit": [-4.0, 6.0]
+}

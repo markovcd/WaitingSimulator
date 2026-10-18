@@ -16,6 +16,7 @@ namespace WaitingSim;
 /// <param name="Distractions">What competes with watching the line; without it, nothing does.</param>
 /// <param name="Staring">How glancing back too long drains the person behind; without it, glancing back costs nothing.</param>
 /// <param name="LetPast">What waving the person behind past does; without it, or without a step out, waving does nothing.</param>
+/// <param name="Crowd">How a crowd at a counter behaves; a crowd level needs it, and a line ignores it.</param>
 public sealed record Tuning(
     int GraceWindowTicks,
     ZoneLimits Zones,
@@ -29,7 +30,8 @@ public sealed record Tuning(
     ArrivalTuning? Arrivals = null,
     DistractionTuning? Distractions = null,
     StaringTuning? Staring = null,
-    LetPastTuning? LetPast = null)
+    LetPastTuning? LetPast = null,
+    CrowdTuning? Crowd = null)
 {
     /// <summary>The newest tuning format this sim reads.</summary>
     public const int FormatVersion = 1;
@@ -75,7 +77,74 @@ public sealed record Tuning(
             ReadArrivals(root, problems),
             ReadDistractions(root, problems),
             ReadStaring(root, problems),
-            ReadLetPast(root, problems));
+            ReadLetPast(root, problems),
+            ReadCrowd(root, problems));
+    }
+
+    /// <summary>Reads the <c>crowd</c> object, which a tuning file may leave out.</summary>
+    private static CrowdTuning? ReadCrowd(JsonElement root, List<string> problems)
+    {
+        if (!root.TryGetProperty("crowd", out _))
+        {
+            return null;
+        }
+
+        var crowd = JsonFile.Section(root, "crowd", problems);
+        var pick = Duration(crowd, "crowd.pickTicks", problems);
+        var memory = Duration(crowd, "crowd.clerkMemoryTicks", problems);
+        var letThrough = Duration(crowd, "crowd.letThroughAfterTicks", problems);
+        var pass = Duration(crowd, "crowd.passTicks", problems);
+        var service = ReadTicks(crowd, "crowd.serviceTicks", problems);
+        var arrival = ReadTicks(crowd, "crowd.arrivalTicks", problems);
+        if ((service.Min < 1 || arrival.Min < 1) && problems.Count == 0)
+        {
+            problems.Add("crowd: serviceTicks.min and arrivalTicks.min must be at least 1");
+        }
+
+        var glanceReach = JsonFile.Positive(crowd, "crowd.glanceReachMeters", problems);
+        var waveReach = JsonFile.Positive(crowd, "crowd.waveReachMeters", problems);
+        if (waveReach < glanceReach && problems.Count == 0)
+        {
+            problems.Add("crowd.waveReachMeters: must be at least glanceReachMeters, or waving would hide you");
+        }
+
+        var share = crowd is { } section && section.TryGetProperty("cutterShare", out _) ? JsonFile.Positive(crowd, "crowd.cutterShare", problems) : 0f;
+        if (share > 1f && problems.Count == 0)
+        {
+            problems.Add("crowd.cutterShare: must be from 0 up to 1");
+        }
+
+        return new(
+            JsonFile.Positive(crowd, "crowd.glanceMetersPerSecond", problems),
+            glanceReach,
+            waveReach,
+            JsonFile.Positive(crowd, "crowd.waveDrainPerSecond", problems),
+            JsonFile.Positive(crowd, "crowd.frontMeters", problems),
+            pick,
+            service,
+            memory,
+            JsonFile.Positive(crowd, "crowd.sightMeters", problems),
+            JsonFile.Positive(crowd, "crowd.servedAheadHit", problems),
+            JsonFile.Positive(crowd, "crowd.falseClaimHit", problems),
+            JsonFile.Positive(crowd, "crowd.squeezeDrainPerSecond", problems),
+            letThrough,
+            pass,
+            JsonFile.Positive(crowd, "crowd.standOffMeters", problems),
+            JsonFile.Positive(crowd, "crowd.recoveryPerSecond", problems),
+            arrival,
+            share);
+    }
+
+    /// <summary>The duration at <paramref name="path"/>, from 1 tick up to <see cref="MaxDurationTicks"/>.</summary>
+    private static int Duration(JsonElement? parent, string path, List<string> problems)
+    {
+        var ticks = JsonFile.Integer(parent, path, problems);
+        if (ticks is < 1 or > MaxDurationTicks && problems.Count == 0)
+        {
+            problems.Add(JsonFile.Invariant($"{path}: must be from 1 up to {MaxDurationTicks}"));
+        }
+
+        return ticks;
     }
 
     /// <summary>Reads the <c>letPast</c> object, which a tuning file may leave out.</summary>

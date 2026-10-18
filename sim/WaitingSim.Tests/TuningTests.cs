@@ -130,6 +130,35 @@ public sealed class TuningTests
         Assert.Equal([problem], Tuning.Parse(withStaring.Replace(field, replacement, StringComparison.Ordinal)).Problems);
     }
 
+    private const string Crowd = """
+        "crowd": {
+            "glanceMetersPerSecond": 1.5, "glanceReachMeters": 0.35, "waveReachMeters": 1.2, "waveDrainPerSecond": 10,
+            "frontMeters": 0.6, "pickTicks": 60, "serviceTicks": { "min": 300, "max": 300 }, "clerkMemoryTicks": 1800,
+            "sightMeters": 2.5, "servedAheadHit": 15, "falseClaimHit": 20, "squeezeDrainPerSecond": 6,
+            "letThroughAfterTicks": 120, "passTicks": 60, "standOffMeters": 0.15, "recoveryPerSecond": 0.5,
+            "arrivalTicks": { "min": 600, "max": 600 }, "cutterShare": 0.15
+          },
+          "patience": {
+        """;
+
+    private static readonly string WithCrowd = Valid.Replace("\"patience\": {", Crowd, StringComparison.Ordinal);
+
+    [Fact]
+    public void A_crowd_reads_into_its_values_and_a_tuning_file_may_leave_it_out()
+    {
+        Assert.Equal(CrowdTests.Rules, Tuning.Parse(WithCrowd).Value!.Crowd);
+        Assert.Null(Tuning.Parse(Valid).Value!.Crowd);
+    }
+
+    [Theory]
+    [InlineData("\"pickTicks\": 60", "\"pickTicks\": 0", "crowd.pickTicks: must be from 1 up to 216000")]
+    [InlineData("\"waveReachMeters\": 1.2", "\"waveReachMeters\": 0.2", "crowd.waveReachMeters: must be at least glanceReachMeters, or waving would hide you")]
+    [InlineData("\"cutterShare\": 0.15", "\"cutterShare\": 2", "crowd.cutterShare: must be from 0 up to 1")]
+    [InlineData("\"serviceTicks\": { \"min\": 300", "\"serviceTicks\": { \"min\": 0", "crowd: serviceTicks.min and arrivalTicks.min must be at least 1")]
+    [InlineData("\"sightMeters\": 2.5", "\"sightMeters\": -1", "crowd.sightMeters: missing, or not a positive number")]
+    public void A_bad_crowd_field_is_reported_by_name(string field, string replacement, string problem) =>
+        Assert.Equal([problem], Tuning.Parse(WithCrowd.Replace(field, replacement, StringComparison.Ordinal)).Problems);
+
     [Fact]
     public void Arrivals_read_into_their_values_and_a_tuning_file_may_leave_them_out()
     {

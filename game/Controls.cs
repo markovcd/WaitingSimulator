@@ -18,6 +18,9 @@ internal static class Controls
     public static readonly StringName LookDown = "look_down";
     public static readonly StringName GlanceBack = "glance_back";
     public static readonly StringName LetPast = "let_past";
+    public static readonly StringName CallOut = "call_out";
+    public static readonly StringName Wave = "wave";
+    public static readonly StringName NextLevel = "next_level";
     public static readonly StringName DebugOverlay = "debug_overlay";
     public static readonly StringName LineUpAgain = "line_up_again";
     public static readonly StringName CycleDifficulty = "cycle_difficulty";
@@ -48,6 +51,11 @@ internal static class Controls
         Add(ReloadTuning, Key(Godot.Key.F5));
         Add(LineUpAgain, Key(Godot.Key.R), new InputEventJoypadButton { ButtonIndex = JoyButton.Start });
         Add(LetPast, Key(Godot.Key.E), new InputEventJoypadButton { ButtonIndex = JoyButton.X });
+
+        // A crowd has no line to let anyone past in, so its call out shares the key.
+        Add(CallOut, Key(Godot.Key.E), new InputEventJoypadButton { ButtonIndex = JoyButton.X });
+        Add(Wave, Key(Godot.Key.F), new InputEventJoypadButton { ButtonIndex = JoyButton.Y });
+        Add(NextLevel, Key(Godot.Key.F6));
         Add(GlanceBack, Key(Godot.Key.Q), new InputEventMouseButton { ButtonIndex = MouseButton.Right }, new InputEventJoypadButton { ButtonIndex = JoyButton.LeftShoulder });
     }
 

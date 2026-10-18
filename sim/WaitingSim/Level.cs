@@ -17,6 +17,9 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
     /// <summary>The newest level format this sim reads.</summary>
     public const int FormatVersion = 1;
 
+    /// <summary>What a line level's <c>kind</c> field says; a level file without one is a line level.</summary>
+    public const string LineKind = "line";
+
     /// <summary>Reads a level file's text; its agents' traits must be among <paramref name="traits"/>. Problems name the field they concern.</summary>
     public static Parsed<Level> Parse(string json, IReadOnlyList<Trait> traits)
     {
@@ -48,8 +51,31 @@ public sealed record Level(ulong Seed, Lane Lane, IReadOnlyList<AgentSpawn> Agen
         return sim;
     }
 
+    /// <summary>Whether a level file's text is a crowd level's, by its <c>kind</c>; anything else is read as a line level.</summary>
+    public static bool IsCrowd(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.ValueKind == JsonValueKind.Object
+                && document.RootElement.TryGetProperty("kind", out var kind)
+                && kind.ValueKind == JsonValueKind.String
+                && kind.GetString() == CrowdLevel.Kind;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
     private static Level Read(JsonElement root, IReadOnlyList<Trait> traits, List<string> problems)
     {
+        if (root.TryGetProperty("kind", out _) && JsonFile.Text(root, "kind", problems) is var kind && kind != LineKind && problems.Count == 0)
+        {
+            problems.Add($"kind: \"{kind}\" is not \"{LineKind}\"");
+        }
+
         var seed = JsonFile.Unsigned(root, "seed", problems);
         var lane = Lane.Read(root, problems);
         var agents = AgentSpawn.ReadAll(root, traits, "the known traits", problems);

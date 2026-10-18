@@ -49,7 +49,7 @@ Levels are built once and reused. A level is a scenario; the mode is the rules w
 - **Crowd levels:** get served from a crowd with no visible order, without crossing the people who were there first.
 - **Hybrids:** queue to take a number, then wait in a room listening for it; or get called, then pick the right line for the right window.
 
-### Crowd levels (designed, not built)
+### Crowd levels
 
 A crowd pressing against a counter with no line: a bar, a deli counter with no numbers, tram doors opening, an airport gate when boarding is called, a bakery on a Sunday morning. It reuses the line's bodies, bumps and patience; nothing about it is fighting. Designed single-player first, with the two rules multiplayer needs (blocking has a limit, blame follows the cause) in from the start.
 
@@ -58,6 +58,13 @@ A crowd pressing against a counter with no line: a bar, a deli counter with no n
 - **Squeezing forward.** The crowd is denser near the front. When someone is served and leaves, a hole opens, and whoever leans in first takes it, decided on the tick. Leaning in is a short push, a bump that does not bounce, and costs the person squeezed past some patience.
 - **Cutters block and get blocked.** A cutter is someone who arrived after you drifting forward past you. You stop one by holding your shoulder in its path, or by telling the clerk "I was here first" when it tries to be served, which works only if the sim recorded you as first. Blocking has a limit: everyone around the blocker loses patience with it, and a crowd lets a blocked agent through after a while, so nobody can be held back forever.
 - **Losing is social pressure.** Push too many people to fed up and staff (a bouncer, at a bar) move you out; the softer loss is being edged to the back with no way forward. Staff blame whoever caused the drain, which the sim records, never whoever stands nearest.
+
+**As built** (the deli counter, `data/levels/deli-counter.json`; F6 or `-- --level deli-counter` plays it): everything above but these.
+- The glance lands on whoever is at the front within reach of it, facing the clerk or not.
+- Blocking costs nothing by itself; its limit is the crowd letting the pusher through after four seconds of pushing. Charging the blocker would charge everyone standing at the front, since everyone behind presses toward it.
+- The softer loss is not built. Once staff move someone out, the person who called them is calm again.
+- Hold F to wave; E says "I was here first".
+- Starting values (`crowd` in `data/tuning.json`): the glance sweeps 1 m/s and lands within 0.35 m (1.2 m when waving), "Yes?" lasts 1 s, service 6 to 15 s, a newcomer every 15 to 30 s with one in seven pushing straight for the counter, sight 2.5 m, the clerk remembers anyone who arrived 45 s earlier, being served ahead costs 10, a false "I was here first" 20, being pushed into 6 a second.
 
 Open questions are in §16.
 

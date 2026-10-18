@@ -46,6 +46,26 @@
     "afterGraceTicks": 120,
     "blameHit": 40
   },
+  "crowd": {
+    "glanceMetersPerSecond": 1.0,
+    "glanceReachMeters": 0.35,
+    "waveReachMeters": 1.2,
+    "waveDrainPerSecond": 4,
+    "frontMeters": 0.6,
+    "pickTicks": 60,
+    "serviceTicks": { "min": 360, "max": 900 },
+    "clerkMemoryTicks": 2700,
+    "sightMeters": 2.5,
+    "servedAheadHit": 10,
+    "falseClaimHit": 20,
+    "squeezeDrainPerSecond": 6,
+    "letThroughAfterTicks": 240,
+    "passTicks": 60,
+    "standOffMeters": 0.15,
+    "recoveryPerSecond": 0.3,
+    "arrivalTicks": { "min": 900, "max": 1800 },
+    "cutterShare": 0.15
+  },
   "patience": {
     "stages": {
       "restlessBelow": 70,
