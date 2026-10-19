@@ -9,6 +9,9 @@ internal enum Swatch
     Shoes,
     Hair,
 
+    /// <summary>A cap and a backpack, in a color of their own.</summary>
+    Gear,
+
     /// <summary>The eyes, brows and mouth.</summary>
     Features,
 }

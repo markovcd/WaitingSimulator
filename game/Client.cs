@@ -277,10 +277,13 @@ public sealed partial class Client : Node3D
         if (SetDressing.LineCounter(level.Lane, level.Clerk) is { } counter)
         {
             Furniture.Counter(this, counter);
+            Furniture.Window(this, counter);
         }
 
         var towardLine = -level.Lane.TowardFront(level.Clerk);
-        Furniture.BackWall(this, SetDressing.BackWall(level.Clerk, towardLine), towardLine, "PLEASE WAIT");
+        Furniture.Room(this, level.Clerk, towardLine, "PLEASE WAIT");
+        Furniture.Chairs(this, SetDressing.Chairs(level.Clerk, towardLine));
+        Furniture.Plants(this, SetDressing.Plants(level.Clerk, towardLine));
         heldMarker = Scenery.HeldMarker(this, marking);
         ticket = Scenery.Ticket(this);
         speech = Scenery.SpeechBubble(this);

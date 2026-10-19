@@ -44,16 +44,30 @@ public sealed class FigureTests
     }
 
     [Fact]
-    public void The_hair_covers_the_crown_and_leaves_the_face_bare()
+    public void Hair_and_caps_cover_the_crown_and_leave_the_face_bare()
     {
         string[] face = [Figure.LeftEye, Figure.RightEye, Figure.LeftBrow, Figure.RightBrow, Figure.LeftMouth, Figure.RightMouth, "Nose"];
         var head = Figure.Parts.Single(part => part.Name == "Head");
-        var hair = Figure.Parts.Single(part => part.Name == "Hair");
-        var crown = new Vector3(0f, MathF.Cos(hair.Tilt), MathF.Sin(hair.Tilt));
 
-        Assert.True(hair.Size.X > head.Size.X, "The hair is no wider than the head it sits on.");
-        Assert.All(Figure.Parts.Where(part => face.Contains(part.Name)), part =>
-            Assert.True(Vector3.Dot(High(part) with { X = 0f } - hair.Center, crown) < 0f, $"The hair covers {part.Name}."));
+        Assert.All(Figure.Parts.Where(part => part.Shape == PartShape.Hemisphere), covering =>
+        {
+            var crown = new Vector3(0f, MathF.Cos(covering.Tilt), MathF.Sin(covering.Tilt));
+            Assert.True(covering.Size.X > head.Size.X, $"{covering.Name} is no wider than the head it sits on.");
+            Assert.All(Figure.Parts.Where(part => face.Contains(part.Name)), part =>
+                Assert.True(Vector3.Dot(High(part) with { X = 0f } - covering.Center, crown) < 0f, $"{covering.Name} covers {part.Name}."));
+        });
+    }
+
+    [Fact]
+    public void Some_agents_wear_each_thing_and_some_do_not()
+    {
+        var looks = Enumerable.Range(0, 30).Select(id => Figure.For(new AgentId(id))).ToList();
+
+        Assert.All(Enum.GetValues<Wear>().Where(wear => wear != Wear.None), wear =>
+        {
+            Assert.Contains(looks, look => look.Wears.HasFlag(wear));
+            Assert.Contains(looks, look => !look.Wears.HasFlag(wear));
+        });
     }
 
     [Fact]
@@ -98,7 +112,7 @@ public sealed class FigureTests
     /// <summary>Half the part's size along each axis, as its shape takes up room.</summary>
     private static Vector3 Extent(FigurePart part) => part.Shape switch
     {
-        PartShape.Box => part.Size / 2f,
+        PartShape.Box => part.Size / 2f * new Vector3(MathF.Max(part.Taper, 1f), 1f, MathF.Max(part.Taper, 1f)),
         PartShape.Capsule => new(part.Size.X / 2f, part.Size.Y / 2f, part.Size.X / 2f),
 
         // A tipped hemisphere can reach anywhere its whole ball does.

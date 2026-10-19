@@ -9,6 +9,7 @@ namespace WaitingSimulator.Game;
 internal static class Scenery
 {
     private const float FloorSize = 30f;
+    private const float FloorTile = 0.6f;
 
     /// <summary>How high the lane's fill and tape sit off the floor, so neither flickers into it.</summary>
     private const float FillHeight = 0.004f;
@@ -18,6 +19,9 @@ internal static class Scenery
     private const float MarkerDepth = 0.12f;
 
     private static readonly Color Background = new(0.62f, 0.64f, 0.66f);
+    /// <summary>The warm fill that lights what the sun does not, so the shaded band reads as shade rather than dark.</summary>
+    private static readonly Color Ambient = new(1f, 0.97f, 0.92f);
+
     private static readonly Color FloorColor = new(0.55f, 0.53f, 0.5f);
 
     /// <summary>Washes out the scene behind the result screen, so its text never sits on a face.</summary>
@@ -37,21 +41,22 @@ internal static class Scenery
                 BackgroundMode = Godot.Environment.BGMode.Color,
                 BackgroundColor = Background,
                 AmbientLightSource = Godot.Environment.AmbientSource.Color,
-                AmbientLightColor = Background,
-                AmbientLightEnergy = 0.6f,
+                AmbientLightColor = Ambient,
+                AmbientLightEnergy = 0.55f,
             },
         });
         parent.AddChild(new DirectionalLight3D
         {
             Name = "Light",
             RotationDegrees = new Vector3(-55f, 30f, 0f),
+            LightEnergy = 0.75f,
             ShadowEnabled = true,
         });
         parent.AddChild(new MeshInstance3D
         {
             Name = "Floor",
             Mesh = new PlaneMesh { Size = new Vector2(FloorSize, FloorSize) },
-            MaterialOverride = Toon.Of(FloorColor),
+            MaterialOverride = Toon.Tiled(FloorColor, FloorTile),
             Position = center with { Y = 0f },
         });
     }
@@ -184,7 +189,7 @@ internal static class Scenery
         }
 
         var parts = new Dictionary<string, Node3D>();
-        foreach (var part in Game.Figure.Parts)
+        foreach (var part in Game.Figure.Parts.Where(part => look.Wears.HasFlag(part.Wear)))
         {
             var mesh = new MeshInstance3D
             {
@@ -294,13 +299,55 @@ internal static class Scenery
     /// <summary>A part's mesh, with as few sides as still read as its shape, which the toon shader shows as facets.</summary>
     private static Mesh Mesh(FigurePart part) => part.Shape switch
     {
-        PartShape.Box => new BoxMesh { Size = ToGodot(part.Size) },
+        PartShape.Box when part.Taper == 1f => new BoxMesh { Size = ToGodot(part.Size) },
+        PartShape.Box => TaperedBox(ToGodot(part.Size), part.Taper),
         PartShape.Capsule => new CapsuleMesh { Radius = part.Size.X / 2f, Height = part.Size.Y, RadialSegments = 8, Rings = 1 },
         PartShape.Sphere => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X, RadialSegments = 8, Rings = 4 },
 
         // A hemisphere spends half its rings on its flat bottom.
         _ => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X / 2f, IsHemisphere = true, RadialSegments = 8, Rings = 6 },
     };
+
+    /// <summary>A box <paramref name="size"/> big at its top whose bottom is <paramref name="taper"/> as wide and deep.</summary>
+    private static ArrayMesh TaperedBox(Vector3 size, float taper)
+    {
+        Vector3 Corner(int x, int y, int z)
+        {
+            var scale = y > 0 ? 0.5f : 0.5f * taper;
+            return new Vector3(x * size.X * scale, y * size.Y * 0.5f, z * size.Z * scale);
+        }
+
+        var tool = new SurfaceTool();
+        tool.Begin(Godot.Mesh.PrimitiveType.Triangles);
+        foreach (var axis in new[] { 0, 1, 2 })
+        {
+            foreach (var side in new[] { -1, 1 })
+            {
+                int[][] square = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+                var quad = square.Select(uv => axis switch
+                {
+                    0 => Corner(side, uv[0], uv[1]),
+                    1 => Corner(uv[0], side, uv[1]),
+                    _ => Corner(uv[0], uv[1], side),
+                }).ToArray();
+                var outward = (quad[0] + quad[1] + quad[2] + quad[3]) / 4f;
+                foreach (var (a, b, c) in new[] { (quad[0], quad[1], quad[2]), (quad[0], quad[2], quad[3]) })
+                {
+                    // Godot draws a triangle's front where its corners run clockwise, which is where their cross product points away.
+                    var flipped = (b - a).Cross(c - a).Dot(outward) > 0f;
+                    var normal = (b - a).Cross(c - a).Normalized() * (flipped ? 1f : -1f);
+                    Vector3[] corners = flipped ? [a, c, b] : [a, b, c];
+                    foreach (var corner in corners)
+                    {
+                        tool.SetNormal(normal);
+                        tool.AddVertex(corner);
+                    }
+                }
+            }
+        }
+
+        return tool.Commit();
+    }
 
     /// <summary>The face's marks are too small to carry an ink line; every other part has one that follows its shape.</summary>
     private static Edging Edging(FigurePart part) => part switch

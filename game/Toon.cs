@@ -40,6 +40,22 @@ internal static class Toon
         return material;
     }
 
+    /// <summary>A material of its own for a floor of <paramref name="color"/> laid in tiles <paramref name="size"/> meters across.</summary>
+    public static ShaderMaterial Tiled(Color color, float size)
+    {
+        var material = Tintable(color);
+        material.SetShaderParameter("tile", size);
+        return material;
+    }
+
+    /// <summary>A material for <paramref name="color"/> that gives off <paramref name="glow"/> of its color, lit or not.</summary>
+    public static ShaderMaterial Glowing(Color color, float glow)
+    {
+        var material = Tintable(color);
+        material.SetShaderParameter("glow", glow);
+        return material;
+    }
+
     /// <summary>Repaints <paramref name="material"/> <paramref name="color"/>.</summary>
     public static void Tint(ShaderMaterial material, Color color) => material.SetShaderParameter("albedo", color);
 }

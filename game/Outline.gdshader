@@ -14,8 +14,13 @@ uniform float max_width = 0.03;
 uniform bool square = false;
 
 void vertex() {
-    float away = -(MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).z;
-    VERTEX += (square ? sign(VERTEX) : NORMAL) * clamp(away * width_per_meter, min_width, max_width);
+    // The line casts no shadow: a pushed-out hull's shadow would saw at the shape it rings.
+    if (IN_SHADOW_PASS) {
+        VERTEX = vec3(0.0);
+    } else {
+        float away = -(MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).z;
+        VERTEX += (square ? sign(VERTEX) : NORMAL) * clamp(away * width_per_meter, min_width, max_width);
+    }
 }
 
 void fragment() {

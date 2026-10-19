@@ -5,6 +5,8 @@ namespace WaitingSim.Tests;
 
 public sealed class SetDressingTests
 {
+    private static readonly string Data = Path.Combine(AppContext.BaseDirectory, "data");
+
     private static readonly Tuning Shipped = Tuning.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "tuning.json"))).Value!;
 
     public static TheoryData<string> Lanes() => ["straight", "bent"];
@@ -51,6 +53,50 @@ public sealed class SetDressingTests
         var wall = SetDressing.BackWall(new Vector2(0f, -1f), new Vector2(0f, 3f));
 
         Assert.True(wall.Y < -1f && wall.X == 0f, $"The wall is at {wall}.");
+    }
+
+    public static TheoryData<string> ShippedLevels() =>
+        [.. Directory.GetFiles(Path.Combine(Data, "levels"), "*.json").Select(Path.GetFileNameWithoutExtension).OfType<string>()];
+
+    [Theory]
+    [MemberData(nameof(ShippedLevels))]
+    public void Every_shipped_level_s_entrance_exit_and_agents_are_inside_its_room(string name)
+    {
+        var room = Room(name);
+
+        Assert.All(room.Inside, point =>
+        {
+            var at = SetDressing.InRoom(room.Clerk, room.Toward, point);
+            Assert.InRange(at.X, -SetDressing.WallBehindClerk + 0.5f, SetDressing.RoomLength - SetDressing.WallBehindClerk - 0.5f);
+            Assert.InRange(MathF.Abs(at.Y), 0f, SetDressing.RoomHalfWidth - 0.5f);
+        });
+    }
+
+    [Theory]
+    [MemberData(nameof(ShippedLevels))]
+    public void Chairs_and_plants_stand_clear_of_where_people_go(string name)
+    {
+        var room = Room(name);
+        var furniture = SetDressing.Chairs(room.Clerk, room.Toward).Select(chair => chair.At).Concat(SetDressing.Plants(room.Clerk, room.Toward)).ToList();
+
+        Assert.All(furniture, piece =>
+        {
+            Assert.All(room.Inside, point => Assert.True(Vector2.Distance(piece, point) > 1.5f, $"{piece} is in the way at {point}."));
+            Assert.True(room.Lane is null || room.Lane.Measure(piece).Off > room.Lane.HalfWidth + 1f, $"{piece} is beside the lane.");
+        });
+    }
+
+    /// <summary>Where shipped level <paramref name="name"/>'s clerk stands and faces, its lane if it has one, and the points people go.</summary>
+    private static (Vector2 Clerk, Vector2 Toward, Lane? Lane, List<Vector2> Inside) Room(string name)
+    {
+        if (Levels.IsCrowd(Data, name))
+        {
+            var crowd = CrowdData.Load(Data, name).Value!.Level;
+            return (crowd.Clerk, crowd.Counter.TowardCrowd, null, [crowd.Exit, .. crowd.Entrance is { } way ? [way] : Array.Empty<Vector2>(), .. crowd.Agents.Select(agent => agent.Position)]);
+        }
+
+        var line = GameData.Load(Data, name).Value!.Level;
+        return (line.Clerk, -line.Lane.TowardFront(line.Clerk), line.Lane, [.. new[] { line.Entrance, line.Exit }.OfType<Vector2>(), .. line.Agents.Select(agent => agent.Position)]);
     }
 
     private static Lane Lane(string name) => name == "straight"
