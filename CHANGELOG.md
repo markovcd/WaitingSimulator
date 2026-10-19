@@ -23,3 +23,4 @@
 - A crowd at a deli counter, a second kind of level: no line, the clerk serves whoever catches their eye, and everyone remembers who was there first. The crowd is big, presses and sways, and a shove ripples through it.
 - F6 moves to the next level.
 - An Android build for playtesting on a phone, with on-screen touch controls.
+- A cel-shaded, low-poly look with ink outlines: people have hair, and the post office and the deli have a counter, a wall with a sign and posts along the line.

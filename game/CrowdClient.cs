@@ -199,7 +199,9 @@ public sealed partial class CrowdClient : Node3D
     private void Build()
     {
         Scenery.AddRoom(this, Floor.ToWorld((level!.Counter.From + level.Counter.To) / 2f));
-        Scenery.Counter(this, level.Counter);
+        Furniture.Counter(this, level.Counter);
+        Furniture.Display(this, level.Counter);
+        Furniture.BackWall(this, SetDressing.BackWall(level.Clerk, level.Counter.TowardCrowd), level.Counter.TowardCrowd, "DELI");
         yes = Scenery.SpeechBubble(this);
         yes.Text = "YES?";
         yes.Position = Floor.ToWorld(level.Clerk, Scenery.SpeechHeight);

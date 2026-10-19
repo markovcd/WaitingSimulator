@@ -11,4 +11,7 @@ internal enum PartShape
 
     /// <summary>A ball as wide as the part's x size.</summary>
     Sphere,
+
+    /// <summary>The top half of a ball as wide as the part's x size, its flat side on the part's center.</summary>
+    Hemisphere,
 }

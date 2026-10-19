@@ -3,8 +3,8 @@ using Godot;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The placeholder world, built in code: light, a floor with the lane marked on it, a crude humanoid <see cref="Figure"/> for each agent and the
-/// clerk, the voices cues play through and the debug overlay.
+/// The world, built in code and cel shaded (<see cref="Toon"/>): light, a floor with the lane marked on it, a low-poly
+/// <see cref="Figure"/> for each agent and the clerk, the voices cues play through and the debug overlay.
 /// </summary>
 internal static class Scenery
 {
@@ -51,7 +51,7 @@ internal static class Scenery
         {
             Name = "Floor",
             Mesh = new PlaneMesh { Size = new Vector2(FloorSize, FloorSize) },
-            MaterialOverride = Flat(FloorColor),
+            MaterialOverride = Toon.Of(FloorColor),
             Position = center with { Y = 0f },
         });
     }
@@ -60,10 +60,10 @@ internal static class Scenery
     /// Paints <paramref name="marking"/> on the floor: a fill over every strip and cap, and tape along the strips' edges.
     /// Returns the fill's material, which the caller tints to show where the player stands.
     /// </summary>
-    public static StandardMaterial3D Lane(Node parent, LaneMarking marking)
+    public static ShaderMaterial Lane(Node parent, LaneMarking marking)
     {
-        var fill = Flat(ToColor(LaneMarking.Fill(LaneState.InLine)));
-        var tape = Flat(ToColor(LaneMarking.Tape));
+        var fill = Toon.Tintable(ToColor(LaneMarking.Fill(LaneState.InLine)));
+        var tape = Toon.Of(ToColor(LaneMarking.Tape));
         var lane = new Node3D { Name = "Lane" };
         parent.AddChild(lane);
         foreach (var strip in marking.Strips)
@@ -110,7 +110,7 @@ internal static class Scenery
         {
             Name = "HeldPlace",
             Mesh = new BoxMesh { Size = new Vector3(marking.HalfWidth * 2f, 0.002f, MarkerDepth) },
-            MaterialOverride = Flat(ToColor(LaneMarking.HeldPaint)),
+            MaterialOverride = Toon.Of(ToColor(LaneMarking.HeldPaint)),
             Visible = false,
         };
         parent.AddChild(marker);
@@ -139,7 +139,7 @@ internal static class Scenery
         {
             Name = "Ticket",
             Mesh = new BoxMesh { Size = new Vector3(0.12f, 0.004f, 0.07f) },
-            MaterialOverride = Flat(new Color(0.95f, 0.94f, 0.88f)),
+            MaterialOverride = Toon.Of(new Color(0.95f, 0.94f, 0.88f)),
             Rotation = new Vector3(0f, 0.4f, 0f),
             Visible = false,
         };
@@ -149,28 +149,6 @@ internal static class Scenery
 
     /// <summary>How high above the floor a speech bubble floats, in meters: over the head of someone talking.</summary>
     public const float SpeechHeight = 2.0f;
-
-    /// <summary>How high the counter a crowd presses against stands, in meters.</summary>
-    private const float CounterHeight = 1.0f;
-
-    /// <summary>How deep the counter is, back from its edge toward the clerk, in meters.</summary>
-    private const float CounterDepth = 0.6f;
-
-    private static readonly Color CounterColor = new(0.42f, 0.33f, 0.26f);
-
-    /// <summary>The counter a crowd presses against: a block behind its edge from <paramref name="counter"/>, on the clerk's side.</summary>
-    public static void Counter(Node parent, WaitingSim.Counter counter)
-    {
-        var middle = ((counter.From + counter.To) / 2f) - (counter.TowardCrowd * (CounterDepth / 2f));
-        parent.AddChild(new MeshInstance3D
-        {
-            Name = "Counter",
-            Mesh = new BoxMesh { Size = new Vector3(counter.Length, CounterHeight, CounterDepth) },
-            MaterialOverride = Flat(CounterColor),
-            Position = Floor.ToWorld(middle, CounterHeight / 2f),
-            Rotation = new Vector3(0f, Floor.YawFacing(counter.TowardCrowd), 0f),
-        });
-    }
 
     /// <summary>A "..." over the head of the person making small talk, hidden until they start; it always faces the eyes.</summary>
     public static Label3D SpeechBubble(Node parent)
@@ -212,8 +190,9 @@ internal static class Scenery
             {
                 Name = part.Name,
                 Mesh = Mesh(part),
-                MaterialOverride = Flat(Color(part.Swatch, look)),
+                MaterialOverride = Toon.Of(Color(part.Swatch, look), Edging(part)),
                 Position = ToGodot(part.Center),
+                Rotation = new Vector3(part.Tilt, 0f, 0f),
             };
             limbs[part.Limb].AddChild(mesh);
             parts[part.Name] = mesh;
@@ -312,11 +291,23 @@ internal static class Scenery
         return label;
     }
 
+    /// <summary>A part's mesh, with as few sides as still read as its shape, which the toon shader shows as facets.</summary>
     private static Mesh Mesh(FigurePart part) => part.Shape switch
     {
         PartShape.Box => new BoxMesh { Size = ToGodot(part.Size) },
-        PartShape.Capsule => new CapsuleMesh { Radius = part.Size.X / 2f, Height = part.Size.Y },
-        _ => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X },
+        PartShape.Capsule => new CapsuleMesh { Radius = part.Size.X / 2f, Height = part.Size.Y, RadialSegments = 8, Rings = 1 },
+        PartShape.Sphere => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X, RadialSegments = 8, Rings = 4 },
+
+        // A hemisphere spends half its rings on its flat bottom.
+        _ => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X / 2f, IsHemisphere = true, RadialSegments = 8, Rings = 6 },
+    };
+
+    /// <summary>The face's marks are too small to carry an ink line; every other part has one that follows its shape.</summary>
+    private static Edging Edging(FigurePart part) => part switch
+    {
+        { Swatch: Swatch.Features } => Game.Edging.None,
+        { Shape: PartShape.Box } => Game.Edging.Square,
+        _ => Game.Edging.Round,
     };
 
     private static Color Color(Swatch swatch, Look look)
@@ -327,12 +318,11 @@ internal static class Scenery
             Swatch.Shirt => look.Shirt,
             Swatch.Trousers => look.Trousers,
             Swatch.Shoes => Game.Figure.Shoes,
+            Swatch.Hair => look.Hair,
             _ => Game.Figure.Features,
         };
         return ToColor(paint);
     }
 
     private static Vector3 ToGodot(System.Numerics.Vector3 vector) => new(vector.X, vector.Y, vector.Z);
-
-    private static StandardMaterial3D Flat(Color color) => new() { AlbedoColor = color };
 }

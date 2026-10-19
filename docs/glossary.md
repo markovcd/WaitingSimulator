@@ -69,6 +69,7 @@ Prefer the domain's words over the framework's. Code names are filled in as the 
 
 | Say | Means | Code | Not |
 |---|---|---|---|
+| **set dressing** | The client's furniture around a level (counters, the back wall, posts along the lane), placed from level data and only looked at; the sim never sees it. | `SetDressing`, `Furniture` | props |
 | **sim** | The engine-free library that owns every game rule. | `WaitingSim` | engine, backend, model |
 | **client** | The Godot project that shows the sim and turns input into commands. | | frontend, view |
 | **tick** | One fixed sim step (1/60 s). | `Tick` | frame (a frame is the client's) |

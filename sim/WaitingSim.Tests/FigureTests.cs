@@ -44,6 +44,19 @@ public sealed class FigureTests
     }
 
     [Fact]
+    public void The_hair_covers_the_crown_and_leaves_the_face_bare()
+    {
+        string[] face = [Figure.LeftEye, Figure.RightEye, Figure.LeftBrow, Figure.RightBrow, Figure.LeftMouth, Figure.RightMouth, "Nose"];
+        var head = Figure.Parts.Single(part => part.Name == "Head");
+        var hair = Figure.Parts.Single(part => part.Name == "Hair");
+        var crown = new Vector3(0f, MathF.Cos(hair.Tilt), MathF.Sin(hair.Tilt));
+
+        Assert.True(hair.Size.X > head.Size.X, "The hair is no wider than the head it sits on.");
+        Assert.All(Figure.Parts.Where(part => face.Contains(part.Name)), part =>
+            Assert.True(Vector3.Dot(High(part) with { X = 0f } - hair.Center, crown) < 0f, $"The hair covers {part.Name}."));
+    }
+
+    [Fact]
     public void Every_capsule_is_at_least_as_tall_as_it_is_wide()
     {
         Assert.All(Figure.Parts.Where(part => part.Shape == PartShape.Capsule), part => Assert.True(part.Size.Y >= part.Size.X, part.Name));
@@ -87,6 +100,8 @@ public sealed class FigureTests
     {
         PartShape.Box => part.Size / 2f,
         PartShape.Capsule => new(part.Size.X / 2f, part.Size.Y / 2f, part.Size.X / 2f),
+
+        // A tipped hemisphere can reach anywhere its whole ball does.
         _ => new(part.Size.X / 2f),
     };
 }

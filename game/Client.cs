@@ -59,7 +59,7 @@ public sealed partial class Client : Node3D
     private double noticeLeft;
     private readonly List<FigureNode?> bodies = [];
     private FigureNode? clerk;
-    private StandardMaterial3D? laneFill;
+    private ShaderMaterial? laneFill;
     private MeshInstance3D? heldMarker;
     private MeshInstance3D? ticket;
     private Label3D? speech;
@@ -273,6 +273,14 @@ public sealed partial class Client : Node3D
         Scenery.AddRoom(this, Floor.ToWorld((front + back) / 2f));
         var marking = LaneMarking.Of(level.Lane);
         laneFill = Scenery.Lane(this, marking);
+        Furniture.Posts(this, SetDressing.Posts(level.Lane));
+        if (SetDressing.LineCounter(level.Lane, level.Clerk) is { } counter)
+        {
+            Furniture.Counter(this, counter);
+        }
+
+        var towardLine = -level.Lane.TowardFront(level.Clerk);
+        Furniture.BackWall(this, SetDressing.BackWall(level.Clerk, towardLine), towardLine, "PLEASE WAIT");
         heldMarker = Scenery.HeldMarker(this, marking);
         ticket = Scenery.Ticket(this);
         speech = Scenery.SpeechBubble(this);
@@ -288,7 +296,7 @@ public sealed partial class Client : Node3D
 
         clerk = Scenery.Figure("Clerk", Figure.Clerk);
         clerk.Root.Position = Floor.ToWorld(level.Clerk);
-        clerk.Root.Rotation = new Vector3(0f, Floor.YawFacing(-level.Lane.TowardFront(level.Clerk)), 0f);
+        clerk.Root.Rotation = new Vector3(0f, Floor.YawFacing(towardLine), 0f);
         AddChild(clerk.Root);
         overlay = Scenery.Overlay(this);
         result = Scenery.Result(this);
@@ -337,7 +345,7 @@ public sealed partial class Client : Node3D
 
         clerk!.Show(Face.Bored, Face.Blinking(-1, now));
         var you = driver.Current.Agents[level!.Player.Value];
-        laneFill!.AlbedoColor = Scenery.ToColor(LaneMarking.Fill(LaneMarking.StateOf(you)));
+        Toon.Tint(laneFill!, Scenery.ToColor(LaneMarking.Fill(LaneMarking.StateOf(you))));
         ticket!.Visible = you.TicketAt is not null;
         if (you.TicketAt is { } lying)
         {

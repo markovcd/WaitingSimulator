@@ -4,7 +4,7 @@ using WaitingSim;
 namespace WaitingSimulator.Game;
 
 /// <summary>
-/// The crude humanoid every agent and the clerk is drawn as: its parts and where they hang, the colors it comes in, how
+/// The low-poly humanoid every agent and the clerk is drawn as: its parts and where they hang, the colors it comes in, how
 /// each agent's look is picked from its id so a replay looks the same, and how far its limbs swing while it walks.
 /// Facing -z, with its face on the front of its head, it fits front to back inside the sim's body.
 /// </summary>
@@ -37,6 +37,11 @@ internal static class Figure
         new(0.66f, 0.58f, 0.38f), new(0.55f, 0.55f, 0.55f), new(0.36f, 0.5f, 0.5f),
     ];
 
+    private static readonly Paint[] HairColors =
+    [
+        new(0.16f, 0.12f, 0.1f), new(0.32f, 0.22f, 0.14f), new(0.62f, 0.5f, 0.3f), new(0.45f, 0.22f, 0.13f), new(0.55f, 0.54f, 0.52f),
+    ];
+
     private static readonly Paint[] TrouserColors = [new(0.25f, 0.26f, 0.28f), new(0.22f, 0.25f, 0.35f), new(0.36f, 0.3f, 0.25f), new(0.55f, 0.5f, 0.4f)];
 
     public const string LeftEye = "LeftEye";
@@ -45,6 +50,9 @@ internal static class Figure
     public const string RightBrow = "RightBrow";
     public const string LeftMouth = "LeftMouth";
     public const string RightMouth = "RightMouth";
+
+    /// <summary>How far the hair is tipped back, uncovering the face below its front edge.</summary>
+    public const float HairTilt = 0.7f;
 
     /// <summary>How tall each half of a shut mouth is, in meters.</summary>
     public const float MouthHeight = 0.008f;
@@ -55,8 +63,8 @@ internal static class Figure
     /// <summary>The color of every figure's eyes, brows and mouth.</summary>
     public static Paint Features { get; } = new(0.12f, 0.1f, 0.1f);
 
-    /// <summary>The clerk's look: usual size, in a brown shirt.</summary>
-    public static Look Clerk { get; } = new(1f, SkinColors[0], new(0.55f, 0.44f, 0.38f), TrouserColors[0]);
+    /// <summary>The clerk's look: usual size, gray-haired, in a brown shirt.</summary>
+    public static Look Clerk { get; } = new(1f, SkinColors[0], new(0.55f, 0.44f, 0.38f), TrouserColors[0], HairColors[^1]);
 
     public static IReadOnlyList<FigurePart> Parts { get; } =
     [
@@ -64,6 +72,7 @@ internal static class Figure
         new("Torso", PartShape.Box, new(0.36f, 0.5f, 0.2f), new(0f, 1.23f, 0f), Limb.Body, Swatch.Shirt),
         new("Neck", PartShape.Capsule, new(0.08f, 0.1f, 0.08f), new(0f, 1.5f, 0f), Limb.Body, Swatch.Skin),
         new("Head", PartShape.Sphere, new(0.22f, 0.22f, 0.22f), new(0f, 1.6f, 0f), Limb.Body, Swatch.Skin),
+        new("Hair", PartShape.Hemisphere, new(0.236f, 0.236f, 0.236f), new(0f, 1.592f, 0f), Limb.Body, Swatch.Hair, HairTilt),
         new("Nose", PartShape.Box, new(0.04f, 0.05f, 0.05f), new(0f, 1.59f, -0.11f), Limb.Body, Swatch.Skin),
         new(LeftEye, PartShape.Box, new(0.025f, 0.02f, 0.02f), new(-0.038f, 1.625f, -0.1f), Limb.Body, Swatch.Features),
         new(RightEye, PartShape.Box, new(0.025f, 0.02f, 0.02f), new(0.038f, 1.625f, -0.1f), Limb.Body, Swatch.Features),
@@ -91,7 +100,12 @@ internal static class Figure
     public static Look For(AgentId agent)
     {
         var id = agent.Value;
-        return new(Heights[(id * 3) % Heights.Length], SkinColors[(id * 2) % SkinColors.Length], ShirtColors[id % ShirtColors.Length], TrouserColors[(id * 3) % TrouserColors.Length]);
+        return new(
+            Heights[(id * 3) % Heights.Length],
+            SkinColors[(id * 2) % SkinColors.Length],
+            ShirtColors[id % ShirtColors.Length],
+            TrouserColors[(id * 3) % TrouserColors.Length],
+            HairColors[(id * 2) % HairColors.Length]);
     }
 
     /// <summary>
