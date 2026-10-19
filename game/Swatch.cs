@@ -7,6 +7,10 @@ internal enum Swatch
     Shirt,
     Trousers,
     Shoes,
+
+    /// <summary>The white rubber under every shoe.</summary>
+    Sole,
+
     Hair,
 
     /// <summary>A cap and a backpack, in a color of their own.</summary>

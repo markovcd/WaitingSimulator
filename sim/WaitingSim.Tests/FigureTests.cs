@@ -44,17 +44,20 @@ public sealed class FigureTests
     }
 
     [Fact]
-    public void Hair_and_caps_cover_the_crown_and_leave_the_face_bare()
+    public void Hair_and_caps_cover_the_head_and_pass_behind_the_face()
     {
         string[] face = [Figure.LeftEye, Figure.RightEye, Figure.LeftBrow, Figure.RightBrow, Figure.LeftMouth, Figure.RightMouth, "Nose"];
         var head = Figure.Parts.Single(part => part.Name == "Head");
 
-        Assert.All(Figure.Parts.Where(part => part.Shape == PartShape.Hemisphere), covering =>
+        Assert.All(Figure.Parts.Where(part => part.Name is "Hair" or "Cap"), covering =>
         {
-            var crown = new Vector3(0f, MathF.Cos(covering.Tilt), MathF.Sin(covering.Tilt));
             Assert.True(covering.Size.X > head.Size.X, $"{covering.Name} is no wider than the head it sits on.");
+            Assert.Equal(head.Center, covering.Center);
             Assert.All(Figure.Parts.Where(part => face.Contains(part.Name)), part =>
-                Assert.True(Vector3.Dot(High(part) with { X = 0f } - covering.Center, crown) < 0f, $"{covering.Name} covers {part.Name}."));
+            {
+                var height = High(part).Y - covering.Center.Y;
+                Assert.True(Front(covering, height) is not { } front || front > Low(part).Z, $"{covering.Name} covers {part.Name}.");
+            });
         });
     }
 
@@ -105,17 +108,35 @@ public sealed class FigureTests
         Assert.Equal(walking, faster, 0.0001f);
     }
 
-    private static Vector3 Low(FigurePart part) => Figure.Pivot(part.Limb) + part.Center - Extent(part);
+    private static Vector3 Low(FigurePart part) => part.Rings is { } rings
+        ? Figure.Pivot(part.Limb) + part.Center + new Vector3(-rings.Max(ring => ring.HalfWidth), rings[0].Height, rings.Min(ring => ring.Back - ring.HalfDepth))
+        : Figure.Pivot(part.Limb) + part.Center - Extent(part);
 
-    private static Vector3 High(FigurePart part) => Figure.Pivot(part.Limb) + part.Center + Extent(part);
+    private static Vector3 High(FigurePart part) => part.Rings is { } rings
+        ? Figure.Pivot(part.Limb) + part.Center + new Vector3(rings.Max(ring => ring.HalfWidth), rings[^1].Height, rings.Max(ring => ring.Back + ring.HalfDepth))
+        : Figure.Pivot(part.Limb) + part.Center + Extent(part);
+
+    /// <summary>How far forward a loft's front face reaches at <paramref name="height"/> above its center, or null outside it.</summary>
+    private static float? Front(FigurePart loft, float height)
+    {
+        var rings = loft.Rings!;
+        for (var i = 1; i < rings.Count; i++)
+        {
+            if (height >= rings[i - 1].Height && height <= rings[i].Height)
+            {
+                var t = (height - rings[i - 1].Height) / (rings[i].Height - rings[i - 1].Height);
+                return loft.Center.Z + float.Lerp(rings[i - 1].Back - rings[i - 1].HalfDepth, rings[i].Back - rings[i].HalfDepth, t);
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>Half the part's size along each axis, as its shape takes up room.</summary>
     private static Vector3 Extent(FigurePart part) => part.Shape switch
     {
         PartShape.Box => part.Size / 2f * new Vector3(MathF.Max(part.Taper, 1f), 1f, MathF.Max(part.Taper, 1f)),
         PartShape.Capsule => new(part.Size.X / 2f, part.Size.Y / 2f, part.Size.X / 2f),
-
-        // A tipped hemisphere can reach anywhere its whole ball does.
         _ => new(part.Size.X / 2f),
     };
 }

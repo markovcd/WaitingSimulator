@@ -197,13 +197,14 @@ internal static class Scenery
                 Mesh = Mesh(part),
                 MaterialOverride = Toon.Of(Color(part.Swatch, look), Edging(part)),
                 Position = ToGodot(part.Center),
-                Rotation = new Vector3(part.Tilt, 0f, 0f),
             };
             limbs[part.Limb].AddChild(mesh);
             parts[part.Name] = mesh;
         }
 
-        return new FigureNode(root, limbs, parts);
+        var figure = new FigureNode(root, limbs, parts);
+        figure.Swing(0f);
+        return figure;
     }
 
     /// <summary>A voice at <paramref name="parent"/>'s spot, for its cues.</summary>
@@ -303,10 +304,62 @@ internal static class Scenery
         PartShape.Box => TaperedBox(ToGodot(part.Size), part.Taper),
         PartShape.Capsule => new CapsuleMesh { Radius = part.Size.X / 2f, Height = part.Size.Y, RadialSegments = 8, Rings = 1 },
         PartShape.Sphere => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X, RadialSegments = 8, Rings = 4 },
-
-        // A hemisphere spends half its rings on its flat bottom.
-        _ => new SphereMesh { Radius = part.Size.X / 2f, Height = part.Size.X / 2f, IsHemisphere = true, RadialSegments = 8, Rings = 6 },
+        _ => Loft(part.Rings ?? []),
     };
+
+    /// <summary>
+    /// Octagons through <paramref name="rings"/>, bottom to top, joined side to side and capped at both ends. Its normals
+    /// are smooth, so the ink line round it stays whole; the toon shader lights its facets flat regardless.
+    /// </summary>
+    private static ArrayMesh Loft(IReadOnlyList<Ring> rings)
+    {
+        // Corners at 22.5° and every 45° after put flat faces to the front, back and sides, at each ring's half sizes.
+        var stretch = 1f / MathF.Cos(MathF.PI / 8f);
+        Vector3[] Octagon(Ring ring) =>
+        [
+            .. Enumerable.Range(0, 8).Select(k => (MathF.PI / 8f) + (k * MathF.PI / 4f)).Select(angle =>
+                new Vector3(ring.HalfWidth * stretch * MathF.Cos(angle), ring.Height, ring.Back + (ring.HalfDepth * stretch * MathF.Sin(angle)))),
+        ];
+
+        var tool = new SurfaceTool();
+        tool.Begin(Godot.Mesh.PrimitiveType.Triangles);
+        var outlines = rings.Select(Octagon).ToArray();
+        for (var r = 1; r < outlines.Length; r++)
+        {
+            var axis = new Vector3(0f, (rings[r - 1].Height + rings[r].Height) / 2f, (rings[r - 1].Back + rings[r].Back) / 2f);
+            for (var k = 0; k < 8; k++)
+            {
+                var (a, b, c, d) = (outlines[r - 1][k], outlines[r - 1][(k + 1) % 8], outlines[r][(k + 1) % 8], outlines[r][k]);
+                var outward = ((a + b + c + d) / 4f) - axis;
+                Face(tool, a, b, c, outward);
+                Face(tool, a, c, d, outward);
+            }
+        }
+
+        foreach (var (outline, ring, up) in new[] { (outlines[0], rings[0], -1f), (outlines[^1], rings[^1], 1f) })
+        {
+            var middle = new Vector3(0f, ring.Height, ring.Back);
+            for (var k = 0; k < 8; k++)
+            {
+                Face(tool, middle, outline[k], outline[(k + 1) % 8], Vector3.Up * up);
+            }
+        }
+
+        tool.Index();
+        tool.GenerateNormals();
+        return tool.Commit();
+    }
+
+    /// <summary>Adds the triangle <paramref name="a"/>, <paramref name="b"/>, <paramref name="c"/> facing <paramref name="outward"/>.</summary>
+    private static void Face(SurfaceTool tool, Vector3 a, Vector3 b, Vector3 c, Vector3 outward)
+    {
+        // Godot draws a triangle's front where its corners run clockwise, which is where their cross product points away.
+        Vector3[] corners = (b - a).Cross(c - a).Dot(outward) > 0f ? [a, c, b] : [a, b, c];
+        foreach (var corner in corners)
+        {
+            tool.AddVertex(corner);
+        }
+    }
 
     /// <summary>A box <paramref name="size"/> big at its top whose bottom is <paramref name="taper"/> as wide and deep.</summary>
     private static ArrayMesh TaperedBox(Vector3 size, float taper)
@@ -365,6 +418,7 @@ internal static class Scenery
             Swatch.Shirt => look.Shirt,
             Swatch.Trousers => look.Trousers,
             Swatch.Shoes => Game.Figure.Shoes,
+            Swatch.Sole => Game.Figure.Sole,
             Swatch.Hair => look.Hair,
             _ => Game.Figure.Features,
         };

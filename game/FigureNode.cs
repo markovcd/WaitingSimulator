@@ -19,8 +19,8 @@ internal sealed class FigureNode(Node3D root, IReadOnlyDictionary<Limb, Node3D> 
     {
         limbs[Limb.LeftLeg].Rotation = new Vector3(angle, 0f, 0f);
         limbs[Limb.RightLeg].Rotation = new Vector3(-angle, 0f, 0f);
-        limbs[Limb.LeftArm].Rotation = new Vector3(-angle, 0f, 0f);
-        limbs[Limb.RightArm].Rotation = new Vector3(angle, 0f, 0f);
+        limbs[Limb.LeftArm].Rotation = new Vector3(-angle, 0f, -Figure.ArmSplay);
+        limbs[Limb.RightArm].Rotation = new Vector3(angle, 0f, Figure.ArmSplay);
     }
 
     /// <summary>Sets the face to <paramref name="expression"/>, with the eyes shut while <paramref name="blinking"/>.</summary>
