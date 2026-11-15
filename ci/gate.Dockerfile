@@ -4,7 +4,7 @@
 # The android stage builds on the gate stage and adds what an Android export needs; export.sh builds it.
 ARG GODOT_VERSION=4.7.2
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS gate
+FROM mcr.microsoft.com/dotnet/sdk:10.0.404-noble@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb AS gate
 
 ARG GODOT_VERSION
 
